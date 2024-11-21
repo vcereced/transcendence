@@ -1,0 +1,92 @@
+version: '3.8'  # Docker Compose version
+
+services:
+  nginx:
+    image: nginx:1.23  # Specify the version for stability
+    container_name: api-gateway
+    ports:
+      - "8000:8000"  # Expose port 80 to access the API Gateway from outside
+    volumes:
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf 
+      - ./services/nginx/www:/usr/share/nginx/html  
+    depends_on:
+      - auth
+      # - game
+      # - tournament
+      # - stats
+    networks:
+      - app-network  # Shared network for internal communication
+
+  auth:
+    build:
+      context: ./services/auth  # Directory for auth Dockerfile and code
+    container_name: auth
+    ports:
+      - "8001:8001"  # Expose port 8001 to access the Auth service from outside
+    volumes:
+      - ./services/auth:/app  # Bind mount for code synchronization
+    networks:
+      - app-network  # Internal network only
+
+  websocket:
+    build:
+      context: ./services/websocket  # Ruta del microservicio de WebSocket
+    container_name: websocket
+    volumes:
+      - ./services/websocket:/app  
+    # ports:
+    #   - "8002:8002"  # Exponer el puerto para WebSocket
+    environment:
+      - REDIS_HOST=redis  # Usaremos Redis para gestionar las conexiones de WebSocket
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  tournaments:
+    build:
+      context: ./services/tournaments
+    container_name: tournaments
+    volumes:
+      - ./services/tournaments:/app
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    # ports:
+    #   - "6379:6379"  # Expose Redis port to manage WebSocket connections
+    networks:
+      - app-network
+
+
+  # game:
+  #   build:
+  #     context: ./services/game  # Directory for game Dockerfile and code
+  #   container_name: game
+  #   volumes:
+  #     - ./services/game:/app  # Bind mount for code synchronization
+  #   networks:
+  #     - app-network
+
+  # tournament:
+  #   build:
+  #     context: ./services/tournament  # Directory for tournament Dockerfile and code
+  #   container_name: tournament
+  #   volumes:
+  #     - ./services/tournament:/app  # Bind mount for code synchronization
+  #   networks:
+  #     - app-network
+
+  # stats:
+  #   build:
+  #     context: ./services/stats  # Directory for stats Dockerfile and code
+  #   container_name: stats
+  #   volumes:
+  #     - ./services/stats:/app  # Bind mount for code synchronization
+  #   networks:
+  #     - app-network
+
+# Define the Docker network to allow communication between services
+networks:
+  app-network:
+    driver: bridge
