@@ -41,7 +41,7 @@ async function createTournament(event) {
 
     if (tournamentName) {
         try {
-            const response = await fetch('/api/torneo/create', {
+            const response = await fetch('/api/tournament/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -68,7 +68,7 @@ async function loadTournaments() {
     tournamentList.innerHTML = "";  // Limpiar la lista antes de agregar nuevos torneos
 
     try {
-        const response = await fetch('/api/torneo');  // Obtener los torneos existentes
+        const response = await fetch('/api/tournament');  // Obtener los torneos existentes
         const tournaments = await response.json();
 
         tournaments.forEach(tournament => {
@@ -93,7 +93,7 @@ async function loadTournaments() {
 // Función para unirse a un torneo
 async function joinTournament(tournamentId) {
     try {
-        const response = await fetch(`/api/torneo/${tournamentId}/join`, {
+        const response = await fetch(`/api/tournament/${tournamentId}/join`, {
             method: 'POST'
         });
 

@@ -1,10 +1,8 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import TournamentViewSet
-
-router = DefaultRouter()
-router.register(r'tournaments', TournamentViewSet)
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('api/tournaments', include(router.urls)),
+    path('create', views.create_tournament, name='create_tournament'),
+    path('', views.list_tournaments, name='list_tournaments'),
+    path('<int:tournament_id>/join', views.join_tournament, name='join_tournament'),
 ]

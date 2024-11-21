@@ -49,6 +49,8 @@ services:
     container_name: tournaments
     volumes:
       - ./services/tournaments:/app
+    networks:
+      - app-network
 
   redis:
     image: redis:alpine
