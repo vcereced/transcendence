@@ -37,8 +37,13 @@ async function loadTournaments() {
     tournamentList.innerHTML = ""; // Limpiar la lista antes de agregar nuevos torneos
 
     try {
-        const response = await fetch('/api/tournament'); // Obtener los torneos existentes
-        const tournaments = await response.json();
+        const [tournamentResponse, playerCountsResponse] = await Promise.all([
+            fetch('/api/tournament'), // Obtener los torneos existentes
+            fetch('/api/tournament/player_counts') // Obtener los contadores de jugadores
+        ]);
+
+        const tournaments = await tournamentResponse.json();
+        const playerCounts = await playerCountsResponse.json();
 
         tournaments.forEach(tournament => {
             const li = document.createElement("li");
@@ -48,7 +53,7 @@ async function loadTournaments() {
 
             const userCountContainer = document.createElement("span");
             userCountContainer.className = "badge bg-primary rounded-pill";
-            userCountContainer.textContent = `Jugadores conectados: ${tournament.user_count || 0} `;
+            userCountContainer.textContent = `Jugadores conectados: ${playerCounts[tournament.id] || 0}`;
             li.appendChild(userCountContainer);
 
             const joinButton = document.createElement("button");

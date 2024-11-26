@@ -38,8 +38,6 @@ def list_tournaments(request):
 def join_tournament(request, tournament_id):
     try:
         tournament = Tournament.objects.get(id=tournament_id)
-        # Aquí puedes agregar lógica para unir al usuario actual al torneo
-        # Por ejemplo: tournament.players.add(request.user)
         redis_client.incr(f'tournament_{tournament.id}_player_count')
         redis_client.publish('tournaments_channel', json.dumps({
     	"tournamentId": tournament.id,
@@ -48,3 +46,12 @@ def join_tournament(request, tournament_id):
         return Response({"message": f"Te has unido al torneo '{tournament.name}'."}, status=status.HTTP_200_OK)
     except Tournament.DoesNotExist:
         return Response({"error": "Torneo no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def list_tournament_player_counts(request):
+    keys = redis_client.scan_iter(match='tournament_*_player_count')
+    tournament_counts = {}
+    for key in keys:
+        tournament_id = key.split('_')[1]  # Extraer el ID del torneo de la clave
+        tournament_counts[tournament_id] = redis_client.get(key)
+    return Response(tournament_counts, status=status.HTTP_200_OK)
