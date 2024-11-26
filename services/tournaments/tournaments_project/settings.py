@@ -71,6 +71,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'tournaments_project.wsgi.application'
 
 
+#REDIS SETTINGS
+
+REDIS_HOST = 'redis'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_DECODE_RESPONSES = True
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 

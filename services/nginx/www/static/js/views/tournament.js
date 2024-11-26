@@ -1,5 +1,3 @@
-// static/js/views/tournament.js
-
 export function renderTournament() {
     return `
         <div class="container">
@@ -22,8 +20,6 @@ export function renderTournament() {
     `;
 }
 
-// static/js/views/torneo.js
-
 export function initTournament() {
     // Obtener el formulario para crear un torneo
     const createForm = document.getElementById("create-tournament-form");
@@ -33,9 +29,49 @@ export function initTournament() {
     loadTournaments();
 }
 
+let socket = null; // Variable global para el WebSocket
+
+// Función para cargar los torneos disponibles
+async function loadTournaments() {
+    const tournamentList = document.getElementById("tournament-list");
+    tournamentList.innerHTML = ""; // Limpiar la lista antes de agregar nuevos torneos
+
+    try {
+        const response = await fetch('/api/tournament'); // Obtener los torneos existentes
+        const tournaments = await response.json();
+
+        tournaments.forEach(tournament => {
+            const li = document.createElement("li");
+            li.className = "list-group-item d-flex justify-content-between align-items-center";
+            li.id = `tournament-${tournament.id}`; // Asignar un ID basado en el tournamentId
+            li.textContent = tournament.name;
+
+            const userCountContainer = document.createElement("span");
+            userCountContainer.className = "badge bg-primary rounded-pill";
+            userCountContainer.textContent = `Jugadores conectados: ${tournament.user_count || 0} `;
+            li.appendChild(userCountContainer);
+
+            const joinButton = document.createElement("button");
+            joinButton.className = "btn btn-success btn-sm";
+            joinButton.textContent = "Unirse";
+            joinButton.onclick = () => joinTournament(tournament.id);
+
+            li.appendChild(joinButton);
+            tournamentList.appendChild(li);
+        });
+
+        // Iniciar el WebSocket global si no está iniciado
+        if (socket === null) {
+            socket = startGlobalWebSocket();
+        }
+    } catch (error) {
+        console.error("Error al cargar los torneos:", error);
+    }
+}
+
 // Función para crear un torneo
 async function createTournament(event) {
-    event.preventDefault();  // Evitar el comportamiento por defecto del formulario
+    event.preventDefault(); // Evitar el comportamiento por defecto del formulario
 
     const tournamentName = document.getElementById("tournament-name").value;
 
@@ -44,14 +80,14 @@ async function createTournament(event) {
             const response = await fetch('/api/tournament/create', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name: tournamentName })
+                body: JSON.stringify({ name: tournamentName }),
             });
 
             if (response.ok) {
                 alert("Torneo creado exitosamente!");
-                loadTournaments();  // Recargar los torneos disponibles
+                loadTournaments(); // Recargar los torneos disponibles
             } else {
                 alert("Error al crear el torneo.");
             }
@@ -62,39 +98,45 @@ async function createTournament(event) {
     }
 }
 
-// Función para cargar los torneos disponibles
-async function loadTournaments() {
-    const tournamentList = document.getElementById("tournament-list");
-    tournamentList.innerHTML = "";  // Limpiar la lista antes de agregar nuevos torneos
+// Función para iniciar el WebSocket global
+function startGlobalWebSocket() {
+    const socket = new WebSocket(`ws://${window.location.host}/ws/global_tournament_counter/`);
 
-    try {
-        const response = await fetch('/api/tournament');  // Obtener los torneos existentes
-        const tournaments = await response.json();
+    socket.onopen = () => {
+        console.log("Conexión WebSocket global abierta");
+    };
 
-        tournaments.forEach(tournament => {
-            const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            li.textContent = tournament.name;
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+		console.log("Mensaje WebSocket global:", data);
+        // Si el evento contiene un "user_count" para un torneo específico
+        if (data.tournamentId && data.user_count !== undefined) {
+            const tournament = document.querySelector(`#tournament-${data.tournamentId}`);
+            if (tournament) {
+                const userCountContainer = tournament.querySelector('.badge');
+                if (userCountContainer) {
+                    userCountContainer.textContent = `Jugadores conectados: ${data.user_count}`;
+                }
+            }
+        }
+    };
 
-            // Agregar el botón para unirse al torneo
-            const joinButton = document.createElement("button");
-            joinButton.className = "btn btn-success btn-sm";
-            joinButton.textContent = "Unirse";
-            joinButton.onclick = () => joinTournament(tournament.id);
+    socket.onclose = function (event) {
+        console.log("Conexión WebSocket global cerrada", event);
+    };
 
-            li.appendChild(joinButton);
-            tournamentList.appendChild(li);
-        });
-    } catch (error) {
-        console.error("Error al cargar los torneos:", error);
-    }
+    socket.onerror = function (error) {
+        console.error("Error en WebSocket global:", error);
+    };
+
+    return socket; // Devolver la conexión WebSocket
 }
 
 // Función para unirse a un torneo
 async function joinTournament(tournamentId) {
     try {
         const response = await fetch(`/api/tournament/${tournamentId}/join`, {
-            method: 'POST'
+            method: 'POST',
         });
 
         if (response.ok) {
