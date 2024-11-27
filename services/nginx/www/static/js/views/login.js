@@ -51,13 +51,18 @@ export function initLogin() {
 		if (data.success) {
 			console.log("Inicio de sesión ok");
 			loginResponseMessage.innerText = "Inicio de sesión exitoswo";
-			location.hash = '/game';
+			//localStorage.setItem('accessToken', data.access);
+			//localStorage.setItem('refreshToken', data.refresh);
+			// location.hash = '/game';
+			document.cookie = `accessToken=${data.access}; path=/; SameSite=Lax`;
+			document.cookie = `refreshToken=${data.refresh}; path=/; SameSite=Lax`;
+
+
 
 		} else {
 			console.log("Error al iniciar sesión");
 			loginResponseMessage.innerText = data.message;
 		}
 	});
-
 
 }
