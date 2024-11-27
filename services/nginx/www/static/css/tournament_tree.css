@@ -1,0 +1,109 @@
+/* Contenedor general para el árbol de clasificación */
+.tournament-tree {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+/* Cada ronda en el torneo */
+.round {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+}
+
+/* Estructura para cada enfrentamiento */
+.match {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Estilo para cada jugador */
+.player {
+    padding: 10px 20px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    width: 120px;
+}
+
+/* Ajustes para rondas intermedias y final */
+.round-2 .match,
+.final .match {
+    flex-direction: row;
+}
+
+/* Estilo para la ronda final */
+.final .player {
+    background-color: #ffd700; /* Dorado para el final */
+    color: #fff;
+}
+
+/* Sección para el campeón */
+.champion {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 30px;
+}
+
+/* Estilo para el campeón */
+.champion .player {
+    background-color: #4caf50; /* Verde para el campeón */
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 28px;
+}
+
+/* Sombra para dar un efecto visual de profundidad */
+.player {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Efecto al pasar el mouse sobre el jugador */
+.player:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Sombra sutil para las rondas */
+.round {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo de texto para indicar el nombre del torneo */
+#tournament-id {
+    font-weight: bold;
+    font-size: 20px;
+    color: #333;
+}
+
+/* Ajustes para los dispositivos móviles */
+@media (max-width: 768px) {
+    .round {
+        flex-direction: column;
+    }
+
+    .round-2 .match,
+    .final .match {
+        flex-direction: column;
+    }
+
+    .tournament-tree {
+        gap: 40px;
+    }
+
+    .player {
+        width: 100%;
+        padding: 15px 10px;
+    }
+}

@@ -8,6 +8,7 @@ import { renderLogin, initLogin } from './views/login.js';
 import { renderGame, initGame } from './views/game.js';
 import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
+import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
 
 /**
  * Container for possible routes of the SPA. Works as a pointer
@@ -21,14 +22,23 @@ const routes = {
     "/game": { render: renderGame, init: initGame },
 	"/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
+	"/tournament/room": { render: renderTournamentRoom, init: initTournamentRoom }
 };
 
 function router() {
     const path = location.hash.slice(1) || "/index";
     const route = routes[path];
-	console.log("path" + path);
+	console.log("path: " + path);
 
-    if (route) {
+	const urlParams = new URLSearchParams(window.location.hash.slice(window.location.hash.indexOf('?') + 1));
+	const tournamentId = urlParams.get('id');
+	//THIS COULD BE IMPROVED FOR THE ROUTES CHECK IT LATER WITH TEAM!
+	if (tournamentId) {
+		const cleanPath = path.split("?")[0];
+		console.log("cleanPath: " + cleanPath);
+		document.getElementById("main-content").innerHTML = renderTournamentRoom(tournamentId);
+		initTournamentRoom(tournamentId);
+	}else if (route) {
         // Carga el contenido en #main-content
         document.getElementById("main-content").innerHTML = route.render();
         
