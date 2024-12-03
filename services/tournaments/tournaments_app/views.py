@@ -34,15 +34,17 @@ def list_tournaments(request):
     serializer = TournamentSerializer(tournaments, many=True)
     return Response(serializer.data)
 
+# Prepare this for allowing users to join a tournament, be aware
+# of the edge cases like the tournament not existing or the user already being in the tournament.
+# or the tournament being full. TAKE CARE OF THIS !!! JAVI WILL BE TESTING THIS !!!
 @api_view(['POST'])
 def join_tournament(request, tournament_id):
     try:
         tournament = Tournament.objects.get(id=tournament_id)
-        redis_client.incr(f'tournament_{tournament.id}_player_count')
-        redis_client.publish('tournaments_channel', json.dumps({
-    	"tournamentId": tournament.id,
-    	"user_count": redis_client.get(f'tournament_{tournament.id}_player_count')
-}))
+        # redis_client.incr(f'tournament_{tournament.id}_player_count')
+        # redis_client.publish('tournaments_channel', json.dumps({
+    	# "tournamentId": tournament.id,
+    	# "user_count": redis_client.get(f'tournament_{tournament.id}_player_count')}))
         return Response({"message": f"Te has unido al torneo '{tournament.name}'."}, status=status.HTTP_200_OK)
     except Tournament.DoesNotExist:
         return Response({"error": "Torneo no encontrado."}, status=status.HTTP_404_NOT_FOUND)
