@@ -6,7 +6,8 @@ services:
     build: ./services/nginx
     container_name: api-gateway
     ports:
-      - "8000:8000"  # Expose port 80 to access the API Gateway from outside
+      - "8443:443"  # Expose port 80 to access the API Gateway from outside
+      - "8000:80"  # Expose port 80 to access the API Gateway from outside
     volumes:
       - ./services/nginx/www:/usr/share/nginx/html  
       - ./services/nginx/conf/jwt_validation.lua:/etc/nginx/lua/jwt_validation.lua              

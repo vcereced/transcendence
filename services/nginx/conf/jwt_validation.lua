@@ -1,51 +1,13 @@
 -- -- /etc/nginx/lua/jwt_validation.lua
 
--- local jwt = require "resty.jwt"
--- local jwt_token = ngx.var.http_Authorization
-
--- if not jwt_token then
---     ngx.status = ngx.HTTP_UNAUTHORIZED
---     ngx.say("Missing token")
---     return ngx.exit(ngx.HTTP_UNAUTHORIZED)
--- end
-
--- local validators = require "resty.jwt-validators"
--- jwt_token = jwt_token:sub(8)
-
--- local jwt_secret_key = os.getenv("JWT_SECRET")
-
--- ngx.say("jwt_token; ")
--- ngx.say(jwt_token)
-
--- ngx.say("secret key; ")
--- ngx.say(jwt_secret_key)
-
--- local jwt_obj = jwt:verify(jwt_secret_key, jwt_token, {
---     exp = validators.is_not_expired(),
--- })
-
--- if not jwt_obj["verified"] then
---     ngx.status = ngx.HTTP_UNAUTHORIZED
---     ngx.say("Invalid token")
---     return ngx.exit(ngx.HTTP_UNAUTHORIZED)
--- end
-
--- ngx.say("no casca")
-
 local jwt = require "resty.jwt"
 local validators = require "resty.jwt-validators"
 
-
--- Depuración de las solicitudes
-ngx.log(ngx.ERR, "nuevo LOG______________________________")
-local headers = ngx.req.get_headers()
-ngx.log(ngx.ERR, "Headers: ", require('cjson').encode(headers))
-
+-- Debugging cat [container]:/var/log/nginx/error.log
 local cookies = ngx.var.http_cookie
-ngx.log(ngx.ERR, "Cookies: ", cookies or "No cookies")
+ngx.log(ngx.DEBUG, "Cookies: ", cookies or "No cookies")
 
-
--- Obtener las cookies
+-- get cookies
 local cookies = ngx.var.http_cookie
 
 if not cookies then

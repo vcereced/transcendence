@@ -41,7 +41,7 @@ export function initWebsocket() {
         }
 
         // Establecer la conexión WebSocket
-        socket = new WebSocket(`ws://localhost:8000/ws/room/${roomName}/`);
+        socket = new WebSocket(`wss://localhost:8443/ws/room/${roomName}/`);
 
         // Event listener cuando la conexión se abra
         socket.onopen = () => {
