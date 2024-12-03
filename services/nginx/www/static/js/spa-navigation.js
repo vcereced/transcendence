@@ -14,38 +14,61 @@ import { renderTournamentRoom, initTournamentRoom } from './views/tournament_roo
  * Container for possible routes of the SPA. Works as a pointer
  * of functions to render and initialize each section.
 */
+
 const routes = {
     "/index": { render: renderHome, init: initHome },
-    // "/about": { render: renderAbout, init: initAbout },
     "/register": { render: renderRegister, init: initRegister },
     "/login": { render: renderLogin, init: initLogin },
     "/game": { render: renderGame, init: initGame },
-	"/websocket": { render: renderWebsocket, init: initWebsocket },
+    "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
-	"/tournament/room": { render: renderTournamentRoom, init: initTournamentRoom }
+    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom }
 };
+
+function parseRoute(path) {
+    // Asegurarnos de que el path tiene la barra inicial
+    path = path.startsWith("/") ? path : "/" + path;
+    
+    const routeKeys = Object.keys(routes);
+    for (const key of routeKeys) {
+        // Buscar rutas con parámetros dinámicos, como ":id"
+        const paramMatch = key.match(/:([^\/]+)/);
+        if (paramMatch) {
+            const paramKey = paramMatch[1];
+            const basePath = key.split("/:")[0]; // Base path sin el parámetro dinámico
+            console.log("Base Path:", basePath);
+            console.log("Key:", key);
+            console.log("Path:", path);
+
+            if (path.startsWith(basePath)) {
+                // Extraer el valor del parámetro de la URL
+                const paramValue = path.slice(basePath.length + 1); // El valor después de "/tournament/room/"
+                console.log("Param Value:", paramValue);
+                console.log("Route key:", key);
+                console.log("Route:", routes[key]);
+
+                // Aquí tratamos de devolver el objeto de ruta con el parámetro dinámico
+                return { route: routes[key], params: { [paramKey]: paramValue } };
+            } else {
+                console.log("No match for path:", path);
+            }
+        }
+    }
+    // Si no es una ruta dinámica, devolver la ruta directamente
+    return { route: routes[path], params: {} };
+}
 
 function router() {
     const path = location.hash.slice(1) || "/index";
-    const route = routes[path];
-	console.log("path: " + path);
+    const { route, params } = parseRoute(path);
+    console.log("Ruta:", path, "Parámetros:", params);
 
-	const urlParams = new URLSearchParams(window.location.hash.slice(window.location.hash.indexOf('?') + 1));
-	const tournamentId = urlParams.get('id');
-	//THIS COULD BE IMPROVED FOR THE ROUTES CHECK IT LATER WITH TEAM!
-	if (tournamentId) {
-		const cleanPath = path.split("?")[0];
-		console.log("cleanPath: " + cleanPath);
-		document.getElementById("main-content").innerHTML = renderTournamentRoom(tournamentId);
-		initTournamentRoom(tournamentId);
-	}else if (route) {
-        // Carga el contenido en #main-content
-        document.getElementById("main-content").innerHTML = route.render();
-        
-        // Ejecuta la lógica de inicialización de la sección
-        route.init();
+    if (route) {
+        // Renderiza e inicializa la ruta, pasando los parámetros si existen
+        document.getElementById("main-content").innerHTML = route.render(params);
+        route.init(params);
     } else {
-        document.getElementById("main-content").innerHTML = "<h2>404</h2><p>NOT FOUND 42</p>";
+        document.getElementById("main-content").innerHTML = "<h2>404</h2><p>NOT FOUND</p>";
     }
 }
 

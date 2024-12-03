@@ -148,7 +148,7 @@ async function joinTournament(tournamentId) {
             alert("Te has unido al torneo exitosamente!");
 			// Redirigir a la sala del torneo timeout 1 seg
 			setTimeout(() => {
-				location.hash = `tournament/room?id=${tournamentId}`;
+				location.hash = `tournament/room/${tournamentId}`;
 			}
 			, 700);
         } else {

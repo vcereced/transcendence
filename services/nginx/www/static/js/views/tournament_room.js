@@ -7,68 +7,87 @@ export function renderTournamentRoom(tournamentId) {
             <!-- Árbol de clasificación -->
             <div class="tournament-tree">
                 <div class="round round-1">
-                    <div class="match">
-                        <div class="player">Jugador 1</div>
-                        <div class="player">Jugador 2</div>
+                    <div class="match" data-match="1">
+                        <div class="player" data-player="1">Jugador 1</div>
+                        <div class="player" data-player="2">Jugador 2</div>
                     </div>
-                    <div class="match">
-                        <div class="player">Jugador 3</div>
-                        <div class="player">Jugador 4</div>
+                    <div class="match" data-match="2">
+                        <div class="player" data-player="3">Jugador 3</div>
+                        <div class="player" data-player="4">Jugador 4</div>
                     </div>
-                    <div class="match">
-                        <div class="player">Jugador 5</div>
-                        <div class="player">Jugador 6</div>
+                    <div class="match" data-match="3">
+                        <div class="player" data-player="5">Jugador 5</div>
+                        <div class="player" data-player="6">Jugador 6</div>
                     </div>
-                    <div class="match">
-                        <div class="player">Jugador 7</div>
-                        <div class="player">Jugador 8</div>
+                    <div class="match" data-match="4">
+                        <div class="player" data-player="7">Jugador 7</div>
+                        <div class="player" data-player="8">Jugador 8</div>
                     </div>
                 </div>
 
                 <div class="round round-2">
-                    <div class="match">
-                        <div class="player">Ganador 1</div>
-                        <div class="player">Ganador 2</div>
+                    <div class="match" data-match="5">
+                        <div class="player" data-player="9">Ganador 1</div>
+                        <div class="player" data-player="10">Ganador 2</div>
                     </div>
-                    <div class="match">
-                        <div class="player">Ganador 3</div>
-                        <div class="player">Ganador 4</div>
+                    <div class="match" data-match="6">
+                        <div class="player" data-player="11">Ganador 3</div>
+                        <div class="player" data-player="12">Ganador 4</div>
                     </div>
                 </div>
 
                 <div class="round final">
-                    <div class="match">
-                        <div class="player">Ganador 5</div>
-                        <div class="player">Ganador 6</div>
+                    <div class="match" data-match="7">
+                        <div class="player" data-player="13">Ganador 5</div>
+                        <div class="player" data-player="14">Ganador 6</div>
                     </div>
                 </div>
 
                 <div class="champion">
                     <h3>Campeón</h3>
-                    <div class="player">Nombre del campeón</div>
+                    <div class="player" data-player="15">Pendiente...</div>
                 </div>
             </div>
-
-            <!-- Lista de jugadores -->
-            <ul id="player-list" class="list-group">
-                <!-- Aquí se mostrarán los jugadores -->
-            </ul>
         </div>
     `;
 }
 
+
 export function initTournamentRoom(tournamentId) {
-    // Insertar el ID del torneo en la página
     document.getElementById("tournament-id").textContent = tournamentId;
 
-    // Simulando jugadores iniciales (esto se debe reemplazar por los jugadores reales más adelante)
-    const playerList = document.getElementById("player-list");
-    const players = ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4", "Jugador 5", "Jugador 6", "Jugador 7", "Jugador 8"];
-    
-    players.forEach(player => {
-        const li = document.createElement("li");
-        li.className = "list-group-item";
-        li.textContent = player;
-        playerList.appendChild(li);
-    });
+    // Simulación de lógica dinámica para actualizar resultados
+    simulateTournamentProgress();
 }
+
+function simulateTournamentProgress() {
+    const matches = document.querySelectorAll(".match");
+
+    matches.forEach((match, index) => {
+        const players = match.querySelectorAll(".player");
+
+        // Simula un resultado aleatorio
+        const winnerIndex = Math.floor(Math.random() * 2);
+        const loserIndex = winnerIndex === 0 ? 1 : 0;
+
+        players[winnerIndex].classList.add("winner");
+        players[loserIndex].classList.add("loser");
+
+        // Actualiza al ganador en la siguiente ronda (si corresponde)
+        const nextMatch = document.querySelector(`.match[data-match="${Math.floor(index / 2) + 5}"]`);
+        if (nextMatch) {
+            const nextPlayerSlot = nextMatch.querySelector(`.player[data-player="${index + 9}"]`);
+            if (nextPlayerSlot) {
+                nextPlayerSlot.textContent = players[winnerIndex].textContent;
+            }
+        }
+    });
+
+    // Actualiza al campeón
+    const finalWinner = document.querySelector(".final .player.winner");
+    if (finalWinner) {
+        const champion = document.querySelector(".champion .player");
+        champion.textContent = finalWinner.textContent;
+    }
+}
+
