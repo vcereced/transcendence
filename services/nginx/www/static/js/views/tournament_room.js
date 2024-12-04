@@ -1,3 +1,5 @@
+let socket = null;
+
 export function renderTournamentRoom(tournamentId) {
     return `
         <div class="container">
@@ -52,12 +54,42 @@ export function renderTournamentRoom(tournamentId) {
     `;
 }
 
-
 export function initTournamentRoom(tournamentId) {
     document.getElementById("tournament-id").textContent = tournamentId;
 
+    // Iniciar el WebSocket específico para este torneo
+    if (socket === null) {
+        socket = startTournamentWebSocket(tournamentId);
+    }
+
     // Simulación de lógica dinámica para actualizar resultados
     simulateTournamentProgress();
+}
+
+function startTournamentWebSocket(tournamentId) {
+    const socket = new WebSocket(`ws://${window.location.host}/ws/room/${tournamentId}/`);
+
+    socket.onopen = () => {
+        console.log(`Conexión WebSocket para el torneo ${tournamentId} abierta`);
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log("Mensaje WebSocket del torneo:", data);
+
+        // Aquí podrías manejar los cambios que recibes del WebSocket y actualizar la interfaz si es necesario
+        // Ejemplo: actualizar los resultados de las partidas, mostrar el número de jugadores, etc.
+    };
+
+    socket.onclose = function (event) {
+        console.log(`Conexión WebSocket para el torneo ${tournamentId} cerrada`, event);
+    };
+
+    socket.onerror = function (error) {
+        console.error(`Error en WebSocket para el torneo ${tournamentId}:`, error);
+    };
+
+    return socket;
 }
 
 function simulateTournamentProgress() {
@@ -90,4 +122,3 @@ function simulateTournamentProgress() {
         champion.textContent = finalWinner.textContent;
     }
 }
-
