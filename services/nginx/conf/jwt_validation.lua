@@ -47,6 +47,7 @@ local jwt_obj = jwt:verify(jwt_secret_key, jwt_token, {
 if not jwt_obj["verified"] then
     ngx.status = ngx.HTTP_UNAUTHORIZED
     ngx.log(ngx.ERR, "Invalid token")
+	ngx.say("Invalid token")
     return ngx.exit(ngx.HTTP_UNAUTHORIZED)
 end
 

@@ -31,6 +31,9 @@ export function initWebsocket() {
     const userCountDiv = document.getElementById("count");
 
     let socket;
+	const token = localStorage.getItem("accessToken");
+
+
 
     // Conectar al WebSocket cuando el usuario presiona el botón
     connectBtn.addEventListener("click", () => {
@@ -39,6 +42,11 @@ export function initWebsocket() {
             alert("Por favor, ingresa un nombre de sala.");
             return;
         }
+
+		if (!token) {
+			alert("Por favor, inicia sesión.");
+			return;
+		}
 
         // Establecer la conexión WebSocket
         socket = new WebSocket(`wss://localhost:8443/ws/room/${roomName}/`);

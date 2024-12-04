@@ -48,6 +48,15 @@ services:
     networks:
       - app-network
 
+  tournaments:
+    build:
+      context: ./services/tournaments
+    container_name: tournaments
+    volumes:
+      - ./services/tournaments:/app
+    networks:
+      - app-network
+
   redis:
     image: redis:alpine
     container_name: redis

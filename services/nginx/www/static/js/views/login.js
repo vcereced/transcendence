@@ -50,6 +50,8 @@ export function initLogin() {
 
 		if (data.success) {
 			console.log("Inicio de sesión ok");
+			localStorage.setItem("accessToken", data.access);
+        	localStorage.setItem("refreshToken", data.refresh);
 			loginResponseMessage.innerText = "Inicio de sesión exitoswo";
 
 			document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;

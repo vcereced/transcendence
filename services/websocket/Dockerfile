@@ -7,6 +7,9 @@ WORKDIR /app
 # Copia el archivo de requerimientos al contenedor
 COPY requirements.txt /app/
 
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
 # Instala las dependencias necesarias
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt

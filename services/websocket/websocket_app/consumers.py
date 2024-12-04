@@ -1,69 +1,139 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 import redis.asyncio as redis
+import asyncio
 
-class RoomConsumer(AsyncWebsocketConsumer):
+class TournamentCounterConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Obtiene el nombre de la sala desde la URL
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = f'room_{self.room_name}'
+    # Establecer la conexión con el WebSocket
+        print("Connecting to global WebSocket")
+    
+    # Conectar a Redis
+        self.redis = redis.from_url("redis://redis:6379")  # Conexión a Redis
+    # Canal de Django para el WebSocket global
+        self.room_group_name = "global_tournament_counter"  # Canal global para todos los torneos
 
-        # Conectar a Redis usando el nombre del servicio en Docker
-        self.redis = redis.from_url("redis://redis:6379")  
+    # Crear un objeto pubsub para escuchar el canal de Redis
+        self.pubsub = self.redis.pubsub()
 
-        # Añade el canal del cliente a la sala
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+    # Suscribirse al canal de Redis 'tournaments_channel'
+        await self.pubsub.subscribe('tournaments_channel')
 
-        # Envia el número de usuarios conectados en la sala
-        await self.update_user_count()
+    # Añadir el canal del WebSocket al grupo global de canales de Django
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
-        # Acepta la conexión WebSocket
+    # Aceptar la conexión WebSocket
         await self.accept()
 
-    async def disconnect(self, close_code):
-        # Quita el canal del cliente de la sala
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+    # Iniciar el bucle para escuchar los mensajes de Redis
+        asyncio.create_task(self.listen_to_redis())
 
-        # Envia el número de usuarios conectados en la sala después de desconectar
-        await self.update_user_count()
+    async def listen_to_redis(self):
+    # Bucle para escuchar los mensajes en el canal de Redis
+        while True:
+            message = await self.pubsub.get_message(ignore_subscribe_messages=True)
+            if message:
+                # Procesamos el mensaje recibido
+                print(f"Received message from Redis: {message}")
+                if message['type'] == 'message':
+                    # Extraemos los datos del mensaje
+                    data = json.loads(message['data'])
+                    tournament_id = data.get('tournamentId')
+                    user_count = data.get('user_count')
+
+                    if tournament_id and user_count is not None:
+                        # Enviar los datos de actualización a todos los clientes conectados
+                        await self.send(text_data=json.dumps({
+                            'tournamentId': tournament_id,
+                            'user_count': user_count
+                        }))
+
+
+    async def disconnect(self, close_code):
+        # Quitar el canal del grupo global
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        # Maneja los mensajes recibidos y retransmite el mensaje a todos en el grupo de la sala
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        # Manejar cualquier mensaje recibido (por ejemplo, actualizaciones de contador de jugadores)
+        pass
 
+    async def update_user_count(self, tournament_id, user_count):
+        # Actualizar el contador de jugadores en todos los torneos a través del WebSocket global
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'chat_message',
-                'message': message
+                'type': 'tournament_user_count',
+                'tournament_id': tournament_id,
+                'user_count': user_count
             }
         )
 
-    async def chat_message(self, event):
-        # Envía el mensaje a WebSocket
-        message = event['message']
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
-    
-    async def update_user_count(self):
-        # Usamos Redis para contar el número de usuarios conectados a esta sala
-        user_count_key = f"{self.room_group_name}_user_count"
-        
-        # Aumentar el contador de usuarios por cada nuevo cliente conectado
-        await self.redis.incr(user_count_key)
+    async def tournament_user_count(self, event):
+        # Recibir actualizaciones del contador de jugadores de Redis
+        tournament_id = event['tournament_id']
+        user_count = event['user_count']
 
-        # Obtener el número actualizado de usuarios conectados (Eliminamos el argumento 'encoding')
-        current_user_count = await self.redis.get(user_count_key)
+        # Enviar la actualización a todos los clientes conectados
+        await self.send(text_data=json.dumps({
+            'tournamentId': tournament_id,
+            'user_count': user_count
+        }))
+
+
+
+# consumers.py
+class RoomConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        print("Connecting to specific tournament WebSocket")
+        self.user = self.scope.get('user')
         
-        # Envia el número actualizado de usuarios conectados al grupo
+        # Obtener el nombre del torneo desde la URL
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.room_group_name = f'tournament_{self.room_name}'  # Canal específico del torneo
+        
+        # Conectar a Redis
+        self.redis = redis.from_url("redis://redis:6379")
+
+        # Definir la clave para el contador de jugadores en este torneo
+        self.user_count_key = f"tournament_{self.room_group_name}_player_count"
+
+        # Añadir el canal al grupo del torneo
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+        # Incrementar el contador de jugadores en Redis
+        print("Incrementing player count", self.user_count_key)
+        
+        current_user_count = await self.redis.incr(self.user_count_key)
+
+        # Publicar actualización en Redis (para el consumidor global)
+        await self.publish_global_update(current_user_count)
+
+        # Aceptar la conexión WebSocket
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Quitar el canal del grupo del torneo
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+        # Disminuir el contador de jugadores en Redis
+        current_user_count = await self.redis.decr(self.user_count_key)
+
+        # Publicar actualización en Redis (para el consumidor global)
+        await self.publish_global_update(current_user_count)
+
+    async def publish_global_update(self, user_count):
+        """Publica la actualización de conteo en el canal de Redis global."""
+        message = {
+            "tournamentId": self.room_name,  # El ID del torneo (extraído de la URL)
+            "user_count": user_count
+        }
+        await self.redis.publish('tournaments_channel', json.dumps(message))
+
+    async def update_user_count(self):
+        # Obtener el número actualizado de jugadores en este torneo
+        current_user_count = await self.redis.get(self.user_count_key)
+
+        # Enviar el número actualizado de jugadores conectados a todos los usuarios del torneo
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -71,9 +141,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 'count': int(current_user_count) if current_user_count is not None else 0
             }
         )
-    
+
     async def user_count(self, event):
-        # Recibe el número de usuarios conectados en la sala y envíalo al WebSocket
+        # Recibe el número actualizado de jugadores conectados en el torneo y lo envía al WebSocket
         count = event['count']
         await self.send(text_data=json.dumps({
             'user_count': count
