@@ -4,7 +4,7 @@ export function renderTournamentRoom(tournamentId) {
     return `
         <div class="container">
             <h2>Sala del Torneo</h2>
-            <p>ID del torneo: <span id="tournament-id">${tournamentId}</span></p>
+            <p>ID del torneo: <span id="tournament-id">${tournamentId.id}</span></p>
 
             <!-- Árbol de clasificación -->
             <div class="tournament-tree">
@@ -55,7 +55,7 @@ export function renderTournamentRoom(tournamentId) {
 }
 
 export function initTournamentRoom(tournamentId) {
-    document.getElementById("tournament-id").textContent = tournamentId;
+    // document.getElementById("tournament-id").textContent = tournamentId.id;
 
     // Iniciar el WebSocket específico para este torneo
     if (socket === null) {
@@ -67,10 +67,11 @@ export function initTournamentRoom(tournamentId) {
 }
 
 function startTournamentWebSocket(tournamentId) {
-    const socket = new WebSocket(`ws://${window.location.host}/ws/room/${tournamentId}/`);
+	console.log('tournamentId>', tournamentId.id);
+    const socket = new WebSocket(`wss://${window.location.host}/ws/room/${tournamentId.id}/`);
 
     socket.onopen = () => {
-        console.log(`Conexión WebSocket para el torneo ${tournamentId} abierta`);
+        console.log(`Conexión WebSocket para el torneo ${tournamentId.id} abierta`);
     };
 
     socket.onmessage = function (event) {

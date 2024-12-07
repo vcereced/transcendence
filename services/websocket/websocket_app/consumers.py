@@ -95,7 +95,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.redis = redis.from_url("redis://redis:6379")
 
         # Definir la clave para el contador de jugadores en este torneo
-        self.user_count_key = f"tournament_{self.room_group_name}_player_count"
+        self.user_count_key = f"{self.room_group_name}_player_count"
 
         # Añadir el canal al grupo del torneo
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
@@ -110,6 +110,18 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         # Aceptar la conexión WebSocket
         await self.accept()
+        
+		#FOR TESTING PURPOSES. HERE WE CAN OBTAIN THE JWT TOKEN FROM THE SCOPE
+        
+        headers = dict(self.scope['headers'])
+        cookie_header = headers[b'cookie']
+        if cookie_header:
+            for c in cookie_header.decode().split(';'):
+                if 'accessToken' in c:
+                    print("access token found:")
+                    jwt_token = c.split('=')[1]
+                    print(jwt_token)
+                    break
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo del torneo

@@ -42,10 +42,15 @@ async function loadTournaments() {
             fetch('/api/tournament/player_counts') // Obtener los contadores de jugadores
         ]);
 		 //DESGLOSAR BIEN ESTE ERROR HANDLING!!
-		if (tournamentResponse.status === 401 || playerCountsResponse.status === 401) {
+		if (!tournamentResponse.ok || !playerCountsResponse.ok) {
+        	console.error("Error al obtener torneos o contadores de jugadores", {
+            	tournamentStatus: tournamentResponse.status,
+            	playerCountsStatus: playerCountsResponse.status,
+            });
+        	alert("Hubo un problema al cargar los torneos. Intenta de nuevo más tarde.");
 			document.getElementById("main-content").innerHTML = "<h2>401</h2><p>UNAUTHORIZED GO TO LOGIN!</p>";
-			return;
-		}
+            return;
+        }
 
 
         const tournaments = await tournamentResponse.json();
@@ -123,6 +128,7 @@ function startGlobalWebSocket() {
 		console.log("Mensaje WebSocket global:", data);
         // Si el evento contiene un "user_count" para un torneo específico
         if (data.tournamentId && data.user_count !== undefined) {
+			console.log("entered to if:", data);
             const tournament = document.querySelector(`#tournament-${data.tournamentId}`);
             if (tournament) {
                 const userCountContainer = tournament.querySelector('.badge');

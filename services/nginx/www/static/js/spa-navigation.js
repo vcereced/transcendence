@@ -36,16 +36,10 @@ function parseRoute(path) {
         if (paramMatch) {
             const paramKey = paramMatch[1];
             const basePath = key.split("/:")[0]; // Base path sin el parámetro dinámico
-            console.log("Base Path:", basePath);
-            console.log("Key:", key);
-            console.log("Path:", path);
 
             if (path.startsWith(basePath)) {
                 // Extraer el valor del parámetro de la URL
                 const paramValue = path.slice(basePath.length + 1); // El valor después de "/tournament/room/"
-                console.log("Param Value:", paramValue);
-                console.log("Route key:", key);
-                console.log("Route:", routes[key]);
 
                 // Aquí tratamos de devolver el objeto de ruta con el parámetro dinámico
                 return { route: routes[key], params: { [paramKey]: paramValue } };
@@ -61,7 +55,7 @@ function parseRoute(path) {
 function router() {
     const path = location.hash.slice(1) || "/index";
     const { route, params } = parseRoute(path);
-    console.log("Ruta:", path, "Parámetros:", params);
+    console.log("Ruta:", route, "Parámetros:", params.id);
 
     if (route) {
         // Renderiza e inicializa la ruta, pasando los parámetros si existen
