@@ -1,3 +1,4 @@
+/* Estilos para el árbol de clasificación */
 .tournament-tree {
     display: flex;
     justify-content: space-between;
@@ -48,4 +49,50 @@
 .player.loser {
     background: #f8d7da;
     border-color: #dc3545;
+}
+
+/* Estilos para la sección de usuarios conectados */
+.connected-users {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    max-width: 300px;
+    max-height: 200px;
+    overflow-y: auto; /* Scroll interno si la lista crece demasiado */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px; /* Espaciado respecto al árbol */
+}
+
+/* Estilo para los títulos */
+.connected-users h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    text-align: center;
+    color: #333;
+}
+
+/* Estilo para la lista */
+.connected-users ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.connected-users li {
+    padding: 5px;
+    margin: 5px 0;
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    color: #0050b3;
+    transition: all 0.3s ease; /* Transición para animaciones */
+}
+
+/* Animaciones suaves */
+.connected-users li.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
 }

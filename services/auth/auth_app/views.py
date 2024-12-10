@@ -46,6 +46,7 @@ def login_api_view(request):
 	user = authenticate(username=username, password=password)
 	if user is not None:
 		refresh = RefreshToken.for_user(user)
+		refresh['username'] = user.username
 
 		print("TOKEN access: ", str(refresh.access_token))
 

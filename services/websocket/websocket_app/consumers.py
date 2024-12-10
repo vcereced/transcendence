@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 import redis.asyncio as redis
 import asyncio
+import jwt
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -108,8 +109,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Publicar actualización en Redis (para el consumidor global)
         await self.publish_global_update(current_user_count)
 
-        # Aceptar la conexión WebSocket
-        await self.accept()
+        
         
 		#FOR TESTING PURPOSES. HERE WE CAN OBTAIN THE JWT TOKEN FROM THE SCOPE
         
@@ -121,11 +121,30 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     print("access token found:")
                     jwt_token = c.split('=')[1]
                     print(jwt_token)
+                    try:
+                        payload = jwt.decode(jwt_token, options={"verify_signature": False})
+                        print("Decoded Payload:", payload)
+
+                        username = payload.get('username')
+                        self.username = username
+                        print(f"Username: {username}")
+                    except jwt.DecodeError as e:
+                        print(f"Erorr decoding token: {e}")
                     break
+        print("publishing local update")
+        await self.redis.sadd(f"{self.room_group_name}_users", username) # Create a set of users in the tournament
+        await self.publish_local_update()
+        # Aceptar la conexión WebSocket
+        await self.accept()
+    
+
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo del torneo
+        print (f'User {self.username} disconnected')
+        await self.redis.srem(f"{self.room_group_name}_users", self.username)
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        await self.publish_local_update()
 
         # Disminuir el contador de jugadores en Redis
         current_user_count = await self.redis.decr(self.user_count_key)
@@ -140,6 +159,32 @@ class RoomConsumer(AsyncWebsocketConsumer):
             "user_count": user_count
         }
         await self.redis.publish('tournaments_channel', json.dumps(message))
+
+    async def publish_local_update(self):
+        "Publica actualizacion de nombres de usuarios en el canal de Redis local"
+        user_list = await self.redis.smembers(f"{self.room_group_name}_users")
+        decoded_user_list = [user.decode('utf-8') for user in user_list]
+        message = {
+            "tournamentId": self.room_name,
+            "user_list": decoded_user_list
+        }
+        await self.redis.publish(self.room_group_name, json.dumps(message))
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'user_list',
+                'user_list': decoded_user_list
+            }
+        )
+
+    async def user_list(self, event):
+        """Maneja el mensaje de tipo 'user_list'."""
+        
+        # Sends the updated user list to the client
+        await self.send(text_data=json.dumps({
+            'type': 'user_list',
+            'user_list': event['user_list']
+        }))
 
     async def update_user_count(self):
         # Obtener el número actualizado de jugadores en este torneo

@@ -2,4 +2,5 @@ Django==3.2.18
 daphne==3.0.2
 channels==3.0.4
 channels_redis==3.3.1
-redis==4.6.0  
+redis==4.6.0 
+PyJWT==2.8.0
