@@ -8,3 +8,9 @@ Grupo formado por:
 - Javier Sánchez
 - Victor Cereceda
 
+
+
+#Links:
+
+Diagrams: https://drive.google.com/file/d/1Llc0r4MQEMciNO2diklEgxHzNlYJo6Po/view?usp=sharing
+
