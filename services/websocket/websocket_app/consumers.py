@@ -49,7 +49,6 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
                             'user_count': user_count
                         }))
 
-
     async def disconnect(self, close_code):
         # Quitar el canal del grupo global
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -80,9 +79,6 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
             'user_count': user_count
         }))
 
-
-
-# consumers.py
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         print("Connecting to specific tournament WebSocket")
@@ -109,8 +105,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Publicar actualización en Redis (para el consumidor global)
         await self.publish_global_update(current_user_count)
 
-        
-        
 		#FOR TESTING PURPOSES. HERE WE CAN OBTAIN THE JWT TOKEN FROM THE SCOPE
         
         headers = dict(self.scope['headers'])
@@ -129,16 +123,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
                         self.username = username
                         print(f"Username: {username}")
                     except jwt.DecodeError as e:
-                        print(f"Erorr decoding token: {e}")
+                        print(f"Error decoding token: {e}")
                     break
         print("publishing local update")
+        await self.redis.set(f"user_channel:{self.username}", self.channel_name)
         await self.redis.sadd(f"{self.room_group_name}_users", username) # Create a set of users in the tournament
         await self.publish_local_update()
+        print("sending message directly to user")
+        await self.send_message("Hello from the server mr. " + self.username)
         # Aceptar la conexión WebSocket
         await self.accept()
     
-
-
     async def disconnect(self, close_code):
         # Quitar el canal del grupo del torneo
         print (f'User {self.username} disconnected')
@@ -204,4 +199,26 @@ class RoomConsumer(AsyncWebsocketConsumer):
         count = event['count']
         await self.send(text_data=json.dumps({
             'user_count': count
+        }))
+
+    async def send_message(self, message):
+        # Send message to specific channel
+        channel_name = await self.redis.get(f"user_channel:{self.username}")
+
+        if channel_name:
+            await self.channel_layer.send(
+                channel_name.decode('utf-8'),
+                {
+                    'type': 'direct_message',
+                    'message': message
+                }
+            )
+
+    async def direct_message(self, event):
+        # Receive message from room group
+        message = event['message']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
         }))

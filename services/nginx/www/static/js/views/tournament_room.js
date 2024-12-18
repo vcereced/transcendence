@@ -83,6 +83,8 @@ function startTournamentWebSocket(tournamentId) {
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
         }
+        //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
+        //OR TO START THE TOURNAMENT.
     };
 
     socket.onclose = function (event) {
