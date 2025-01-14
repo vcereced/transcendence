@@ -31,10 +31,13 @@ export async function initGame() {
     const ballRadius = 10;
 
     // Paddle properties
+    const angle = 45;
+    const paddleHeight = canvas.height / 4;
+    const angleInRadians = angle * Math.PI / 180;
+    const paddleRadius = (paddleHeight / 2) / Math.sin(angleInRadians);
+    const paddleOffset = (paddleHeight / 2) / Math.tan(angleInRadians);
     let leftPaddleY;
     let rightPaddleY;
-    const paddleWidth = 10;
-    const paddleHeight = 100;
 
     // Conectar al WebSocket
     socket.onopen = function(event) {
@@ -74,13 +77,17 @@ export async function initGame() {
         context.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2, true);
         context.fill();
 
-        // Draw the left paddle
+        // Draw the left paddle as an arc
         context.fillStyle = 'white';
-        context.fillRect(0, leftPaddleY, paddleWidth, paddleHeight);
+        context.beginPath();
+        context.arc(0 - paddleOffset, leftPaddleY + paddleRadius, paddleRadius, 0, Math.PI * 2, true);
+        context.fill();
 
-        // Draw the right paddle
+        // Draw the right paddle as an arc
         context.fillStyle = 'white';
-        context.fillRect(canvas.width - paddleWidth, rightPaddleY, paddleWidth, paddleHeight);
+        context.beginPath();
+        context.arc(canvas.width + paddleOffset, rightPaddleY + paddleRadius, paddleRadius, 0, Math.PI * 2, true);
+        context.fill();
     }
 
 
@@ -106,6 +113,46 @@ export async function initGame() {
             keys.s = false;
         }
     });
+
+
+    // Collision detection
+
+    // Detect collisions
+    function detectCollisions() {
+        // Ball and left paddle collision
+        if (ball.x - ball.radius < paddleWidth && ball.y > leftPaddleY && ball.y < leftPaddleY + paddleHeight) {
+            console.log('Collision detected! Ball and left paddle');
+        }
+
+        // Ball and right paddle collision
+        if (ball.x + ball.radius > canvas.width - paddleWidth && ball.y > rightPaddleY && ball.y < rightPaddleY + paddleHeight) {
+            console.log('Collision detected! Ball and right paddle');
+        }
+
+        // Ball and top border collision
+        if (ball.y - ball.radius < 0) {
+            console.log('Collision detected! Ball and top border');
+        }
+
+        // Ball and bottom border collision
+        if (ball.y + ball.radius > canvas.height) {
+            console.log('Collision detected! Ball and bottom border');
+        }
+
+        // Ball and left border collision
+        if (ball.x - ball.radius < 0) {
+            console.log('Collision detected! Ball and left border');
+        }
+
+        // Ball and right border collision
+        if (ball.x + ball.radius > canvas.width) {
+            console.log('Collision detected! Ball and right border');
+        }
+    }
+
+
+
+    // Game loop
     
     function gameLoop() {
         let moveDirection = null;
@@ -122,6 +169,9 @@ export async function initGame() {
                 direction: moveDirection,
             }));
         }
+
+        // Detect collisions
+        // detectCollisions();
     
         // Call gameLoop again after a short delay
         setTimeout(gameLoop, 16); // Approximately 60 frames per second

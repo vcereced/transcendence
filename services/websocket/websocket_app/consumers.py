@@ -227,6 +227,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 class GameConsumer(AsyncWebsocketConsumer):
 
     group_tasks = {}
+    paddle_move_amount = 5
 
     async def connect(self):
 
@@ -379,12 +380,11 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive_paddle_update(self, event):
         if not event.get("direction"):
             return
-        move_amount = 1
         direction_multiplier = 1 if event["direction"] == "down" else -1
         if self.role == "left":
-            self.game_state.left.paddle_y += move_amount * direction_multiplier
+            self.game_state.left.paddle_y += self.paddle_move_amount * direction_multiplier
         else:
-            self.game_state.right.paddle_y += move_amount * direction_multiplier
+            self.game_state.right.paddle_y += self.paddle_move_amount * direction_multiplier
 
 
 
