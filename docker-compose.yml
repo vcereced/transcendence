@@ -63,10 +63,10 @@ services:
     networks:
       - app-network
 
-  game:
+  game_drf:
     build:
       context: ./services/game  # Directory for game Dockerfile and code
-    container_name: game
+    container_name: game_drf
     volumes:
       - ./services/game:/app  # Bind mount for code synchronization
     env_file:
