@@ -3,10 +3,10 @@ from rest_framework import serializers
 
     
 class BallSerializer(serializers.Serializer):
-    x = serializers.IntegerField()
-    y = serializers.IntegerField()
-    dx = serializers.IntegerField()
-    dy = serializers.IntegerField()
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+    dx = serializers.FloatField()
+    dy = serializers.FloatField()
 
     
 class PlayerSerializer(serializers.Serializer):

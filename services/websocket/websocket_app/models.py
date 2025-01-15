@@ -4,7 +4,7 @@ import json
 
 # Custom models for the game that work with redis instead of a database
 class Ball:
-    def __init__(self, x: int, y: int, dx: int, dy: int):
+    def __init__(self, x: float, y: float, dx: float, dy: float):
         self.x = x
         self.y = y
         self.dx = dx
