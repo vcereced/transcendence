@@ -73,7 +73,23 @@ services:
       - .env
     command: [/bin/sh, drf_entrypoint.sh]
     ports:
-      - "8013:8004"  # Expose port to access the Game service admin console
+      - "8014:8004"  # Expose port to access the Game service admin console
+    networks:
+      - app-network
+
+  game_daphne:
+    build:
+      context: ./services/game  # Ruta del microservicio de Game daphne
+    container_name: game_daphne
+    volumes:
+      - ./services/game:/app  
+    ports:
+      - "8015:8005"  # Exponer el puerto para WebSocket
+    environment:
+      - REDIS_HOST=redis  # Usaremos Redis para gestionar las conexiones de WebSocket
+    depends_on:
+      - redis
+    command: [/bin/sh, daphne_entrypoint.sh]
     networks:
       - app-network
 

@@ -8,23 +8,14 @@ class BallSerializer(serializers.Serializer):
     y = serializers.FloatField()
     dx = serializers.FloatField()
     dy = serializers.FloatField()
-
-    
-class PlayerSerializer(serializers.Serializer):
-    is_human = serializers.BooleanField()
-    id = serializers.IntegerField()
-    connected = serializers.BooleanField()
     
 
 class SideSerializer(serializers.Serializer):
-    paddle_y = serializers.IntegerField()
+    paddle_y = serializers.FloatField()
     score = serializers.IntegerField()
-    player = PlayerSerializer()
 
     
 class GameStateSerializer(serializers.Serializer):
-    type = serializers.CharField()
-    is_paused = serializers.BooleanField()
     ball = BallSerializer()
     left = SideSerializer()
     right = SideSerializer()
