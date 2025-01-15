@@ -87,5 +87,19 @@ class GameState:
             "left": self.left.to_dict(),
             "right": self.right.to_dict(),
         }
-        
+    
+
+class Game(models.Model):
+    left_player_id = models.IntegerField()
+    left_player_username = models.CharField(max_length=100)
+    left_player_score = models.IntegerField(default=0)
+    right_player_id = models.IntegerField()
+    right_player_username = models.CharField(max_length=100)
+    right_player_score = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_finished = models.BooleanField(default=False)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
 

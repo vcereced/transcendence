@@ -1,5 +1,6 @@
 import json
 from rest_framework import serializers
+from game_app import models
 
     
 class BallSerializer(serializers.Serializer):
@@ -21,12 +22,15 @@ class SideSerializer(serializers.Serializer):
     player = PlayerSerializer()
 
     
-class GameSerializer(serializers.Serializer):
+class GameStateSerializer(serializers.Serializer):
     type = serializers.CharField()
     is_paused = serializers.BooleanField()
     ball = BallSerializer()
     left = SideSerializer()
     right = SideSerializer()
 
-    
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Game
+        fields = '__all__'
 

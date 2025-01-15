@@ -79,7 +79,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send_error_and_close("Game state not found")
             return False
 
-        serializer = serializers.GameSerializer(data=json.loads(game_data))
+        serializer = serializers.GameStateSerializer(data=json.loads(game_data))
         if not serializer.is_valid():
             print(serializer.errors)
             await self.send_error_and_close("Invalid game state")
@@ -140,7 +140,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def game_state_update(self, event):
-        serializer = serializers.GameSerializer(data=event["game_state"])
+        serializer = serializers.GameStateSerializer(data=event["game_state"])
         if not serializer.is_valid():
             print(f"Errors: {serializer.errors}")
             return

@@ -3,8 +3,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import redis.asyncio as redis
 import asyncio
 import jwt
-from services.game.game_app import serializers
-from websocket_app import models
 import random
 
 

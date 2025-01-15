@@ -63,15 +63,19 @@ services:
     networks:
       - app-network
 
-
-  # game:
-  #   build:
-  #     context: ./services/game  # Directory for game Dockerfile and code
-  #   container_name: game
-  #   volumes:
-  #     - ./services/game:/app  # Bind mount for code synchronization
-  #   networks:
-  #     - app-network
+  game:
+    build:
+      context: ./services/game  # Directory for game Dockerfile and code
+    container_name: game
+    volumes:
+      - ./services/game:/app  # Bind mount for code synchronization
+    env_file:
+      - .env
+    command: [/bin/sh, drf_entrypoint.sh]
+    ports:
+      - "8013:8004"  # Expose port to access the Game service admin console
+    networks:
+      - app-network
 
   # tournament:
   #   build:

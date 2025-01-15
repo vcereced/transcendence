@@ -1,0 +1,24 @@
+# Base image with Python
+FROM python:3.10
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements.txt and install dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the codebase
+COPY . /app/
+
+# Set environment variables for Django
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Expose the port Django will use
+EXPOSE 8004
+
+# Expose the port Daphne will use
+EXPOSE 8005
+
+
