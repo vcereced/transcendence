@@ -20,17 +20,15 @@ class GameConsumer(AsyncWebsocketConsumer):
     paddle_height = field_height / 4
     paddle_width = field_width / 50
     paddle_move_amount = field_height / 50
-    initial_dx = fps * field_width / 5
-    initial_dy = fps * field_height / 5
+    initial_ball_speed = field_height / 2 / fps
     ball_speed_increment = 1.1
-    is_colliding = False
 
     initial_game_state = {
         "ball": {
             "x": field_width / 2,
             "y": field_height / 2,
-            "dx": initial_dx,
-            "dy": initial_dy,
+            "dx": initial_ball_speed,
+            "dy": initial_ball_speed,
         },
         "left": {"paddle_y": field_height / 2, "score": 0},
         "right": {"paddle_y": field_height / 2, "score": 0},
@@ -57,7 +55,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         await self.save_and_broadcast_game_state()
 
-
     async def find_out_game(self):
         self.user_data = self.extract_user_data_from_jwt()
         if not self.user_data or not self.user_data.get("user_id"):
@@ -74,16 +71,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             return False
 
         return True
-    
+
     @sync_to_async
     def query_db_for_game(self):
         self.game = models.Game.objects.get(
-                (
-                    Q(left_player_id=self.user_data["user_id"])
-                    | Q(right_player_id=self.user_data["user_id"])
-                )
-                & Q(is_finished=False)
+            (
+                Q(left_player_id=self.user_data["user_id"])
+                | Q(right_player_id=self.user_data["user_id"])
             )
+            & Q(is_finished=False)
+        )
 
     def extract_user_data_from_jwt(self):
         user_data = {}
@@ -182,7 +179,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive_paddle_update(self, event):
         if not event.get("key"):
             return
-        
+
         direction_multiplier = (
             1 if (event["key"] == "arrowDown" or event["key"] == "s") else -1
         )
@@ -230,67 +227,77 @@ class GameConsumer(AsyncWebsocketConsumer):
             return
 
         # Left paddle
-        if (
-            self.game_state.ball.x - self.ball_radius <= self.paddle_width
-            and self.game_state.ball.x - self.ball_radius > 0
-            and not self.is_colliding
-        ):
-            if (
-                self.game_state.ball.y
-                >= self.game_state.left.paddle_y - self.paddle_height / 2
-                and self.game_state.ball.y
-                <= self.game_state.left.paddle_y + self.paddle_height / 2
-            ):
-                self.game_state.ball.dx *= -self.ball_speed_increment
-                self.game_state.ball.dy *= self.ball_speed_increment
-                self.is_colliding = True
-                return
+        self.check_paddle_collision(
+            self.paddle_width,
+            self.game_state.left.paddle_y,
+            bounce_away_direction=1,
+        )
 
         # Right paddle
-        if (
-            self.game_state.ball.x + self.ball_radius
-            >= self.field_width - self.paddle_width
-            and self.game_state.ball.x + self.ball_radius < self.field_width
-            and not self.is_colliding
-        ):
-            if (
-                self.game_state.ball.y
-                >= self.game_state.right.paddle_y - self.paddle_height / 2
-                and self.game_state.ball.y
-                <= self.game_state.right.paddle_y + self.paddle_height / 2
-            ):
-                self.game_state.ball.dx *= -self.ball_speed_increment
-                self.game_state.ball.dy *= self.ball_speed_increment
-                self.is_colliding = True
-                return
+        self.check_paddle_collision(
+            self.field_width - self.paddle_width,
+            self.game_state.right.paddle_y,
+            bounce_away_direction=-1,
+        )
 
         # Left and right walls
-        if self.game_state.ball.x - self.ball_radius <= 0:
+        if self.game_state.ball.x - self.ball_radius <= -self.ball_radius:
             self.game_state.left.score += 1
             self.game_state.ball.x = self.field_width / 2
             self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = -2
-            self.game_state.ball.dy = random.choice([-2, 2])
+            self.game_state.ball.dx = -self.initial_ball_speed
+            self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
             return
-        if self.game_state.ball.x + self.ball_radius >= self.field_width:
+        if (
+            self.game_state.ball.x + self.ball_radius
+            >= self.field_width + self.ball_radius
+        ):
             self.game_state.right.score += 1
             self.game_state.ball.x = self.field_width / 2
             self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = 2
-            self.game_state.ball.dy = random.choice([-2, 2])
+            self.game_state.ball.dx = self.initial_ball_speed
+            self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
             return
 
-        self.is_colliding = False
+
+    def check_paddle_collision(
+        self, paddle_x_position, paddle_y_position, bounce_away_direction
+    ):
+        ball_left_border = self.game_state.ball.x - self.ball_radius
+        ball_right_border = self.game_state.ball.x + self.ball_radius
+        ball_top_border = self.game_state.ball.y - self.ball_radius
+        ball_bottom_border = self.game_state.ball.y + self.ball_radius
+        paddle_top_border = paddle_y_position - self.paddle_height / 2
+        paddle_bottom_border = paddle_y_position + self.paddle_height / 2
+
+        # If the ball is moving away from the paddle, it has already collided
+        if bounce_away_direction * self.game_state.ball.dx > 0:
+            return
+
+        # If the ball is not within the paddle's x position, it can't collide
+        if not (
+            ball_left_border <= paddle_x_position
+            and ball_right_border >= paddle_x_position
+        ):
+            return
+
+        if (
+            ball_top_border <= paddle_bottom_border
+            and ball_bottom_border >= paddle_top_border
+        ):
+            self.game_state.ball.dx *= -self.ball_speed_increment
+            self.game_state.ball.dy *= self.ball_speed_increment
 
     async def game_loop(self):
 
         while True:
+            # Comprobar colisiones
+            self.check_collisions()
+
             # Mover la bola
             self.game_state.ball.x += self.game_state.ball.dx
             self.game_state.ball.y += self.game_state.ball.dy
 
-            # Comprobar colisiones
-            self.check_collisions()
 
             await self.save_and_broadcast_game_state()
 
