@@ -14,7 +14,10 @@ export async function initGame() {
 
     // game.js
     if (!hasAccessToken()) {
-        document.getElementById("main-game-container").innerHTML = "<h2>401</h2><p>UNAUTHORIZED GO TO LOGIN!</p>";
+        // Redirect to login page
+        alert("Debes iniciar sesión para jugar");
+        window.sessionStorage.setItem("afterLoginRedirect", "#game");
+        window.location.hash = "#login"
         return;
     }
 
@@ -138,7 +141,6 @@ export async function initGame() {
         }
     
         if (keysPressed.length > 0 && socket.readyState === WebSocket.OPEN) {
-            console.log("Sending message to server: " + keysPressed);
             socket.send(JSON.stringify({
                 type: 'paddle_move',
                 keys: keysPressed,
