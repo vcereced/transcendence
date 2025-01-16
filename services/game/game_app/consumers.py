@@ -177,28 +177,29 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await handlers[event["type"]](event)
 
     async def receive_paddle_update(self, event):
-        if not event.get("key"):
+        if not event.get("keys"):
             return
 
-        direction_multiplier = (
-            1 if (event["key"] == "arrowDown" or event["key"] == "s") else -1
-        )
+        keys = event["keys"]
 
-        for controller in self.left_paddle_controller:
-            if (controller == "letters" and event["key"] in ["w", "s"]) or (
-                controller == "arrows" and event["key"] in ["arrowUp", "arrowDown"]
-            ):
-                self.game_state.left.paddle_y += (
-                    self.paddle_move_amount * direction_multiplier
-                )
+        for key in keys:
+            direction_multiplier = 1 if key in ["arrowDown", "s"] else -1
 
-        for controller in self.right_paddle_controller:
-            if (controller == "letters" and event["key"] in ["w", "s"]) or (
-                controller == "arrows" and event["key"] in ["arrowUp", "arrowDown"]
-            ):
-                self.game_state.right.paddle_y += (
-                    self.paddle_move_amount * direction_multiplier
-                )
+            for controller in self.left_paddle_controller:
+                if (controller == "letters" and key in ["w", "s"]) or (
+                    controller == "arrows" and key in ["arrowUp", "arrowDown"]
+                ):
+                    self.game_state.left.paddle_y += (
+                        self.paddle_move_amount * direction_multiplier
+                    )
+
+            for controller in self.right_paddle_controller:
+                if (controller == "letters" and key in ["w", "s"]) or (
+                    controller == "arrows" and key in ["arrowUp", "arrowDown"]
+                ):
+                    self.game_state.right.paddle_y += (
+                        self.paddle_move_amount * direction_multiplier
+                    )
 
         # Limit paddle movement
         self.game_state.left.paddle_y = max(

@@ -100,7 +100,8 @@ export async function initGame() {
             keys.w = true;
         } else if (event.key === 's') {
             keys.s = true;
-        } else if (event.key === 'ArrowUp') {
+        }
+        if (event.key === 'ArrowUp') {
             keys.arrowUp = true;
         } else if (event.key === 'ArrowDown') {
             keys.arrowDown = true;
@@ -112,7 +113,8 @@ export async function initGame() {
             keys.w = false;
         } else if (event.key === 's') {
             keys.s = false;
-        } else if (event.key === 'ArrowUp') {
+        }
+        if (event.key === 'ArrowUp') {
             keys.arrowUp = false;
         } else if (event.key === 'ArrowDown') {
             keys.arrowDown = false;
@@ -122,27 +124,29 @@ export async function initGame() {
     // Game loop
     
     function gameLoop() {
-        let keyPressed = null;
+        let keysPressed = [];
     
         if (keys.w) {
-            keyPressed = 'w';
+            keysPressed.push('w');
         } else if (keys.s) {
-            keyPressed = 's';
-        } else if (keys.arrowUp) {
-            keyPressed = 'arrowUp';
+            keysPressed.push('s');
+        }
+        if (keys.arrowUp) {
+            keysPressed.push('arrowUp');
         } else if (keys.arrowDown) {
-            keyPressed = 'arrowDown';
+            keysPressed.push('arrowDown');
         }
     
-        if (keyPressed && socket.readyState === WebSocket.OPEN) {
+        if (keysPressed.length > 0 && socket.readyState === WebSocket.OPEN) {
+            console.log("Sending message to server: " + keysPressed);
             socket.send(JSON.stringify({
                 type: 'paddle_move',
-                key: keyPressed,
+                keys: keysPressed,
             }));
         }
     
         // Call gameLoop again after a short delay
-        setTimeout(gameLoop, 16); // Approximately 60 frames per second
+        setTimeout(gameLoop, 16.6666); // Approximately 60 frames per second
     }
     
     // Start the game loop
