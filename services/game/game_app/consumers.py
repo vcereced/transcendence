@@ -241,25 +241,23 @@ class GameConsumer(AsyncWebsocketConsumer):
             bounce_away_direction=-1,
         )
 
-        # Left and right walls
-        if self.game_state.ball.x - self.ball_radius <= -self.ball_radius:
-            self.game_state.left.score += 1
-            self.game_state.ball.x = self.field_width / 2
-            self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = -self.initial_ball_speed
-            self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
-            return
-        if (
-            self.game_state.ball.x + self.ball_radius
-            >= self.field_width + self.ball_radius
-        ):
+        # Left wall
+        if self.game_state.ball.x <= 0:
             self.game_state.right.score += 1
             self.game_state.ball.x = self.field_width / 2
             self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = self.initial_ball_speed
+            self.game_state.ball.dx = self.initial_ball_speed # Serve to the right
             self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
             return
-
+        
+        # Right wall
+        if self.game_state.ball.x >= self.field_width:
+            self.game_state.left.score += 1
+            self.game_state.ball.x = self.field_width / 2
+            self.game_state.ball.y = self.field_height / 2
+            self.game_state.ball.dx = -self.initial_ball_speed # Serve to the left
+            self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
+            return
 
     def check_paddle_collision(
         self, paddle_x_position, paddle_y_position, bounce_away_direction
@@ -298,7 +296,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Mover la bola
             self.game_state.ball.x += self.game_state.ball.dx
             self.game_state.ball.y += self.game_state.ball.dy
-
 
             await self.save_and_broadcast_game_state()
 
