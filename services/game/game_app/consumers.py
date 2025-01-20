@@ -12,7 +12,6 @@ from asgiref.sync import sync_to_async
 
 class GameConsumer(AsyncWebsocketConsumer):
 
-    group_tasks = {}
     field_width = 600
     field_height = 400
     fps = 60
@@ -43,17 +42,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         self.redis = redis.from_url("redis://redis:6379")
 
-        if not await self.initialize_game_state():
-            return
+        await self.determine_controllers()
 
         await self.add_connection_to_group()
 
-        if self.game_group_name not in self.group_tasks:
-            self.group_tasks[self.game_group_name] = asyncio.create_task(
-                self.game_loop()
-            )
+        await self.initialize_game_loop()
 
-        await self.save_and_broadcast_game_state()
+        await self.send_initial_information()
 
     async def find_out_game(self):
         self.user_data = self.extract_user_data_from_jwt()
@@ -101,16 +96,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                     break
         return user_data
 
-    async def initialize_game_state(self):
-        self.game_state = models.GameState.from_dict(self.initial_game_state)
-        self.game_state.ball.dx *= random.choice([-1, 1])
-        self.game_state.ball.dy *= random.choice([-1, 1])
-
-        if not (await self.determine_controllers()):
-            return False
-
-        return True
-
     async def determine_controllers(self):
         if (
             self.game.left_player_id == self.user_data["user_id"]
@@ -118,53 +103,180 @@ class GameConsumer(AsyncWebsocketConsumer):
         ):
             self.left_paddle_controller = ["letters"]
             self.right_paddle_controller = ["arrows"]
-            return True
+
         if self.game.left_player_id == self.user_data["user_id"]:
             self.left_paddle_controller = ["letters", "arrows"]
             self.right_paddle_controller = []
             if self.game.right_player_id == 0:
                 self.right_paddle_controller.append("computer")
-            return True
+
         if self.game.right_player_id == self.user_data["user_id"]:
             self.left_paddle_controller = []
             self.right_paddle_controller = ["letters", "arrows"]
             if self.game.left_player_id == 0:
                 self.left_paddle_controller.append("computer")
-            return True
 
     async def add_connection_to_group(self):
         self.game_group_name = f"game_{self.game.id}"
         await self.channel_layer.group_add(self.game_group_name, self.channel_name)
 
+    async def initialize_game_loop(self):
+        print("initialize_game_loop")
+        if not hasattr(self.channel_layer, "shared_tasks"):
+            self.channel_layer.shared_tasks = {}
+        if self.game_group_name not in self.channel_layer.shared_tasks:
+            self.game_state = models.GameState.from_dict(self.initial_game_state)
+            self.game_state.ball.dx *= random.choice([-1, 1])
+            self.game_state.ball.dy *= random.choice([-1, 1])
+            await self.redis.set(
+                f"game:{self.game.id}:ball", json.dumps(self.game_state.ball.to_dict())
+            )
+            await self.redis.set(
+                f"game:{self.game.id}:paddle:left",
+                str(self.game_state.left.paddle_y),
+            )
+            await self.redis.set(
+                f"game:{self.game.id}:paddle:right",
+                str(self.game_state.right.paddle_y),
+            )
+            await self.redis.set(
+                f"game:{self.game.id}:scores",
+                json.dumps(
+                    {
+                        "left": self.game_state.left.score,
+                        "right": self.game_state.right.score,
+                    }
+                ),
+            )
+
+            self.channel_layer.shared_tasks[self.game_group_name] = asyncio.create_task(
+                self.shared_game_loop()
+            )
+
     async def send_error_and_close(self, error_message):
         await self.send(text_data=json.dumps({"error": error_message}))
         await self.close()
 
-    async def save_and_broadcast_game_state(self):
-        await self.redis.set(
-            f"game:{self.game.id}", json.dumps(self.game_state.to_dict())
-        )
-        await self.channel_layer.group_send(
-            self.game_group_name,
-            {"type": "game_state_update", "game_state": self.game_state.to_dict()},
-        )
-
-    async def game_state_update(self, event):
-        serializer = serializers.GameStateSerializer(data=event["game_state"])
-        if not serializer.is_valid():
-            print(f"Errors: {serializer.errors}")
-            return
-        self.game_state = models.GameState.from_dict(serializer.validated_data)
+    async def send_initial_information(self):
         await self.send(
             text_data=json.dumps(
-                {"type": "game_state_update", "game_state": serializer.validated_data}
+                {
+                    "type": "initial_information",
+                    "usernames": {
+                        "left_username": self.game.left_player_username,
+                        "right_username": self.game.right_player_username,
+                    },
+                    "ball_state": self.game_state.ball.to_dict(),
+                    "left_paddle_state": self.game_state.left.paddle_y,
+                    "right_paddle_state": self.game_state.right.paddle_y,
+                    "scores": {
+                        "left": self.game_state.left.score,
+                        "right": self.game_state.right.score,
+                    },
+                }
             )
         )
 
+    async def save_and_broadcast_ball_state(self):
+        await self.redis.set(
+            f"game:{self.game.id}:ball", json.dumps(self.game_state.ball.to_dict())
+        )
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {"type": "ball_state_update", "ball_state": self.game_state.ball.to_dict()},
+        )
+
+    async def save_and_broadcast_left_paddle_state(self):
+        await self.redis.set(
+            f"game:{self.game.id}:paddle:left", str(self.game_state.left.paddle_y)
+        )
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {
+                "type": "left_paddle_state_update",
+                "paddle_y": self.game_state.left.paddle_y,
+            },
+        )
+
+    async def save_and_broadcast_right_paddle_state(self):
+        await self.redis.set(
+            f"game:{self.game.id}:paddle:right", str(self.game_state.right.paddle_y)
+        )
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {
+                "type": "right_paddle_state_update",
+                "paddle_y": self.game_state.right.paddle_y,
+            },
+        )
+
+    async def save_and_broadcast_scores_state(self):
+        await self.redis.set(
+            f"game:{self.game.id}:scores",
+            json.dumps(
+                {
+                    "left": self.game_state.left.score,
+                    "right": self.game_state.right.score,
+                }
+            ),
+        )
+        await self.channel_layer.group_send(
+            self.game_group_name,
+            {
+                "type": "scores_state_update",
+                "scores": {
+                    "left": self.game_state.left.score,
+                    "right": self.game_state.right.score,
+                },
+            },
+        )
+
+    async def ball_state_update(self, event):
+        self.game_state.ball = models.Ball.from_dict(event["ball_state"])
+        await self.send(
+            text_data=json.dumps(
+                {"type": "ball_state_update", "ball_state": event["ball_state"]}
+            )
+        )
+
+    async def left_paddle_state_update(self, event):
+        self.game_state.left.paddle_y = event["paddle_y"]
+        await self.send(
+            text_data=json.dumps(
+                {"type": "left_paddle_state_update", "paddle_y": event["paddle_y"]}
+            )
+        )
+
+    async def right_paddle_state_update(self, event):
+        self.game_state.right.paddle_y = event["paddle_y"]
+        await self.send(
+            text_data=json.dumps(
+                {"type": "right_paddle_state_update", "paddle_y": event["paddle_y"]}
+            )
+        )
+
+    async def scores_state_update(self, event):
+        self.game_state.left.score = event["scores"]["left"]
+        self.game_state.right.score = event["scores"]["right"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "scores_state_update",
+                    "scores": event["scores"],
+                }
+            )
+        )
+
+    async def load_full_game_state(self):
+        self.game_state.ball = models.Ball.from_dict(
+                json.loads(await self.redis.get(f"game:{self.game.id}:ball"))
+            )
+        self.game_state.left.paddle_y = float(await self.redis.get(f"game:{self.game.id}:paddle:left"))
+        self.game_state.right.paddle_y = float(await self.redis.get(f"game:{self.game.id}:paddle:right"))
+        self.game_state.left.score = json.loads(await self.redis.get(f"game:{self.game.id}:scores"))["left"]
+        self.game_state.right.score = json.loads(await self.redis.get(f"game:{self.game.id}:scores"))["right"]
+
     async def disconnect(self, close_code):
-        # Abandonar el grupo de canales
-        if not hasattr(self, "game_group_name"):
-            return
         await self.channel_layer.group_discard(self.game_group_name, self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):
@@ -180,9 +292,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not event.get("keys"):
             return
 
-        keys = event["keys"]
+        self.game_state.left.paddle_y = float(await self.redis.get(f"game:{self.game.id}:paddle:left"))
+        self.game_state.right.paddle_y = float(await self.redis.get(f"game:{self.game.id}:paddle:right"))
 
-        for key in keys:
+        for key in event["keys"]:
             direction_multiplier = 1 if key in ["arrowDown", "s"] else -1
 
             for controller in self.left_paddle_controller:
@@ -192,6 +305,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     self.game_state.left.paddle_y += (
                         self.paddle_move_amount * direction_multiplier
                     )
+                    await self.save_and_broadcast_left_paddle_state()
 
             for controller in self.right_paddle_controller:
                 if (controller == "letters" and key in ["w", "s"]) or (
@@ -200,6 +314,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     self.game_state.right.paddle_y += (
                         self.paddle_move_amount * direction_multiplier
                     )
+                    await self.save_and_broadcast_right_paddle_state()
 
         # Limit paddle movement
         self.game_state.left.paddle_y = max(
@@ -218,7 +333,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             ),
         )
 
-    def check_collisions(self):
+    async def check_collisions(self):
         # Top and bottom walls
         if (
             self.game_state.ball.y - self.ball_radius <= 0
@@ -246,17 +361,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.game_state.right.score += 1
             self.game_state.ball.x = self.field_width / 2
             self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = self.initial_ball_speed # Serve to the right
+            self.game_state.ball.dx = self.initial_ball_speed  # Serve to the right
             self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
+            await self.save_and_broadcast_scores_state()
             return
-        
+
         # Right wall
         if self.game_state.ball.x >= self.field_width:
             self.game_state.left.score += 1
             self.game_state.ball.x = self.field_width / 2
             self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = -self.initial_ball_speed # Serve to the left
+            self.game_state.ball.dx = -self.initial_ball_speed  # Serve to the left
             self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
+            await self.save_and_broadcast_scores_state()
             return
 
     def check_paddle_collision(
@@ -287,17 +404,18 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.game_state.ball.dx *= -self.ball_speed_increment
             self.game_state.ball.dy *= self.ball_speed_increment
 
-    async def game_loop(self):
+    async def shared_game_loop(self):
 
         while True:
+            await self.load_full_game_state()
             # Comprobar colisiones
-            self.check_collisions()
+            await self.check_collisions()
 
             # Mover la bola
             self.game_state.ball.x += self.game_state.ball.dx
             self.game_state.ball.y += self.game_state.ball.dy
 
-            await self.save_and_broadcast_game_state()
+            await self.save_and_broadcast_ball_state()
 
             # Esperar hasta el siguiente frame
             await asyncio.sleep(1 / self.fps)

@@ -4,7 +4,7 @@ export function renderGame() {
     return `
     <div id="main-game-container">
         <h1>Pong Online</h1>
-        <h2>Bienvenido <span id="username"></span></h2>
+        <h2><span id="left-username"></span> <span id="left-score"></span> - <span id="right-score"></span> <span id="right-username"></span></h2>
         <canvas id="pong-canvas" width="600" height="400" style="border:1px solid #000;"></canvas> 
     </div>
     `;
@@ -22,12 +22,15 @@ export async function initGame() {
     }
 
     let userLoginData = decodeJWT(getCookie("accessToken"));
-    document.getElementById("username").innerText = userLoginData.username;
 
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/`);
 
     const canvas = document.getElementById('pong-canvas');
     const context = canvas.getContext('2d');
+    const leftUsernameSpan = document.getElementById('left-username');
+    const rightUsernameSpan = document.getElementById('right-username');
+    const leftScoreSpan = document.getElementById('left-score');
+    const rightScoreSpan = document.getElementById('right-score');
 
     // Ball properties
     let ball = { x: canvas.height / 2, y: canvas.height / 2 };
@@ -52,19 +55,40 @@ export async function initGame() {
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
 
-        if (data.type === 'game_state_update') {
-            // Posiciones iniciales de la bola y palas
-            ball.x = data.game_state.ball.x;
-            ball.y = data.game_state.ball.y;
-            leftPaddleY = data.game_state.left.paddle_y;
-            rightPaddleY = data.game_state.right.paddle_y;
-            drawEverything();
+        if (data.type === 'initial_information') {
+            leftUsernameSpan.innerText = data.usernames.left_username;
+            rightUsernameSpan.innerText = data.usernames.right_username;
+            leftPaddleY = data.left_paddle_state;
+            rightPaddleY = data.right_paddle_state;
+            ball.x = data.ball_state.x;
+            ball.y = data.ball_state.y;
+            leftScoreSpan.innerText = data.scores.left;
+            rightScoreSpan.innerText = data.scores.right;
+        } else if (data.type === 'ball_state_update') {
+            ball.x = data.ball_state.x;
+            ball.y = data.game_state.y;
+        } else if (data.type === 'left_paddle_state_update') {
+            leftPaddleY = data.paddle_y;
+        } else if (data.type === 'right_paddle_state_update') {
+            rightPaddleY = data.paddle_y;
+        } else if (data.type === 'score_update') {
+            leftScoreSpan.innerText = data.scores.left;
+            rightScoreSpan.innerText = data.scores.right;
+        } else if (data.type === 'game_over') {
+            alert("Game Over!");
         }
     };
 
     socket.onclose = function(event) {
         console.log("Desconectado del WebSocket.");
     };
+
+    socket.onerror = function(event) {
+        deleteCookie("accessToken");
+        deleteCookie("refreshToken");
+        // Refresh the page
+        window.location.reload();
+    }
 
 
     // Draw everything on the canvas
@@ -146,6 +170,8 @@ export async function initGame() {
                 keys: keysPressed,
             }));
         }
+
+        drawEverything();
     
         // Call gameLoop again after a short delay
         setTimeout(gameLoop, 16.6666); // Approximately 60 frames per second
@@ -170,6 +196,10 @@ function getCookie(cname) {
       }
     }
     return "";
+}
+
+function deleteCookie(cname) {
+    document.cookie = cname + '=;';
 }
 
 function decodeJWT(token) {
