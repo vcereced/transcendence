@@ -9,6 +9,7 @@ import random
 from django.db.models import Q
 from asgiref.sync import sync_to_async
 from game import settings as s
+import time
 
 
 class PlayerConsumer(AsyncWebsocketConsumer):
@@ -23,6 +24,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         self.redis = redis.Redis(host="redis", port=6379)
 
         self.determine_controllers()
+        self.last_paddle_update = 0
 
         self.update_game_state_task = asyncio.create_task(self.update_game_state())
 
@@ -92,39 +94,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             if self.game.left_player_id == 0:
                 self.left_paddle_controller.append("computer")
 
-    async def initialize_game_loop(self):
-        print("initialize_game_loop")
-        if not hasattr(self.channel_layer, "shared_tasks"):
-            self.channel_layer.shared_tasks = {}
-        if self.game_group_name not in self.channel_layer.shared_tasks:
-            self.game_state = models.GameState.from_dict(self.initial_game_state)
-            self.game_state.ball.dx *= random.choice([-1, 1])
-            self.game_state.ball.dy *= random.choice([-1, 1])
-            await self.redis.set(
-                f"game:{self.game.id}:ball", json.dumps(self.game_state.ball.to_dict())
-            )
-            await self.redis.set(
-                f"game:{self.game.id}:paddle:left",
-                str(self.game_state.left.paddle_y),
-            )
-            await self.redis.set(
-                f"game:{self.game.id}:paddle:right",
-                str(self.game_state.right.paddle_y),
-            )
-            await self.redis.set(
-                f"game:{self.game.id}:scores",
-                json.dumps(
-                    {
-                        "left": self.game_state.left.score,
-                        "right": self.game_state.right.score,
-                    }
-                ),
-            )
-
-            self.channel_layer.shared_tasks[self.game_group_name] = asyncio.create_task(
-                self.shared_game_loop()
-            )
-
     async def send_error_and_close(self, error_message):
         await self.send(text_data=json.dumps({"error": error_message}))
         await self.close()
@@ -171,6 +140,9 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
     async def receive_paddle_update(self, event):
         if not event.get("keys"):
+            return
+        
+        if time.time() < self.last_paddle_update + 2 / s.FPS:
             return
 
         async with self.redis.pipeline() as pipe:
@@ -227,6 +199,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 except redis.WatchError:
                     # Retry if someone else modified the game state
                     continue
+
+        self.last_paddle_update = time.time()
 
     async def update_game_state(self):
         while True:
