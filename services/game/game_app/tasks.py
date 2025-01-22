@@ -41,4 +41,4 @@ def create_game(game_data):
         redis_client.set(f"game:{game.id}:left_paddle_y", json.dumps(s.INITIAL_GAME_STATE["left_paddle_y"]))
         redis_client.set(f"game:{game.id}:right_paddle_y", json.dumps(s.INITIAL_GAME_STATE["right_paddle_y"]))
         redis_client.set(f"game:{game.id}:scores", json.dumps(s.INITIAL_GAME_STATE["scores"]))
-        redis_client.rpush("game_queue", f"game:{game.id}")
+        redis_client.rpush("game_queue", f"{game.id}")
