@@ -72,6 +72,7 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_finished = models.BooleanField(default=False)
     finished_at = models.DateTimeField(null=True, blank=True)
+    return_url = models.URLField(max_length=200)
 
     class Meta:
         ordering = ["-created_at"]
