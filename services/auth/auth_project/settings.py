@@ -27,7 +27,7 @@ SECRET_KEY = os.getenv("JWT_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'ngnix', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', 'ngnix', '127.0.0.1', 'auth_service']
 
 
 # Application definition
@@ -86,7 +86,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),  # Duración del token
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=0.5),  # Duración del token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Duración del token de refresco
     'ROTATE_REFRESH_TOKENS': True,                  # Renueva el refresh token al utilizarlo
     'BLACKLIST_AFTER_ROTATION': True,               # Evitar que se reutilicen tokens de refresco rotados
