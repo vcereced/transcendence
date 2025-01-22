@@ -170,7 +170,7 @@ FIELD_WIDTH = 1.5 * FIELD_HEIGHT
 BALL_RADIUS = FIELD_WIDTH / 50
 PADDLE_HEIGHT = FIELD_HEIGHT / 4
 PADDLE_WIDTH = FIELD_WIDTH / 50
-PADDLE_MOVE_AMOUNT = FIELD_HEIGHT / 25
+PADDLE_MOVE_AMOUNT = FIELD_HEIGHT / 50
 INITIAL_BALL_SPEED = FIELD_HEIGHT / 2 / FPS
 BALL_SPEED_INCREMENT = 1.1
 
@@ -181,7 +181,8 @@ INITIAL_GAME_STATE = {
         "dx": INITIAL_BALL_SPEED,
         "dy": INITIAL_BALL_SPEED,
     },
-    "left": {"paddle_y": FIELD_HEIGHT / 2, "score": 0},
-    "right": {"paddle_y": FIELD_HEIGHT / 2, "score": 0},
+    "scores": {"left": 0, "right": 0},
+    "left_paddle_y": FIELD_HEIGHT / 2,
+    "right_paddle_y": FIELD_HEIGHT / 2,
 }
 

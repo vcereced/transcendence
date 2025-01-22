@@ -30,36 +30,34 @@ async def play_game(game_name):
 
     game_state = await load_game_state(redis_client, game_name)
 
-    while game_state.left.score < 5 and game_state.right.score < 5:
-        async with redis_client.pipeline() as pipe:
-            while True:
-                try:
-                    # Make sure we are the only ones updating the game state
-                    await pipe.watch(f"{game_name}")
+    while game_state.left.score < 500 and game_state.right.score < 500:
 
-                    game_state = await load_game_state(pipe, game_name)
+        game_state = await load_game_state(redis_client, game_name)
 
-                    game_state = check_collisions(game_state)
+        game_state = check_collisions(game_state)
 
-                    game_state.ball.x += game_state.ball.dx
-                    game_state.ball.y += game_state.ball.dy
+        game_state.ball.x += game_state.ball.dx
+        game_state.ball.y += game_state.ball.dy
 
-                    # now we can put the pipeline back into buffered mode with MULTI
-                    pipe.multi()
-                    await save_game_state(pipe, game_name, game_state)
-                    await pipe.execute()
-                    break
-                except redis.WatchError:
-                    # Retry if someone else modified the game state
-                    continue
+        await save_game_state(redis_client, game_name, game_state)
+
         await asyncio.sleep(1 / s.FPS)
 
 
-async def load_game_state(redis_client, game_name):
-    game_state_data = await redis_client.get(f"{game_name}")
-    if game_state_data:
+async def load_game_state(redis_client : redis.Redis, game_name):
+    ball_data = await redis_client.get(f"{game_name}:ball")
+    left_paddle_data = await redis_client.get(f"{game_name}:left_paddle_y")
+    right_paddle_data = await redis_client.get(f"{game_name}:right_paddle_y")
+    scores_data = await redis_client.get(f"{game_name}:scores")
+    if ball_data and left_paddle_data and right_paddle_data and scores_data:
+        scores = json.loads(scores_data)
+        game_state_data = {
+            "ball": json.loads(ball_data),
+            "left": {"paddle_y": json.loads(left_paddle_data), "score": scores["left"]},
+            "right": {"paddle_y": json.loads(right_paddle_data), "score": scores["right"]},
+        }
         game_state_serializer = serializers.GameStateSerializer(
-            data=json.loads(game_state_data)
+            data=game_state_data
         )
         if game_state_serializer.is_valid():
             return GameState.from_dict(game_state_serializer.validated_data)
@@ -69,8 +67,9 @@ async def load_game_state(redis_client, game_name):
         raise Exception("Game state not found")
 
 
-async def save_game_state(redis_client, game_name, game_state):
-    await redis_client.set(f"{game_name}", json.dumps(game_state.to_dict()))
+async def save_game_state(redis_client : redis.Redis, game_name, game_state : GameState):
+    await redis_client.set(f"{game_name}:ball", json.dumps(game_state.ball.to_dict()))
+    await redis_client.set(f"{game_name}:scores", json.dumps({"left": game_state.left.score, "right": game_state.right.score}))
 
 
 def check_collisions(game_state: GameState):

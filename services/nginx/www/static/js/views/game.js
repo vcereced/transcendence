@@ -31,20 +31,19 @@ export async function initGame() {
     const rightUsernameSpan = document.getElementById('right-username');
     const leftScoreSpan = document.getElementById('left-score');
     const rightScoreSpan = document.getElementById('right-score');
+    let ballRadius;
+    let paddleHeight;
+    let paddleWidth;
+    let fps;
 
-    // Ball properties
-    let ball = { x: canvas.height / 2, y: canvas.height / 2 };
-    const ballRadius = canvas.width / 50;
 
-    // Paddle properties
-    const paddleHeight = canvas.height / 4;
-    const paddleWidth = canvas.width / 50;
+    let ball = { x: canvas.height / 2, y: canvas.height / 2 }
+    let leftPaddleY;
+    let rightPaddleY;
     // const angle = 45;
     // const angleInRadians = angle * Math.PI / 180;
     // const paddleRadius = (paddleHeight / 2) / Math.sin(angleInRadians);
     // const paddleOffset = (paddleHeight / 2) / Math.tan(angleInRadians);
-    let leftPaddleY;
-    let rightPaddleY;
 
     // Conectar al WebSocket
     socket.onopen = function(event) {
@@ -55,28 +54,28 @@ export async function initGame() {
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
 
-        if (data.type === 'initial_information') {
-            leftUsernameSpan.innerText = data.usernames.left_username;
-            rightUsernameSpan.innerText = data.usernames.right_username;
-            leftPaddleY = data.left_paddle_state;
-            rightPaddleY = data.right_paddle_state;
-            ball.x = data.ball_state.x;
-            ball.y = data.ball_state.y;
-            leftScoreSpan.innerText = data.scores.left;
-            rightScoreSpan.innerText = data.scores.right;
-        } else if (data.type === 'ball_state_update') {
-            ball.x = data.ball_state.x;
-            ball.y = data.game_state.y;
-        } else if (data.type === 'left_paddle_state_update') {
-            leftPaddleY = data.paddle_y;
-        } else if (data.type === 'right_paddle_state_update') {
-            rightPaddleY = data.paddle_y;
-        } else if (data.type === 'score_update') {
-            leftScoreSpan.innerText = data.scores.left;
-            rightScoreSpan.innerText = data.scores.right;
-        } else if (data.type === 'game_over') {
-            alert("Game Over!");
-        }
+        if (data.type === 'game_state_update') {
+            leftPaddleY = data.game_state.left.paddle_y;
+            rightPaddleY = data.game_state.right.paddle_y;
+            ball.x = data.game_state.ball.x;
+            ball.y = data.game_state.ball.y;
+            leftScoreSpan.innerText = data.game_state.left.score;
+            rightScoreSpan.innerText = data.game_state.right.score;
+            drawEverything();
+
+        } else if (data.type === 'initial_information') {
+            leftUsernameSpan.innerText = data.left_player_username;
+            rightUsernameSpan.innerText = data.right_player_username;
+            canvas.setAttribute('width', data.field_width);
+            canvas.setAttribute('height', data.field_height);
+            ballRadius = data.ball_radius;
+            paddleHeight = data.paddle_height;
+            paddleWidth = data.paddle_width;
+            fps = data.fps;
+
+            gameLoop();
+        } 
+        
     };
 
     socket.onclose = function(event) {
@@ -148,6 +147,13 @@ export async function initGame() {
         }
     });
 
+    window.addEventListener('blur', () => {
+        keys.w = false;
+        keys.s = false;
+        keys.arrowUp = false;
+        keys.arrowDown = false;
+    });
+
     // Game loop
     
     function gameLoop() {
@@ -170,15 +176,10 @@ export async function initGame() {
                 keys: keysPressed,
             }));
         }
-
-        drawEverything();
     
         // Call gameLoop again after a short delay
-        setTimeout(gameLoop, 16.6666); // Approximately 60 frames per second
+        setTimeout(gameLoop, 1000 / fps); // Approximately 60 frames per second
     }
-    
-    // Start the game loop
-    gameLoop();
 
 }
 

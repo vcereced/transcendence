@@ -26,6 +26,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         self.determine_controllers()
         self.last_paddle_update = 0
 
+        await self.send_initial_information()
+
         self.update_game_state_task = asyncio.create_task(self.update_game_state())
 
     async def find_out_game(self):
@@ -81,42 +83,81 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         ):
             self.left_paddle_controller = ["letters"]
             self.right_paddle_controller = ["arrows"]
-
-        if self.game.left_player_id == self.user_data["user_id"]:
+        elif self.game.left_player_id == self.user_data["user_id"]:
             self.left_paddle_controller = ["letters", "arrows"]
             self.right_paddle_controller = []
             if self.game.right_player_id == 0:
                 self.right_paddle_controller.append("computer")
-
-        if self.game.right_player_id == self.user_data["user_id"]:
+        elif self.game.right_player_id == self.user_data["user_id"]:
             self.left_paddle_controller = []
             self.right_paddle_controller = ["letters", "arrows"]
             if self.game.left_player_id == 0:
                 self.left_paddle_controller.append("computer")
 
+    async def send_initial_information(self):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "initial_information",
+                    "game_id": self.game.id,
+                    "left_player_id": self.game.left_player_id,
+                    "right_player_id": self.game.right_player_id,
+                    "left_player_username": self.game.left_player_username,
+                    "right_player_username": self.game.right_player_username,
+                    "field_height": s.FIELD_HEIGHT,
+                    "field_width": s.FIELD_WIDTH,
+                    "ball_radius": s.BALL_RADIUS,
+                    "paddle_height": s.PADDLE_HEIGHT,
+                    "paddle_width": s.PADDLE_WIDTH,
+                    "fps": s.FPS,
+                }
+            )
+        )
+
     async def send_error_and_close(self, error_message):
         await self.send(text_data=json.dumps({"error": error_message}))
         await self.close()
 
-    async def load_game_state(self, redis_client):
-        game_state_data = await redis_client.get(f"game:{self.game.id}")
-        if game_state_data:
+    async def load_game_state(self, redis_client : redis.Redis):
+        ball_data = await redis_client.get(f"game:{self.game.id}:ball")
+        
+        left_paddle_data = await redis_client.get(f"game:{self.game.id}:left_paddle_y")
+        
+        right_paddle_data = await redis_client.get(
+            f"game:{self.game.id}:right_paddle_y"
+        )
+        
+        scores_data = await redis_client.get(f"game:{self.game.id}:scores")
+        
+        if ball_data and left_paddle_data and right_paddle_data and scores_data:
+            
+            scores = json.loads(scores_data)
+            game_state_data = {
+                "ball": json.loads(ball_data),
+                "left": {
+                    "paddle_y": json.loads(left_paddle_data),
+                    "score": scores["left"],
+                },
+                "right": {
+                    "paddle_y": json.loads(right_paddle_data),
+                    "score": scores["right"],
+                },
+            }
+            
             game_state_serializer = serializers.GameStateSerializer(
-                data=json.loads(game_state_data)
+                data=game_state_data
             )
             if game_state_serializer.is_valid():
+                
                 self.game_state = models.GameState.from_dict(
                     game_state_serializer.validated_data
                 )
+                
             else:
+                
                 raise Exception(f"Invalid game state: {game_state_serializer.errors}")
         else:
             raise Exception("Game state not found")
-
-    async def save_game_state(self, redis_client):
-        await redis_client.set(
-            f"game:{self.game.id}", json.dumps(self.game_state.to_dict())
-        )
 
     async def send_game_state(self):
         await self.send(
@@ -141,40 +182,22 @@ class PlayerConsumer(AsyncWebsocketConsumer):
     async def receive_paddle_update(self, event):
         if not event.get("keys"):
             return
-        
-        if time.time() < self.last_paddle_update + 2 / s.FPS:
+
+        if time.time() < self.last_paddle_update + 1 / s.FPS:
             return
 
-        async with self.redis.pipeline() as pipe:
-            while True:
-                try:
-                    # Make sure we are the only ones updating the game state
-                    await pipe.watch(f"game:{self.game.id}")
+        await self.load_game_state(self.redis)
 
-                    await self.load_game_state(pipe)
+        for key in event["keys"]:
+            direction_multiplier = 1 if key in ["arrowDown", "s"] else -1
 
-                    for key in event["keys"]:
-                        direction_multiplier = 1 if key in ["arrowDown", "s"] else -1
-
-                        for controller in self.left_paddle_controller:
-                            if (controller == "letters" and key in ["w", "s"]) or (
-                                controller == "arrows"
-                                and key in ["arrowUp", "arrowDown"]
-                            ):
-                                self.game_state.left.paddle_y += (
-                                    s.PADDLE_MOVE_AMOUNT * direction_multiplier
-                                )
-
-                        for controller in self.right_paddle_controller:
-                            if (controller == "letters" and key in ["w", "s"]) or (
-                                controller == "arrows"
-                                and key in ["arrowUp", "arrowDown"]
-                            ):
-                                self.game_state.right.paddle_y += (
-                                    s.PADDLE_MOVE_AMOUNT * direction_multiplier
-                                )
-
-                    # Limit paddle movement
+            for controller in self.left_paddle_controller:
+                if (controller == "letters" and key in ["w", "s"]) or (
+                    controller == "arrows" and key in ["arrowUp", "arrowDown"]
+                ):
+                    self.game_state.left.paddle_y += (
+                        s.PADDLE_MOVE_AMOUNT * direction_multiplier
+                    )
                     self.game_state.left.paddle_y = max(
                         s.PADDLE_HEIGHT / 2,
                         min(
@@ -182,7 +205,18 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                             self.game_state.left.paddle_y,
                         ),
                     )
+                    await self.redis.set(
+                        f"game:{self.game.id}:left_paddle_y",
+                        json.dumps(self.game_state.left.paddle_y),
+                    )
 
+            for controller in self.right_paddle_controller:
+                if (controller == "letters" and key in ["w", "s"]) or (
+                    controller == "arrows" and key in ["arrowUp", "arrowDown"]
+                ):
+                    self.game_state.right.paddle_y += (
+                        s.PADDLE_MOVE_AMOUNT * direction_multiplier
+                    )
                     self.game_state.right.paddle_y = max(
                         s.PADDLE_HEIGHT / 2,
                         min(
@@ -190,15 +224,10 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                             self.game_state.right.paddle_y,
                         ),
                     )
-
-                    # now we can put the pipeline back into buffered mode with MULTI
-                    pipe.multi()
-                    await self.save_game_state(pipe)
-                    await pipe.execute()
-                    break
-                except redis.WatchError:
-                    # Retry if someone else modified the game state
-                    continue
+                    await self.redis.set(
+                        f"game:{self.game.id}:right_paddle_y",
+                        json.dumps(self.game_state.right.paddle_y),
+                    )
 
         self.last_paddle_update = time.time()
 
