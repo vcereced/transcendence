@@ -12,9 +12,11 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         print("Connecting to global WebSocket")
 
         # Conectar a Redis
-        self.redis = redis.Redis(
-            host="localhost", port=6379, decode_response=True
-        )  # Conexión a Redis
+          # Conectar a Redis
+        self.redis = redis.from_url("redis://redis:6379")  # Conexión a Redis
+        # self.redis = redis.Redis(
+        #     host="localhost", port=6379, decode_responses=True
+        # )  # Conexión a Redis
         # Canal de Django para el WebSocket global
         self.room_group_name = (
             "global_tournament_counter"  # Canal global para todos los torneos
@@ -136,6 +138,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                         print("Decoded Payload:", payload)
 
                         username = payload.get("username")
+                        user_id = payload.get("user_id")
                         self.username = username
                         print(f"Username: {username}")
                     except jwt.DecodeError as e:

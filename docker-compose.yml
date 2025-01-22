@@ -55,11 +55,27 @@ services:
     networks:
       - app-network
 
+  tournaments_celery:
+    build:
+      context: ./services/tournaments
+    container_name: tournaments_celery
+    command: celery -A tournaments_project worker --loglevel=info 
+    depends_on:
+      - tournaments
+      - message-broker
+    volumes:
+      - ./services/tournaments:/app
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@message-broker:5672//
+    networks:
+      - app-network
+
+
   redis:
     image: redis:alpine
     container_name: redis
-    ports:
-      - "6379:6379"  # Expose Redis port to manage WebSocket connections
+    # ports:
+    #   # - "6379:6379"  # Expose Redis port to manage WebSocket connections
     networks:
       - app-network
 
