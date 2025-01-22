@@ -12,7 +12,7 @@ from channels.auth import AuthMiddlewareStack
 
 
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    "http": django_asgi_app,
     "websocket": AuthMiddlewareStack(  # Usamos el middleware para autenticación de WebSockets
         URLRouter(
             routing.websocket_urlpatterns  # Aquí se definirán nuestras rutas WebSocket

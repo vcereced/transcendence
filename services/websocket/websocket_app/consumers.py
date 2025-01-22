@@ -12,7 +12,9 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         print("Connecting to global WebSocket")
 
         # Conectar a Redis
-        self.redis = redis.from_url("redis://redis:6379")  # Conexión a Redis
+        self.redis = redis.Redis(
+            host="localhost", port=6379, decode_response=True
+        )  # Conexión a Redis
         # Canal de Django para el WebSocket global
         self.room_group_name = (
             "global_tournament_counter"  # Canal global para todos los torneos
@@ -101,7 +103,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         )
 
         # Conectar a Redis
-        self.redis = redis.from_url("redis://redis:6379")
+        self.redis = redis.Redis(host="redis", port=6379)
 
         # Definir la clave para el contador de jugadores en este torneo
         self.user_count_key = f"{self.room_group_name}_player_count"
@@ -225,4 +227,3 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
-

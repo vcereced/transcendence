@@ -138,3 +138,50 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery settings
+
+# Celery broker settings - connect to RabbitMQ running in the 'message-broker' container
+CELERY_BROKER_URL = 'amqp://guest:guest@message-broker:5672//'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# If using a result backend, such as Redis or PostgreSQL:
+CELERY_RESULT_BACKEND = None  # You can change this if you need task results
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# If you need to set a timeout to handle long-running tasks gracefully
+CELERY_TASK_TIME_LIMIT = 300  # Limit each task to a maximum of 5 minutes
+
+CELERY_TASK_ROUTES = {
+    'game_app.tasks.create_game': {
+        'queue': 'game_tasks',
+    },
+}
+
+
+# Game proportions settings
+
+FPS = 60
+FIELD_HEIGHT = 400
+FIELD_WIDTH = 1.5 * FIELD_HEIGHT
+BALL_RADIUS = FIELD_WIDTH / 50
+PADDLE_HEIGHT = FIELD_HEIGHT / 4
+PADDLE_WIDTH = FIELD_WIDTH / 50
+PADDLE_MOVE_AMOUNT = FIELD_HEIGHT / 50
+INITIAL_BALL_SPEED = FIELD_HEIGHT / 2 / FPS
+BALL_SPEED_INCREMENT = 1.1
+
+INITIAL_GAME_STATE = {
+    "ball": {
+        "x": FIELD_WIDTH / 2,
+        "y": FIELD_HEIGHT / 2,
+        "dx": INITIAL_BALL_SPEED,
+        "dy": INITIAL_BALL_SPEED,
+    },
+    "left": {"paddle_y": FIELD_HEIGHT / 2, "score": 0},
+    "right": {"paddle_y": FIELD_HEIGHT / 2, "score": 0},
+}
+

@@ -8,31 +8,10 @@ from game_app import models
 import random
 from django.db.models import Q
 from asgiref.sync import sync_to_async
+from game import settings as s
 
 
-class GameConsumer(AsyncWebsocketConsumer):
-
-    group_tasks = {}
-    field_width = 600
-    field_height = 400
-    fps = 60
-    ball_radius = field_width / 50
-    paddle_height = field_height / 4
-    paddle_width = field_width / 50
-    paddle_move_amount = field_height / 50
-    initial_ball_speed = field_height / 2 / fps
-    ball_speed_increment = 1.1
-
-    initial_game_state = {
-        "ball": {
-            "x": field_width / 2,
-            "y": field_height / 2,
-            "dx": initial_ball_speed,
-            "dy": initial_ball_speed,
-        },
-        "left": {"paddle_y": field_height / 2, "score": 0},
-        "right": {"paddle_y": field_height / 2, "score": 0},
-    }
+class PlayerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
 
@@ -41,7 +20,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not await self.find_out_game():
             return
 
-        self.redis = redis.from_url("redis://redis:6379")
+        self.redis = redis.Redis(host="redis", port=6379)
 
         self.determine_controllers()
 
@@ -145,7 +124,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, close_code):
-        self.update_game_state_task.cancel()
+        if hasattr(self, "update_game_state_task"):
+            self.update_game_state_task.cancel()
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data:
@@ -167,39 +147,41 @@ class GameConsumer(AsyncWebsocketConsumer):
                     await pipe.watch(f"game:{self.game.id}")
 
                     await self.load_game_state(pipe)
-                    
+
                     for key in event["keys"]:
                         direction_multiplier = 1 if key in ["arrowDown", "s"] else -1
 
                         for controller in self.left_paddle_controller:
                             if (controller == "letters" and key in ["w", "s"]) or (
-                                controller == "arrows" and key in ["arrowUp", "arrowDown"]
+                                controller == "arrows"
+                                and key in ["arrowUp", "arrowDown"]
                             ):
                                 self.game_state.left.paddle_y += (
-                                    self.paddle_move_amount * direction_multiplier
+                                    s.PADDLE_MOVE_AMOUNT * direction_multiplier
                                 )
 
                         for controller in self.right_paddle_controller:
                             if (controller == "letters" and key in ["w", "s"]) or (
-                                controller == "arrows" and key in ["arrowUp", "arrowDown"]
+                                controller == "arrows"
+                                and key in ["arrowUp", "arrowDown"]
                             ):
                                 self.game_state.right.paddle_y += (
-                                    self.paddle_move_amount * direction_multiplier
+                                    s.PADDLE_MOVE_AMOUNT * direction_multiplier
                                 )
 
                     # Limit paddle movement
                     self.game_state.left.paddle_y = max(
-                        self.paddle_height / 2,
+                        s.PADDLE_HEIGHT / 2,
                         min(
-                            self.field_height - self.paddle_height / 2,
+                            s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2,
                             self.game_state.left.paddle_y,
                         ),
                     )
 
                     self.game_state.right.paddle_y = max(
-                        self.paddle_height / 2,
+                        s.PADDLE_HEIGHT / 2,
                         min(
-                            self.field_height - self.paddle_height / 2,
+                            s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2,
                             self.game_state.right.paddle_y,
                         ),
                     )
@@ -210,78 +192,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     await pipe.execute()
                     break
                 except redis.WatchError:
-                    print("WatchError, retrying")
                     # Retry if someone else modified the game state
                     continue
-
-    def check_collisions(self):
-        # Top and bottom walls
-        if (
-            self.game_state.ball.y - self.ball_radius <= 0
-            or self.game_state.ball.y + self.ball_radius >= self.field_height
-        ):
-            self.game_state.ball.dy *= -1
-            return
-
-        # Left paddle
-        self.check_paddle_collision(
-            self.paddle_width,
-            self.game_state.left.paddle_y,
-            bounce_away_direction=1,
-        )
-
-        # Right paddle
-        self.check_paddle_collision(
-            self.field_width - self.paddle_width,
-            self.game_state.right.paddle_y,
-            bounce_away_direction=-1,
-        )
-
-        # Left wall
-        if self.game_state.ball.x <= 0:
-            self.game_state.right.score += 1
-            self.game_state.ball.x = self.field_width / 2
-            self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = self.initial_ball_speed  # Serve to the right
-            self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
-            return
-
-        # Right wall
-        if self.game_state.ball.x >= self.field_width:
-            self.game_state.left.score += 1
-            self.game_state.ball.x = self.field_width / 2
-            self.game_state.ball.y = self.field_height / 2
-            self.game_state.ball.dx = -self.initial_ball_speed  # Serve to the left
-            self.game_state.ball.dy = random.choice([-1, 1]) * self.initial_ball_speed
-            return
-
-    def check_paddle_collision(
-        self, paddle_x_position, paddle_y_position, bounce_away_direction
-    ):
-        ball_left_border = self.game_state.ball.x - self.ball_radius
-        ball_right_border = self.game_state.ball.x + self.ball_radius
-        ball_top_border = self.game_state.ball.y - self.ball_radius
-        ball_bottom_border = self.game_state.ball.y + self.ball_radius
-        paddle_top_border = paddle_y_position - self.paddle_height / 2
-        paddle_bottom_border = paddle_y_position + self.paddle_height / 2
-
-        # If the ball is moving away from the paddle, it has already collided
-        if bounce_away_direction * self.game_state.ball.dx > 0:
-            return
-
-        # If the ball is not within the paddle's x position, it can't collide
-        if not (
-            ball_left_border <= paddle_x_position
-            and ball_right_border >= paddle_x_position
-        ):
-            return
-
-        if (
-            ball_top_border <= paddle_bottom_border
-            and ball_bottom_border >= paddle_top_border
-        ):
-            self.game_state.ball.dx *= -self.ball_speed_increment
-            self.game_state.ball.dy *= self.ball_speed_increment
 
     async def update_game_state(self):
         while True:
@@ -290,4 +202,4 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send_game_state()
 
             # Esperar hasta el siguiente frame
-            await asyncio.sleep(1 / self.fps)
+            await asyncio.sleep(1 / s.FPS)

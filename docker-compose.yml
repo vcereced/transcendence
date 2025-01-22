@@ -93,6 +93,44 @@ services:
     networks:
       - app-network
 
+  game_celery:
+    build:
+        context: ./services/game
+    container_name: game_celery
+    volumes:
+      - ./services/game:/app
+    env_file :
+      - .env
+    networks :
+      - app-network
+    restart: always
+    command: [/bin/sh, celery_entrypoint.sh]
+
+  game_asyncio:
+    build:
+        context: ./services/game
+    container_name: game_asyncio
+    volumes:
+      - ./services/game:/app
+    env_file :
+      - .env
+    networks :
+      - app-network
+    restart: always
+    command: [/bin/sh, asyncio_entrypoint.sh]
+
+  message-broker:
+    image: rabbitmq:4-management-alpine
+    container_name: message-broker
+    ports:
+        - 5672:5672
+        - 15672:15672
+    environment:
+      - RABBITMQ_LOGS=-error
+    networks:
+      - app-network
+    restart: always
+
   # tournament:
   #   build:
   #     context: ./services/tournament  # Directory for tournament Dockerfile and code
