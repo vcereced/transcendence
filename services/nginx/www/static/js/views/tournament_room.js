@@ -83,6 +83,9 @@ function startTournamentWebSocket(tournamentId) {
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
         }
+        if (data.type === "start_tournament") {
+            start_tournament();
+        }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
     };
@@ -110,9 +113,15 @@ function updateUserList(userList) {
 
     userList.forEach((user) => {
         const userElement = document.createElement("li");
-        userElement.textContent = user;
+        const [name, id] = user.split(":"); 
+        userElement.textContent = name;
         userListContainer.appendChild(userElement);
     });
+    // userList.forEach((user) => {
+    //     const userElement = document.createElement("li");
+    //     userElement.textContent = user;
+    //     userListContainer.appendChild(userElement);
+    // });
 }
 
 function simulateTournamentProgress() {
@@ -141,4 +150,8 @@ function simulateTournamentProgress() {
         const champion = document.querySelector(".champion .player");
         champion.textContent = finalWinner.textContent;
     }
+}
+
+function start_tournament() {
+    alert("El torneo ha comenzado!");
 }

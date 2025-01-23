@@ -140,20 +140,34 @@ class RoomConsumer(AsyncWebsocketConsumer):
                         username = payload.get("username")
                         user_id = payload.get("user_id")
                         self.username = username
+                        self.user_id = user_id
                         print(f"Username: {username}")
+                        print(f"User ID: {user_id}")
                     except jwt.DecodeError as e:
                         print(f"Error decoding token: {e}")
                     break
         print("publishing local update")
         await self.redis.set(f"user_channel:{self.username}", self.channel_name)
         await self.redis.sadd(
-            f"{self.room_group_name}_users", username
+            f"{self.room_group_name}_users", f"{self.username}: {self.user_id}"
         )  # Create a set of users in the tournament
         await self.publish_local_update()
         print("sending message directly to user")
         await self.send_message("Hello from the server mr. " + self.username)
         # Aceptar la conexión WebSocket
         await self.accept()
+        #Discover if 8 players are already in the tournament
+        if current_user_count == 3:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "start_tournament",
+                },
+            )
+
+    async def start_tournament(self, event):
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({"type": "start_tournament", "message": "Tournament is starting"}))
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo del torneo
@@ -168,6 +182,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Publicar actualización en Redis (para el consumidor global)
         await self.publish_global_update(current_user_count)
 
+#This will update the global user count in the frontend main tournament page
     async def publish_global_update(self, user_count):
         """Publica la actualización de conteo en el canal de Redis global."""
         message = {
@@ -176,6 +191,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         }
         await self.redis.publish("tournaments_channel", json.dumps(message))
 
+#This will be used to send the updated user list to the clients
     async def publish_local_update(self):
         "Publica actualizacion de nombres de usuarios en el canal de Redis local"
         user_list = await self.redis.smembers(f"{self.room_group_name}_users")
