@@ -59,27 +59,18 @@ async def control_paddle_by_computer(game_id, side):
     while True:
         game_state = await load_game_state(redis_client, game_id)
         if side == "left":
-            if game_state.ball.dx < 0:
-                if game_state.left.paddle_y < game_state.ball.y:
-                    game_state.left.paddle_y += s.PADDLE_MOVE_AMOUNT
-                elif game_state.left.paddle_y > game_state.ball.y:
-                    game_state.left.paddle_y -= s.PADDLE_MOVE_AMOUNT
-                game_state.left.paddle_y = max(
-                    s.PADDLE_HEIGHT / 2,
-                    min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, game_state.left.paddle_y),
-                )
-                final_paddle_y = game_state.left.paddle_y
+            final_paddle_y = game_state.left.paddle_y
         elif side == "right":
-            if game_state.ball.dx > 0:
-                if game_state.right.paddle_y < game_state.ball.y:
-                    game_state.right.paddle_y += s.PADDLE_MOVE_AMOUNT
-                elif game_state.right.paddle_y > game_state.ball.y:
-                    game_state.right.paddle_y -= s.PADDLE_MOVE_AMOUNT
-                game_state.right.paddle_y = max(
-                    s.PADDLE_HEIGHT / 2,
-                    min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, game_state.right.paddle_y),
-                )
-                final_paddle_y = game_state.right.paddle_y
+            final_paddle_y = game_state.right.paddle_y
+
+        if final_paddle_y < game_state.ball.y:
+            final_paddle_y += s.PADDLE_MOVE_AMOUNT
+        elif final_paddle_y > game_state.ball.y:
+            final_paddle_y -= s.PADDLE_MOVE_AMOUNT
+        final_paddle_y = max(
+            s.PADDLE_HEIGHT / 2,
+            min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, final_paddle_y),
+        )
 
         await redis_client.set(f"game:{game_id}:{side}_paddle_y", json.dumps(final_paddle_y))
         await asyncio.sleep(1 / s.FPS)
