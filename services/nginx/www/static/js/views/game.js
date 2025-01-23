@@ -31,19 +31,17 @@ export async function initGame() {
     const rightUsernameSpan = document.getElementById('right-username');
     const leftScoreSpan = document.getElementById('left-score');
     const rightScoreSpan = document.getElementById('right-score');
+
     let ballRadius;
     let paddleHeight;
-    let paddleWidth;
+    let paddleRadius;
+    let paddleOffset;
+    let angleInRadians;
     let fps;
-
 
     let ball = { x: canvas.height / 2, y: canvas.height / 2 }
     let leftPaddleY;
     let rightPaddleY;
-    // const angle = 45;
-    // const angleInRadians = angle * Math.PI / 180;
-    // const paddleRadius = (paddleHeight / 2) / Math.sin(angleInRadians);
-    // const paddleOffset = (paddleHeight / 2) / Math.tan(angleInRadians);
 
     // Conectar al WebSocket
     socket.onopen = function(event) {
@@ -70,8 +68,10 @@ export async function initGame() {
             canvas.setAttribute('height', data.field_height);
             ballRadius = data.ball_radius;
             paddleHeight = data.paddle_height;
-            paddleWidth = data.paddle_width;
             fps = data.fps;
+            paddleOffset = data.paddle_offset;
+            paddleRadius = data.paddle_radius;
+            angleInRadians = data.paddle_edge_angle_radians;
 
             gameLoop();
         } 
@@ -96,13 +96,17 @@ export async function initGame() {
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw the left paddle
+        // Draw the left paddle as an arc
         context.fillStyle = 'white';
-        context.fillRect(0, leftPaddleY - paddleHeight/2, paddleWidth, paddleHeight);
+        context.beginPath();
+        context.arc(-paddleOffset, leftPaddleY, paddleRadius, angleInRadians, -angleInRadians, true);
+        context.fill();
 
-        // Draw the right paddle
-        context.fillStyle = 'white';
-        context.fillRect(canvas.width - paddleWidth, rightPaddleY - paddleHeight/2, paddleWidth, paddleHeight);
+        // Draw the right paddle as an arc
+        context.beginPath();
+        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, Math.PI + angleInRadians , Math.PI - angleInRadians, true);
+        context.fill();
+        
 
         // Draw the ball
         context.fillStyle = 'white';

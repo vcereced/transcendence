@@ -108,7 +108,9 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                     "field_width": s.FIELD_WIDTH,
                     "ball_radius": s.BALL_RADIUS,
                     "paddle_height": s.PADDLE_HEIGHT,
-                    "paddle_width": s.PADDLE_WIDTH,
+                    "paddle_offset": s.PADDLE_OFFSET,
+                    "paddle_radius": s.PADDLE_RADIUS,
+                    "paddle_edge_angle_radians": s.PADDLE_EDGE_ANGLE_RADIANS,
                     "fps": s.FPS,
                 }
             )

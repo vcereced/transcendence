@@ -5,6 +5,7 @@ import os
 import random
 import asyncio
 from asgiref.sync import sync_to_async
+import math
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "game.settings")
 django.setup()
@@ -116,17 +117,17 @@ def check_collisions(game_state: GameState):
     # Left paddle
     game_state = check_paddle_collision(
         game_state,
-        s.PADDLE_WIDTH,
+        -s.PADDLE_OFFSET,
         game_state.left.paddle_y,
-        bounce_away_direction=1,
+        1,
     )
 
     # Right paddle
     game_state = check_paddle_collision(
         game_state,
-        s.FIELD_WIDTH - s.PADDLE_WIDTH,
+        s.FIELD_WIDTH + s.PADDLE_OFFSET,
         game_state.right.paddle_y,
-        bounce_away_direction=-1,
+        -1,
     )
 
     # Left wall
@@ -151,33 +152,37 @@ def check_collisions(game_state: GameState):
 
 
 def check_paddle_collision(
-    game_state: GameState, paddle_x_position, paddle_y_position, bounce_away_direction
+    game_state: GameState, paddle_center_x_position, paddle_center_y_position, bounce_away_direction
 ):
-    ball_left_border = game_state.ball.x - s.BALL_RADIUS
-    ball_right_border = game_state.ball.x + s.BALL_RADIUS
-    ball_top_border = game_state.ball.y - s.BALL_RADIUS
-    ball_bottom_border = game_state.ball.y + s.BALL_RADIUS
-    paddle_top_border = paddle_y_position - s.PADDLE_HEIGHT / 2
-    paddle_bottom_border = paddle_y_position + s.PADDLE_HEIGHT / 2
-
-    # If the ball is moving away from the paddle, it has already collided
-    if bounce_away_direction * game_state.ball.dx > 0:
+    # If the ball is not moving towards the paddle, no collision
+    if game_state.ball.dx * bounce_away_direction > 0:
         return game_state
+    
+    centers_distance = math.sqrt(
+        (game_state.ball.x - paddle_center_x_position) ** 2
+        + (game_state.ball.y - paddle_center_y_position) ** 2
+    )
 
-    # If the ball is not within the paddle's x position, it can't collide
-    if not (
-        ball_left_border <= paddle_x_position and ball_right_border >= paddle_x_position
-    ):
+    # If the ball is not close enough to the paddle, no collision
+    if centers_distance > s.BALL_RADIUS + s.PADDLE_RADIUS:
         return game_state
+    
+    # Bounce the ball away from the paddle
+    collision_angle = math.atan2(game_state.ball.y - paddle_center_y_position, game_state.ball.x - paddle_center_x_position)
+    initial_angle = math.atan2(game_state.ball.dy, game_state.ball.dx)
+    theta = math.pi + collision_angle - initial_angle
+    final_angle = collision_angle + theta
+    initial_magnitude = math.sqrt(game_state.ball.dx ** 2 + game_state.ball.dy ** 2)
+    final_magnitude = initial_magnitude * s.BALL_SPEED_INCREMENT
+    game_state.ball.dx = final_magnitude * math.cos(final_angle)
+    game_state.ball.dy = final_magnitude * math.sin(final_angle)
 
-    if (
-        ball_top_border <= paddle_bottom_border
-        and ball_bottom_border >= paddle_top_border
-    ):
-        game_state.ball.dx *= -s.BALL_SPEED_INCREMENT
-        game_state.ball.dy *= s.BALL_SPEED_INCREMENT
+    if abs(game_state.ball.dx) < s.MINIMUM_X_SPEED:
+        game_state.ball.dx = s.MINIMUM_X_SPEED if game_state.ball.dx > 0 else -s.MINIMUM_X_SPEED
+
 
     return game_state
+    
 
 
 if __name__ == "__main__":
