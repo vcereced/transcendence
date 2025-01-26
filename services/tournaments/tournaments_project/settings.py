@@ -72,7 +72,7 @@ WSGI_APPLICATION = 'tournaments_project.wsgi.application'
 
 #Celery settings
 
-CELERY_BROKER_URL = 'pyamqp://guest:guest@message-broker:5672/'
+CELERY_BROKER_URL = 'amqp://guest:guest@message-broker:5672//'
 
 
 CELERY_RESULT_BACKEND = 'rpc://'
@@ -81,6 +81,11 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
+CELERY_TASK_ROUTES = {
+    'tournaments.tasks.start_matchmaking': {
+        'queue': 'matchmaking_tasks',
+    },
+}
 
 #REDIS SETTINGS
 

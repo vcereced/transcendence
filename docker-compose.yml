@@ -18,6 +18,19 @@ services:
     networks:
       - app-network  # Shared network for internal communication
 
+
+  message-broker:
+    image: rabbitmq:4-management-alpine
+    container_name: message-broker
+    ports:
+        - 5672:5672
+        - 15672:15672
+    environment:
+      - RABBITMQ_LOGS=-error
+    networks:
+      - app-network
+    restart: always
+
   auth:
     build:
       context: ./services/auth  # Directory for auth Dockerfile and code
@@ -135,17 +148,7 @@ services:
     restart: always
     command: [/bin/sh, asyncio_entrypoint.sh]
 
-  message-broker:
-    image: rabbitmq:4-management-alpine
-    container_name: message-broker
-    ports:
-        - 5672:5672
-        - 15672:15672
-    environment:
-      - RABBITMQ_LOGS=-error
-    networks:
-      - app-network
-    restart: always
+
 
   # tournament:
   #   build:

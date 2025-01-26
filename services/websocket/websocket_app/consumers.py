@@ -4,6 +4,7 @@ import redis.asyncio as redis
 import asyncio
 import jwt
 import random
+from .tasks import send_start_matchmaking_task
 
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
@@ -158,6 +159,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.accept()
         #Discover if 8 players are already in the tournament
         if current_user_count == 3:
+            message = {
+                "tournament_id": self.room_name,
+            }
+            await send_start_matchmaking_task(message)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
