@@ -65,7 +65,7 @@ async def control_paddle_by_computer(game_id, side):
         s.INITIAL_GAME_STATE["ball"]["x"], s.INITIAL_GAME_STATE["ball"]["y"], 0, 0
     )
     last_seen_time = time.time()
-    refresh_rate = 1
+    refresh_rate = 1 / 10
     while True:
         game_state = await load_game_state(redis_client, game_id)
 
@@ -75,10 +75,10 @@ async def control_paddle_by_computer(game_id, side):
             final_paddle_y = game_state.right.paddle_y
 
         # Refresh the last seen ball position every refresh_rate seconds
-        if time.time() - last_seen_time <= refresh_rate:
+        if time.time() - last_seen_time > refresh_rate:
             last_seen_time = time.time()
             last_seen_ball = game_state.ball
-            target_paddle_y = determine_target_paddle_y(last_seen_ball)
+            target_paddle_y = determine_target_paddle_y(last_seen_ball, side, target_paddle_y)
 
         final_paddle_y = approach_target_paddle_y(final_paddle_y, target_paddle_y)
 
@@ -88,8 +88,36 @@ async def control_paddle_by_computer(game_id, side):
         await asyncio.sleep(1 / s.FPS)
 
 
-def determine_target_paddle_y(last_seen_ball : Ball):
-    return last_seen_ball.y
+def determine_target_paddle_y(last_seen_ball : Ball, side, target_paddle_y):
+    # Don't calculate target if ball is moving away from the computer paddle
+    if (side == "left" and last_seen_ball.dx > 0) or (side == "right" and last_seen_ball.dx < 0):
+        return target_paddle_y
+    
+    ball_velocity_angle = math.atan2(last_seen_ball.dy, last_seen_ball.dx)
+    x_distance_to_goal = s.FIELD_WIDTH - last_seen_ball.x if side == "right" else last_seen_ball.x
+    y_distance_to_goal = x_distance_to_goal * math.tan(ball_velocity_angle) # WARNING
+
+    target_paddle_y = last_seen_ball.y + y_distance_to_goal
+    
+    # There is at least one wall rebound
+    if target_paddle_y > s.FIELD_HEIGHT or target_paddle_y < 0:
+        distance_to_first_rebound = s.FIELD_HEIGHT - last_seen_ball.y if target_paddle_y > s.FIELD_HEIGHT else last_seen_ball.y
+        amount_of_rebounds = int(y_distance_to_goal - distance_to_first_rebound) // s.FIELD_HEIGHT
+        final_offset = int(y_distance_to_goal - distance_to_first_rebound) % s.FIELD_HEIGHT
+        if target_paddle_y > s.FIELD_HEIGHT:
+            if amount_of_rebounds % 2 == 0:
+                target_paddle_y = s.FIELD_HEIGHT - final_offset
+            else:
+                target_paddle_y = final_offset
+        else:
+            if amount_of_rebounds % 2 == 0:
+                target_paddle_y = final_offset
+            else:
+                target_paddle_y = s.FIELD_HEIGHT - final_offset
+
+    return target_paddle_y
+
+
 
 def approach_target_paddle_y(final_paddle_y, target_paddle_y):
     if final_paddle_y < target_paddle_y - s.PADDLE_MOVE_AMOUNT:
