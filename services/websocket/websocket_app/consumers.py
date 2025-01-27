@@ -162,7 +162,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
             message = {
                 "tournament_id": self.room_name,
             }
-            await send_start_matchmaking_task(message)
+            send_start_matchmaking_task(message)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {

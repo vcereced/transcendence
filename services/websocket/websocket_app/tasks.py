@@ -1,7 +1,7 @@
 from celery import shared_task
 from celery import Celery
 
-app = Celery('websocket_project', broker='amqp://guest:guest@rabbitmq:5672//')
+app = Celery('websocket_project', broker='amqp://guest:guest@message-broker:5672//')
 
 @shared_task
 def send_start_matchmaking_task(message):

@@ -72,7 +72,6 @@ services:
     build:
       context: ./services/tournaments
     container_name: tournaments_celery
-    command: celery -A tournaments_project worker --loglevel=info 
     depends_on:
       - tournaments
       - message-broker
@@ -80,6 +79,7 @@ services:
       - ./services/tournaments:/app
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@message-broker:5672//
+    command: [/bin/sh, celery_entrypoint.sh]
     networks:
       - app-network
 

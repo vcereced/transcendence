@@ -6,7 +6,9 @@ WORKDIR /app
 
 # Copy requirements.txt and install dependencies
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && apt-get update \
+    && apt-get install -y netcat-openbsd
 
 # Copy the Django project files
 COPY . /app/

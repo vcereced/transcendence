@@ -85,6 +85,9 @@ CELERY_TASK_ROUTES = {
     'tournaments.tasks.start_matchmaking': {
         'queue': 'matchmaking_tasks',
     },
+    'tournaments.tasks.game_ended': {
+        'queue': 'matchmaking_tasks',
+    },
 }
 
 #REDIS SETTINGS
