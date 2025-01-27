@@ -60,6 +60,7 @@ def query_db_for_game(game_id):
 async def control_paddle_by_computer(game_id, side):
     redis_client = redis.Redis(host="redis", port=6379)
     final_paddle_y = 0
+    target_paddle_y = 0
     last_seen_ball = Ball(
         s.INITIAL_GAME_STATE["ball"]["x"], s.INITIAL_GAME_STATE["ball"]["y"], 0, 0
     )
@@ -74,23 +75,33 @@ async def control_paddle_by_computer(game_id, side):
             final_paddle_y = game_state.right.paddle_y
 
         # Refresh the last seen ball position every refresh_rate seconds
-        if time.time() - last_seen_time > refresh_rate:
+        if time.time() - last_seen_time <= refresh_rate:
             last_seen_time = time.time()
             last_seen_ball = game_state.ball
+            target_paddle_y = determine_target_paddle_y(last_seen_ball)
 
-        if final_paddle_y < last_seen_ball.y - s.PADDLE_MOVE_AMOUNT:
-            final_paddle_y += s.PADDLE_MOVE_AMOUNT
-        elif final_paddle_y > last_seen_ball.y + s.PADDLE_MOVE_AMOUNT:
-            final_paddle_y -= s.PADDLE_MOVE_AMOUNT
-        final_paddle_y = max(
-            s.PADDLE_HEIGHT / 2,
-            min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, final_paddle_y),
-        )
+        final_paddle_y = approach_target_paddle_y(final_paddle_y, target_paddle_y)
 
         await redis_client.set(
             f"game:{game_id}:{side}_paddle_y", json.dumps(final_paddle_y)
         )
         await asyncio.sleep(1 / s.FPS)
+
+
+def determine_target_paddle_y(last_seen_ball : Ball):
+    return last_seen_ball.y
+
+def approach_target_paddle_y(final_paddle_y, target_paddle_y):
+    if final_paddle_y < target_paddle_y - s.PADDLE_MOVE_AMOUNT:
+        final_paddle_y += s.PADDLE_MOVE_AMOUNT
+    elif final_paddle_y > target_paddle_y + s.PADDLE_MOVE_AMOUNT:
+        final_paddle_y -= s.PADDLE_MOVE_AMOUNT
+    final_paddle_y = max(
+        s.PADDLE_HEIGHT / 2,
+        min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, final_paddle_y),
+    )
+
+    return final_paddle_y
 
 
 async def load_game_state(redis_client: redis.Redis, game_id):
