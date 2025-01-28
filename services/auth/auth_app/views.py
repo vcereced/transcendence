@@ -80,8 +80,9 @@ def validate_token_view(request):
     
 @api_view(['POST'])
 def refresh_token_view(request):
+    print("ENTRANDO EN -> refresh_token_view")
     refresh_token = request.data.get('refresh_token')
-
+    print("refresh_token ->: ", str(refresh_token))
     if not refresh_token:
         return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -89,6 +90,8 @@ def refresh_token_view(request):
         # Decodificar el refresh token y generar un nuevo access token
         token = RefreshToken(refresh_token)
         new_access_token = str(token.access_token)
+
+        print("new_token ->: ", str(new_access_token))
 
         return Response({
             'access_token': new_access_token,
