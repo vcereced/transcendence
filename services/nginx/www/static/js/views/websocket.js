@@ -23,8 +23,10 @@ export function renderWebsocket() {
         `;
     }
     
-export function abrirWebSocket(roomName) {
+export function openWebSocket(roomName) {
     const messagesDiv = document.getElementById("messages");
+    const roomNameInput = document.getElementById("roomName");
+    
     let socket;
             // Establecer la conexión WebSocket si el token es válido
             socket = new WebSocket(`wss://localhost:8443/ws/room/${roomName}/`);
@@ -61,13 +63,6 @@ async function validarToken(token) {
     try {
         const response = await fetch('/auth-check', {
             method: 'GET', 
-            headers: {
-                'Authorization': `Bearer ${token}`, 
-                'Content-Type': 'application/json',
-            },
-            //body: JSON.stringify({
-           //     accessToken: token, // Aquí enviamos el accessToken en el cuerpo
-          //  }),
         });
 
         if (response.ok) {
@@ -90,9 +85,9 @@ async function validarToken(token) {
 
 // Función para inicializar la lógica del WebSocket
 export async function initWebsocket() {
-    
+
     const connectBtn = document.getElementById("connectBtn");
-    const roomNameInput = document.getElementById("roomName");
+    //const roomNameInput = document.getElementById("roomName");
     const messagesDiv = document.getElementById("messages");
     const userCountDiv = document.getElementById("count");
     let token = localStorage.getItem("accessToken");
@@ -117,7 +112,7 @@ export async function initWebsocket() {
 
             if (result === "Ok") {
                 console.log("first OK go to openwebsoket");
-                abrirWebSocket(roomName); // Si el token es válido, abre el WebSocket
+                openWebSocket(roomName); // Si el token es válido, abre el WebSocket
             } else if (result === "Token has expired") {
                 console.log("token has expired got to renovar token");
                 token = await renovarToken(); // Si el token expiró, intenta renovarlo
@@ -126,7 +121,7 @@ export async function initWebsocket() {
 
                 if (renewedResult === "Ok") {
                     console.log("token validated go to openwebsoket");
-                    abrirWebSocket(roomName);
+                    openWebSocket(roomName);
                 } else {
                     console.log("token NOT validated ");
                     console.error("No se valida el nuevo token");
