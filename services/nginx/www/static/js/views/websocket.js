@@ -87,7 +87,7 @@ async function validarToken(token) {
 export async function initWebsocket() {
 
     const connectBtn = document.getElementById("connectBtn");
-    //const roomNameInput = document.getElementById("roomName");
+    const roomNameInput = document.getElementById("roomName");
     const messagesDiv = document.getElementById("messages");
     const userCountDiv = document.getElementById("count");
     let token = localStorage.getItem("accessToken");
