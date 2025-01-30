@@ -24,15 +24,11 @@ export function renderWebsocket() {
     }
 
 async function handleReconnection(secondTry) {
-    console.log("Intentando renovar el token...");
-    const newToken = await renovarToken();
+
+    await renovateToken();
     
-    if (newToken) {
-        console.log("Token renovado, reintentando conexión...");
-        openWebSocket(secondTry);
-    } else {
-        console.error("No se pudo renovar el token.");
-    }
+    console.log("Token renovated, trying again conexion...");
+    openWebSocket(secondTry);
 }
 
 
@@ -41,6 +37,10 @@ export async function openWebSocket(secondTry) {
     const roomNameInput = document.getElementById("roomName");
     const roomName = roomNameInput.value.trim();
 
+    if (!roomName) {
+        console.log("Name of room empty, fill it");
+        return;
+    }
 
     let socket;
             // Establecer la conexión WebSocket si el token es válido
@@ -48,6 +48,7 @@ export async function openWebSocket(secondTry) {
 
             // Event listener cuando la conexión se abra
             socket.onopen = () => {
+                console.log("Websocket connection OK");
                 messagesDiv.innerHTML = `<p><strong>Conectado a la sala: ${roomName}</strong></p>`;
             };
 
@@ -69,11 +70,15 @@ export async function openWebSocket(secondTry) {
             };
 
             // Manejar el cierre de la conexión
-            socket.onclose = (event) => {
-                console.log(`token has expired got to renovar token or suddenly closed${event.code}`);
+            socket.onclose = async (event) => {
+                console.log(`token has expired or suddenly closed: websocket.code: ${event.code}`);
 
                 if (!secondTry) {
-                   handleReconnection(true);
+                    try {
+                   await handleReconnection(true); //maybe otrer try/catch and relaunch error
+                } catch (err) {
+                    console.error("openWebsocket:", err);
+                }
                 } else {
                     messagesDiv.innerHTML += `<p style="color: red;">Error: Conexión cerrada.</p>`;
                 }
@@ -113,79 +118,36 @@ export async function initWebsocket() {
     const userCountDiv = document.getElementById("count");
     let token = localStorage.getItem("accessToken");
 
-
     // Conectar al WebSocket cuando el usuario presiona el botón
     connectBtn.addEventListener("click", async () => {
-        const roomName = roomNameInput.value.trim();
-        if (!roomName) {
-            alert("Por favor, ingresa un nombre de sala.");
-            return;
-        }
 
         if (!token) {
             alert("Por favor, inicia sesión.");
             return;
         }
 
-        try {
-            // console.log("antes de validar");
-            // // Validar el token antes de conectar al WebSocket
-            // const result = await validarToken(token);
-
-            // if (result === "Ok") {
-            //     console.log("first OK go to openwebsoket");
-            //     openWebSocket(roomName); // Si el token es válido, abre el WebSocket
-            // } else if (result === "Token has expired") {
-            //     console.log("token has expired got to renovar token");
-            //     token = await renovarToken(); // Si el token expiró, intenta renovarlo
-            //     console.log("token renovated go to validartoken");
-            //     const renewedResult = await validarToken(token); // Validar el nuevo token
-
-            //     if (renewedResult === "Ok") {
-            //         console.log("token validated go to openwebsoket");
-            //         openWebSocket(roomName);
-            //     } else {
-            //         console.log("token NOT validated ");
-            //         console.error("No se valida el nuevo token");
-            //     }
-            // } else {
-            //     console.error("Token inválido u otro error:", result);
-            // }
-
-            openWebSocket(false);
-
-        } catch (error) {
-            console.error("Error en la validación del token:", error);
-        }
+        openWebSocket(false);
     });
 }
 
         
-export async function renovarToken() {
+export async function renovateToken() {
     const refreshToken = localStorage.getItem("refreshToken");
 
     if (refreshToken) {
-        const data = await getNewAccessToken(refreshToken); // Espera la respuesta de la promesa
-        if (data && data.access_token) {
-            console.log("got guardarAccessToken token new", data.access_token);
-            guardarAccessToken(data.access_token); // Guarda el nuevo token
-            console.log("exit from guardarAccessToken");
-            return data.access_token; // Retorna el nuevo access token
-        } else {
-            console.error("renovarToken: No se pudo renovar el token.");
-            return null;
-        }
-    } else {
-        console.error("renovarToken: No hay refresh_token disponible");
-        alert("No hay un refreshToken disponible. Redirigiendo al inicio de sesión.");
-    }
-}
+        const data = await getNewAccessToken(refreshToken);
 
-export function guardarAccessToken(accessToken) {
-    //localStorage.removeItem("accessToken");
-    console.log("inside guardarAccessToken = ", accessToken);
-    document.cookie = `accessToken=${accessToken}; path=/; secure; SameSite=Lax`;
-    //localStorage.setItem("accessToken", accessToken);
+        if (data && data.access_token) {
+
+            document.cookie = `accessToken=${data.access_token}; path=/; secure; SameSite=Lax`;
+            console.log("Token renovated:", data);
+
+        } else {
+            throw new Error("renovateToken: cannot obtein new access token available");}
+    } else {
+        alert("No hay un refreshToken disponible. Redirigiendo al inicio de sesión.");
+        throw new Error("renovateToken: refreshToken not available");
+    }
 }
 
 export async function getNewAccessToken(refreshToken) {
@@ -202,13 +164,11 @@ export async function getNewAccessToken(refreshToken) {
 
         if (response.ok) {
             const data = await response.json();
-            console.log("Token renovado exitosamente:", data);
-            return data; // Devuelve los datos, que deben incluir el nuevo access_token
+            return data;
         } else {
-            console.error(`Error al obtener nuevo access_token: ${response.status}`);
-        }
-        return null;
+            throw new Error(`getNewAccessToken: error new access_token, response: ${response.status}`);}
+
     } catch (error) {
-        console.error("getNewAccessToken: error fetch /auth-refresh", error);
+        throw new Error(`getNewAccessToken: Fetch error details: - ${error.message}`);
     }
 }  
