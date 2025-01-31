@@ -1,3 +1,5 @@
+import { handleReconnection } from './jwtValidator.js';
+
 // static/js/views/websocket.js
 
 // Función para renderizar el HTML de la página WebSocket
@@ -22,15 +24,6 @@ export function renderWebsocket() {
         </div>
         `;
     }
-
-async function handleReconnection(secondTry) {
-
-    await renovateToken();
-    
-    console.log("Token renovated, trying again conexion...");
-    openWebSocket(secondTry);
-}
-
 
 export async function openWebSocket(secondTry) {
     const messagesDiv = document.getElementById("messages");
@@ -74,39 +67,16 @@ export async function openWebSocket(secondTry) {
                 console.log(`token has expired or suddenly closed: websocket.code: ${event.code}`);
 
                 if (!secondTry) {
+
                     try {
-                   await handleReconnection(true); //maybe otrer try/catch and relaunch error
-                } catch (err) {
-                    console.error("openWebsocket:", err);
-                }
+                        await handleReconnection(true); //maybe otrer try/catch and relaunch error
+                    } catch (err) {
+                        console.error("openWebsocket:", err);}
+                        
                 } else {
                     messagesDiv.innerHTML += `<p style="color: red;">Error: Conexión cerrada.</p>`;
                 }
             };
-}
-
-async function validarToken(token) {
-    try {
-        const response = await fetch('/auth-check', {
-            method: 'GET', 
-        });
-
-        if (response.ok) {
-            return "Ok"; 
-        } else if (response.status === 400) {
-            console.log("validar token: Token not available");
-            return "Token not available"; 
-        } else if (response.status === 401) {
-            console.log("validar token: Token has expired");
-            return "Token has expired"; 
-        } else {
-            console.log("validar token: Token not valid", response.status);
-            return "Token not valid"; 
-        }
-    } catch (error) {
-        console.error("validar token: Error fetch /auth-check", error);
-        return false;
-    }
 }
 
 // Función para inicializar la lógica del WebSocket
@@ -129,46 +99,3 @@ export async function initWebsocket() {
         openWebSocket(false);
     });
 }
-
-        
-export async function renovateToken() {
-    const refreshToken = localStorage.getItem("refreshToken");
-
-    if (refreshToken) {
-        const data = await getNewAccessToken(refreshToken);
-
-        if (data && data.access_token) {
-
-            document.cookie = `accessToken=${data.access_token}; path=/; secure; SameSite=Lax`;
-            console.log("Token renovated:", data);
-
-        } else {
-            throw new Error("renovateToken: cannot obtein new access token available");}
-    } else {
-        alert("No hay un refreshToken disponible. Redirigiendo al inicio de sesión.");
-        throw new Error("renovateToken: refreshToken not available");
-    }
-}
-
-export async function getNewAccessToken(refreshToken) {
-    try {
-        const response = await fetch('/auth-refresh', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                refresh_token: refreshToken,
-            }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        } else {
-            throw new Error(`getNewAccessToken: error new access_token, response: ${response.status}`);}
-
-    } catch (error) {
-        throw new Error(`getNewAccessToken: Fetch error details: - ${error.message}`);
-    }
-}  

@@ -10,6 +10,8 @@ import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
 import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
 
+
+
 /**
  * Container for possible routes of the SPA. Works as a pointer
  * of functions to render and initialize each section.
