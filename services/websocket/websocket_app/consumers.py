@@ -93,6 +93,21 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    #MESSAGING FUNCTION FROM GLOBAL WS TO SPECIFIC ROOM WS
+    async def game_end_notification(self, tournament_id, game_result):
+   
+        message = {
+            "type": "game_end",  # Tipo de evento
+            "tournament_id": tournament_id,
+            "game_result": game_result,  # Resultado del juego
+        }
+
+        # Enviar mensaje a los consumidores del torneo específico
+        await self.channel_layer.group_send(
+            f"tournament_{tournament_id}",  # El grupo específico del torneo
+            message
+        )
+
 
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -104,7 +119,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.room_group_name = (
             f"tournament_{self.room_name}"  # Canal específico del torneo
         )
-
+        print(f"someone connected to {self.room_group_name}")
         # Conectar a Redis
         self.redis = redis.Redis(host="redis", port=6379)
 
@@ -162,7 +177,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
             message = {
                 "tournament_id": self.room_name,
             }
-            send_start_matchmaking_task(message)
+            send_start_matchmaking_task(message) #should this be async?
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -251,3 +266,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
+
+    # Manejar el mensaje de "game_end"
+    async def game_end(self, event):
+        tournament_id = event["tournament_id"]
+        game_result = event["game_result"]
+        
+        # Lógica para actualizar la interfaz de usuario cuando el juego termine
+        await self.send(
+            text_data=json.dumps({
+                "type": "game_end",  # Tipo de mensaje
+                "tournamentId": tournament_id,
+                "gameResult": game_result,
+            })
+        )
