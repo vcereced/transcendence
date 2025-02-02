@@ -2,7 +2,7 @@ import { openWebSocket } from './websocket.js';
 
 async function getNewAccessToken(refreshToken) {
 try {
-        const response = await fetch('/auth-refresh', {
+        const response = await fetch('/api/usr/refreshToken', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,9 +42,9 @@ async function renovateToken() {
     }
 }
 
-async function validarToken() {
+async function validateToken() {
     try {
-        const response = await fetch('/auth-check', {
+        const response = await fetch('/api/usr/validateToken', {
             method: 'GET', 
             headers: {
                 'Content-Type': 'application/json',
@@ -54,28 +54,26 @@ async function validarToken() {
         if (response.ok) {
             return "Ok"; 
         } else if (response.status === 400) {
-            console.log("validar token: Token not available");
             return "Token not available"; 
-        } else if (response.status === 401) {
-            console.log("validar token: Token has expired");
-            return "Token has expired"; 
         } else {
-            console.log("validar token: Token not valid", response.status);
-            return "Token not valid"; 
+            return "Token has expired or invalid"; 
         }
+        
     } catch (error) {
-        console.error("validar token: Error fetch /auth-check", error);
+        console.error("validar token: Error fetch /api/usr/validateToken", error);
         return false;
     }
 }
 
 export async function handleJwtToken() {
     try{
-        const response = await validarToken();
+        const response = await validateToken();
         
-        if (response === "Token has expired"){
+        if (response === "Token has expired or invalid") {
             await renovateToken();
             console.log("Token renovated, trying again conexion...");
+        } else if (response === "Token not available") {
+            throw new Error("handleJwtToken: token not available");
         }
 
     } catch (error) {
