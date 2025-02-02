@@ -1,7 +1,7 @@
 import { openWebSocket } from './websocket.js';
 
 async function getNewAccessToken(refreshToken) {
-    try {
+try {
         const response = await fetch('/auth-refresh', {
             method: 'POST',
             headers: {
@@ -42,10 +42,44 @@ async function renovateToken() {
     }
 }
 
-export async function handleReconnection(secondTry) {
+async function validarToken() {
+    try {
+        const response = await fetch('/auth-check', {
+            method: 'GET', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.ok) {
+            return "Ok"; 
+        } else if (response.status === 400) {
+            console.log("validar token: Token not available");
+            return "Token not available"; 
+        } else if (response.status === 401) {
+            console.log("validar token: Token has expired");
+            return "Token has expired"; 
+        } else {
+            console.log("validar token: Token not valid", response.status);
+            return "Token not valid"; 
+        }
+    } catch (error) {
+        console.error("validar token: Error fetch /auth-check", error);
+        return false;
+    }
+}
 
-    await renovateToken();
-    
-    console.log("Token renovated, trying again conexion...");
-    openWebSocket(secondTry);
+export async function handleJwtToken() {
+    try{
+        const response = await validarToken();
+        
+        if (response === "Token has expired"){
+            await renovateToken();
+            console.log("Token renovated, trying again conexion...");
+        }
+
+    } catch (error) {
+        console.error("handleJwtToken", error);
+    }
+
 }

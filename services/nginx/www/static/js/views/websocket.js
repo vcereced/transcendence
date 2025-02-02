@@ -1,4 +1,4 @@
-import { handleReconnection } from './jwtValidator.js';
+import { handleJwtToken } from './jwtValidator.js';
 
 // static/js/views/websocket.js
 
@@ -37,6 +37,7 @@ export async function openWebSocket(secondTry) {
 
     let socket;
             // Establecer la conexión WebSocket si el token es válido
+            await handleJwtToken();
             socket = new WebSocket(`wss://localhost:8443/ws/room/${roomName}/`);
 
             // Event listener cuando la conexión se abra
@@ -65,17 +66,6 @@ export async function openWebSocket(secondTry) {
             // Manejar el cierre de la conexión
             socket.onclose = async (event) => {
                 console.log(`token has expired or suddenly closed: websocket.code: ${event.code}`);
-
-                if (!secondTry) {
-
-                    try {
-                        await handleReconnection(true); //maybe otrer try/catch and relaunch error
-                    } catch (err) {
-                        console.error("openWebsocket:", err);}
-                        
-                } else {
-                    messagesDiv.innerHTML += `<p style="color: red;">Error: Conexión cerrada.</p>`;
-                }
             };
 }
 

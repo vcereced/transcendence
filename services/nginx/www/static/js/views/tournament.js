@@ -1,3 +1,5 @@
+import { handleJwtToken } from './jwtValidator.js';
+
 export function renderTournament() {
     return `
         <div class="container">
@@ -37,6 +39,7 @@ async function loadTournaments() {
     tournamentList.innerHTML = ""; // Limpiar la lista antes de agregar nuevos torneos
 
     try {
+        await handleJwtToken();
         const [tournamentResponse, playerCountsResponse] = await Promise.all([
             fetch('/api/tournament/'), // Obtener los torneos existentes
             fetch('/api/tournament/player_counts') // Obtener los contadores de jugadores
@@ -94,6 +97,7 @@ async function createTournament(event) {
 
     if (tournamentName) {
         try {
+            await handleJwtToken();
             const response = await fetch('/api/tournament/create', {
                 method: 'POST',
                 headers: {
@@ -116,7 +120,8 @@ async function createTournament(event) {
 }
 
 // Función para iniciar el WebSocket global
-function startGlobalWebSocket() {
+async function startGlobalWebSocket() {
+    await handleJwtToken();
     const socket = new WebSocket(`wss://${window.location.host}/ws/global_tournament_counter/`);
 
     socket.onopen = () => {
@@ -153,6 +158,7 @@ function startGlobalWebSocket() {
 // Función para unirse a un torneo
 async function joinTournament(tournamentId) {
     try {
+        await handleJwtToken();
         const response = await fetch(`/api/tournament/${tournamentId}/join`, {
             method: 'POST',
         });
