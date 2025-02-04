@@ -4,7 +4,7 @@ import redis.asyncio as redis
 import asyncio
 import jwt
 import random
-from .tasks import send_start_matchmaking_task
+from .tasks import send_start_matchmaking_task, end_game_simulation
 
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
@@ -39,28 +39,60 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         asyncio.create_task(self.listen_to_redis())
 
     async def listen_to_redis(self):
-        # Bucle para escuchar los mensajes en el canal de Redis
         while True:
             message = await self.pubsub.get_message(ignore_subscribe_messages=True)
             if message:
-                # Procesamos el mensaje recibido
-                print(f"Received message from Redis: {message}")
-                if message["type"] == "message":
-                    # Extraemos los datos del mensaje
-                    data = json.loads(message["data"])
-                    tournament_id = data.get("tournamentId")
-                    user_count = data.get("user_count")
+                data = json.loads(message["data"])
+                tournament_id = data.get("tournament_id")
 
-                    if tournament_id and user_count is not None:
-                        # Enviar los datos de actualización a todos los clientes conectados
-                        await self.send(
-                            text_data=json.dumps(
-                                {
-                                    "tournamentId": tournament_id,
-                                    "user_count": user_count,
-                                }
-                            )
-                        )
+                if data["type"] == "user_count_update":
+                    user_count = data.get("user_count")
+                    await self.send(
+                        json.dumps(
+                        {"tournament_id": tournament_id, 
+                         "user_count": user_count}))
+
+                elif data["type"] == "game_end":  
+                    winner = data.get("winner")
+                    #Print with Color RED
+                    print(f"\033[91mGame ended LISTENED TO REDIS. Winner: {winner}\033[0m")
+
+                    await self.channel_layer.group_send(
+                        f"tournament_{tournament_id}",  
+                        {"type": "game_end_notification", 
+                         "tournament_id": tournament_id,
+                         "winner": winner,
+                         "loser": data.get("loser"),
+                         "match_id": data.get("game_id")
+                        }
+                    )
+
+
+
+
+    # async def listen_to_redis(self):
+    #     # Bucle para escuchar los mensajes en el canal de Redis
+    #     while True:
+    #         message = await self.pubsub.get_message(ignore_subscribe_messages=True)
+    #         if message:
+    #             # Procesamos el mensaje recibido
+    #             print(f"Received message from Redis: {message}")
+    #             if message["type"] == "message":
+    #                 # Extraemos los datos del mensaje
+    #                 data = json.loads(message["data"])
+    #                 tournament_id = data.get("tournament_id")
+    #                 user_count = data.get("user_count")
+
+    #                 if tournament_id and user_count is not None:
+    #                     # Enviar los datos de actualización a todos los clientes conectados
+    #                     await self.send(
+    #                         text_data=json.dumps(
+    #                             {
+    #                                 "tournament_id": tournament_id,
+    #                                 "user_count": user_count,
+    #                             }
+    #                         )
+    #                     )
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo global
@@ -89,24 +121,24 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         # Enviar la actualización a todos los clientes conectados
         await self.send(
             text_data=json.dumps(
-                {"tournamentId": tournament_id, "user_count": user_count}
+                {"tournament_id": tournament_id, "user_count": user_count}
             )
         )
 
-    #MESSAGING FUNCTION FROM GLOBAL WS TO SPECIFIC ROOM WS
-    async def game_end_notification(self, tournament_id, game_result):
+    # #MESSAGING FUNCTION FROM GLOBAL WS TO SPECIFIC ROOM WS
+    # async def game_end_notification(self, tournament_id, game_result):
    
-        message = {
-            "type": "game_end",  # Tipo de evento
-            "tournament_id": tournament_id,
-            "game_result": game_result,  # Resultado del juego
-        }
+    #     message = {
+    #         "type": "game_end",  # Tipo de evento
+    #         "tournament_id": tournament_id,
+    #         "game_result": game_result,  # Resultado del juego
+    #     }
 
-        # Enviar mensaje a los consumidores del torneo específico
-        await self.channel_layer.group_send(
-            f"tournament_{tournament_id}",  # El grupo específico del torneo
-            message
-        )
+    #     # Enviar mensaje a los consumidores del torneo específico
+    #     await self.channel_layer.group_send(
+    #         f"tournament_{tournament_id}",  # El grupo específico del torneo
+    #         message
+    #     )
 
 
 class RoomConsumer(AsyncWebsocketConsumer):
@@ -172,7 +204,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.send_message("Hello from the server mr. " + self.username)
         # Aceptar la conexión WebSocket
         await self.accept()
-        #Discover if 8 players are already in the tournament
+        #Discover if 8 players are already in the tournament. TESTING
         if current_user_count == 3:
             message = {
                 "tournament_id": self.room_name,
@@ -184,6 +216,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     "type": "start_tournament",
                 },
             )
+    #JUST FOR TESTING PURPOSES
+        if current_user_count == 4:
+            message = {
+                "tournament_id": self.room_name,
+                "winner": "jugador1",
+                "loser": "jugador2",
+                "game_id": "1",
+            }
+            end_game_simulation(message)
+
+
 
     async def start_tournament(self, event):
         # Send message to WebSocket
@@ -206,7 +249,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
     async def publish_global_update(self, user_count):
         """Publica la actualización de conteo en el canal de Redis global."""
         message = {
-            "tournamentId": self.room_name,  # El ID del torneo (extraído de la URL)
+            "type": "user_count_update",
+            "tournament_id": self.room_name,  # El ID del torneo (extraído de la URL)
             "user_count": user_count,
         }
         await self.redis.publish("tournaments_channel", json.dumps(message))
@@ -216,7 +260,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         "Publica actualizacion de nombres de usuarios en el canal de Redis local"
         user_list = await self.redis.smembers(f"{self.room_group_name}_users")
         decoded_user_list = [user.decode("utf-8") for user in user_list]
-        message = {"tournamentId": self.room_name, "user_list": decoded_user_list}
+        message = {"tournament_id": self.room_name, "user_list": decoded_user_list}
         await self.redis.publish(self.room_group_name, json.dumps(message))
         await self.channel_layer.group_send(
             self.room_group_name, {"type": "user_list", "user_list": decoded_user_list}
@@ -267,16 +311,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
 
-    # Manejar el mensaje de "game_end"
-    async def game_end(self, event):
-        tournament_id = event["tournament_id"]
-        game_result = event["game_result"]
-        
-        # Lógica para actualizar la interfaz de usuario cuando el juego termine
-        await self.send(
-            text_data=json.dumps({
-                "type": "game_end",  # Tipo de mensaje
-                "tournamentId": tournament_id,
-                "gameResult": game_result,
-            })
-        )
+    #GAME END NOTIFICATION HANDLERS(THIS WILL BE CALLED FROM THE GLOBAL WS)  
+    async def game_end_notification(self, event):
+        usename = self.username
+        await self.send(json.dumps({
+            "type": "game_end",
+            "tournament_id": event["tournament_id"],
+            "winner": event["winner"],
+            "loser": event["loser"],
+            "match_id": event["match_id"],
+            "username": usename
+
+        }))
+
+

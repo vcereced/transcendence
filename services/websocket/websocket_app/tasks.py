@@ -16,3 +16,17 @@ def send_start_matchmaking_task(message):
         queue='matchmaking_tasks')
 
     print("Tarea  start Matchmaking enviada al servicio de torneos.")
+
+@shared_task
+def end_game_simulation(message):
+    """
+    Esta tarea se ejecuta en el servicio 'websocket', y cuando se ejecuta, envía una tarea
+    a otro servicio para finalizar la simulación de un juego.
+    """
+    # Enviar la tarea al servicio 'tournaments' (asumiendo que la tarea se llama 'end_game_simulation')
+    app.send_task(
+        'end_match',
+        args=[message],
+        queue='matchmaking_tasks')
+
+    print("Tarea end_game_simulation enviada al servicio de juegos.")

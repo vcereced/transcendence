@@ -4,6 +4,7 @@ from celery import shared_task
 from celery import Celery
 from django.conf import settings
 import redis
+import json
 
 redis_client = redis.Redis(
     host=settings.REDIS_HOST,
@@ -27,6 +28,8 @@ def send_create_game_task(players):
         "left_player_username": players["left_player_username"],
         "right_player_id": players["right_player_id"],
         "right_player_username": players["right_player_username"],
+        "tournament_id": players["tournament_id"],
+        "game_id": players["game_id"],
     }
 
     # Enviar la tarea al servicio 'game' (asumiendo que la tarea se llama 'create_game')
@@ -86,7 +89,7 @@ def start_matchmaking(message):
             "right_player_id": right_player["user_id"],
             "right_player_username": right_player["username"],
             "tournament_id": tournament_id,
-            "game_id": f"{tournament_id}_game_{i // 2}",
+            "game_id": f"{(i // 2) + 1}", 
             # "return_url": message["return_url"],
         })
 
@@ -101,12 +104,15 @@ def start_matchmaking(message):
 
 @shared_task(name='end_match')
 def end_match(message):
-   #message = {
-    #    "winner": winner,
-    #    "loser": loser,
-    #    "tournament_id": tournament_id,
-    #    "game_id": game_id,
+    message_redis = {
+        "type": "game_end",
+        "winner": message["winner"],
+        "loser": message["loser"],
+        "tournament_id": message["tournament_id"],
+        "game_id":   message["game_id"],
+    } 
     print(f"El juego ha terminado. Ganador: {message['winner']}.")
+    redis_client.publish("tournaments_channel", json.dumps(message_redis))
     # Aquí se puede agregar lógica adicional, como actualizar las puntuaciones de los jugadores.
     # Por ahora, simplemente imprimimos un mensaje.
     print("Fin del juego.")
