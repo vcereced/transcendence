@@ -118,7 +118,6 @@ def determine_target_paddle_y(last_seen_ball : Ball, side, target_paddle_y):
     return target_paddle_y
 
 
-
 def approach_target_paddle_y(final_paddle_y, target_paddle_y):
     if final_paddle_y < target_paddle_y - s.PADDLE_MOVE_AMOUNT:
         final_paddle_y += s.PADDLE_MOVE_AMOUNT

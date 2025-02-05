@@ -26,16 +26,26 @@ export async function initGame() {
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/`);
 
     const canvas = document.getElementById('pong-canvas');
+    const maxCanvasHeightToWindow = 0.6;
+    const maxCanvasWidthToWindow = 0.6;
     const context = canvas.getContext('2d');
     const leftUsernameSpan = document.getElementById('left-username');
     const rightUsernameSpan = document.getElementById('right-username');
     const leftScoreSpan = document.getElementById('left-score');
     const rightScoreSpan = document.getElementById('right-score');
 
+    let fieldHeightProportion;
+    let fieldWidthProportion;
+    let ballRadiusProportion;
+    let paddleRadiusProportion;
+    let paddleOffsetProportion;
+
+    let fieldHeight;
+    let fieldWidth;
     let ballRadius;
-    let paddleHeight;
     let paddleRadius;
     let paddleOffset;
+
     let angleInRadians;
     let fps;
 
@@ -53,10 +63,10 @@ export async function initGame() {
         const data = JSON.parse(event.data);
 
         if (data.type === 'game_state_update') {
-            leftPaddleY = data.game_state.left.paddle_y;
-            rightPaddleY = data.game_state.right.paddle_y;
-            ball.x = data.game_state.ball.x;
-            ball.y = data.game_state.ball.y;
+            leftPaddleY = data.game_state.left.paddle_y * fieldHeight;
+            rightPaddleY = data.game_state.right.paddle_y * fieldHeight;
+            ball.x = data.game_state.ball.x * fieldHeight;
+            ball.y = data.game_state.ball.y * fieldHeight;
             leftScoreSpan.innerText = data.game_state.left.score;
             rightScoreSpan.innerText = data.game_state.right.score;
             drawEverything();
@@ -64,14 +74,28 @@ export async function initGame() {
         } else if (data.type === 'initial_information') {
             leftUsernameSpan.innerText = data.left_player_username;
             rightUsernameSpan.innerText = data.right_player_username;
-            canvas.setAttribute('width', data.field_width);
-            canvas.setAttribute('height', data.field_height);
-            ballRadius = data.ball_radius;
-            paddleHeight = data.paddle_height;
+
+            fieldHeightProportion = data.field_height;
+            fieldWidthProportion = data.field_width;
+            ballRadiusProportion = data.ball_radius;
+            paddleRadiusProportion = data.paddle_radius;
+            paddleOffsetProportion = data.paddle_offset;
+
+            fieldHeight = fieldHeightProportion * maxCanvasHeightToWindow * window.innerHeight;
+            fieldWidth = fieldWidthProportion * fieldHeight;
+            if (fieldWidth > maxCanvasWidthToWindow * window.innerWidth) {
+                fieldWidth = maxCanvasWidthToWindow * window.innerWidth;
+                fieldHeight = fieldWidth / fieldWidthProportion;
+            }
+
+            ballRadius = ballRadiusProportion * fieldHeight;
+            paddleOffset = paddleOffsetProportion * fieldHeight;
+            paddleRadius = paddleRadiusProportion * fieldHeight;
             fps = data.fps;
-            paddleOffset = data.paddle_offset;
-            paddleRadius = data.paddle_radius;
             angleInRadians = data.paddle_edge_angle_radians;
+
+            canvas.setAttribute('height', fieldHeight);
+            canvas.setAttribute('width', fieldWidth);
 
             gameLoop();
         } 
@@ -157,6 +181,23 @@ export async function initGame() {
         keys.arrowUp = false;
         keys.arrowDown = false;
     });
+
+    window.addEventListener('resize', () => {
+        fieldHeight = fieldHeightProportion * maxCanvasHeightToWindow * window.innerHeight;
+        fieldWidth = fieldWidthProportion * fieldHeight;
+        if (fieldWidth > maxCanvasWidthToWindow * window.innerWidth) {
+            fieldWidth = maxCanvasWidthToWindow * window.innerWidth;
+            fieldHeight = fieldWidth / fieldWidthProportion;
+        }
+
+        ballRadius = ballRadiusProportion * fieldHeight;
+        paddleOffset = paddleOffsetProportion * fieldHeight;
+        paddleRadius = paddleRadiusProportion * fieldHeight;
+
+        canvas.setAttribute('height', fieldHeight);
+        canvas.setAttribute('width', fieldWidth);
+        drawEverything();
+    })
 
     // Game loop
     
