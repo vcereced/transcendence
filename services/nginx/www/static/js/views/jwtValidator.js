@@ -1,7 +1,5 @@
-import { openWebSocket } from './websocket.js';
-
 async function getNewAccessToken(refreshToken) {
-try {
+    try {
         const response = await fetch('/api/usr/refreshToken', {
             method: 'POST',
             headers: {

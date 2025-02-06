@@ -9,8 +9,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     gnupg \
-    make \
-    unzip
+    make 
 
 # Agrega la clave publica oficial y el repositorio oficial de OpenResty
 RUN wget -qO - https://openresty.org/package/pubkey.gpg | apt-key add - && \
@@ -19,19 +18,6 @@ RUN wget -qO - https://openresty.org/package/pubkey.gpg | apt-key add - && \
 
 # Instalar OpenResty
 RUN apt-get install -y openresty
-
-# Descargar e instalar LuaRocks
-RUN wget https://luarocks.org/releases/luarocks-3.9.1.tar.gz && \
-    tar zxpf luarocks-3.9.1.tar.gz && \
-    cd luarocks-3.9.1 && \
-    ./configure --with-lua=/usr/local/openresty/luajit/ --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf luarocks-3.9.1 luarocks-3.9.1.tar.gz
-
-# Instalar lua-resty-jwt a través de LuaRocks
-RUN luarocks install lua-resty-jwt
 
 #certificate
 RUN apt-get update && apt-get upgrade -y && apt-get install -y openssl && \

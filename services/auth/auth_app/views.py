@@ -65,9 +65,10 @@ def login_api_view(request):
 	
 @api_view(['GET'])
 def validate_token_view(request):
-    print("ENTRANDO EN -> validate_token_view")
-    token = request.COOKIES.get('accessToken')  # Obtener el token de las cookies
+
+    token = request.COOKIES.get('accessToken')
     print("validate_token_view: ", str(token))
+
     if not token:
         return Response({'error': 'accessToken is required in cookies'}, status=status.HTTP_400_BAD_REQUEST)
     try:
@@ -80,14 +81,14 @@ def validate_token_view(request):
     
 @api_view(['POST'])
 def refresh_token_view(request):
-    print("ENTRANDO EN -> refresh_token_view")
+
     refresh_token = request.data.get('refresh_token')
     print("refresh_token ->: ", str(refresh_token))
+
     if not refresh_token:
         return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # Decodificar el refresh token y generar un nuevo access token
         token = RefreshToken(refresh_token)
         new_access_token = str(token.access_token)
 
@@ -96,6 +97,6 @@ def refresh_token_view(request):
         return Response({
             'access_token': new_access_token,
         }, status=status.HTTP_200_OK)
+    
     except TokenError as e:
-        # Manejar errores si el token es inválido o expiró
         return Response({'error': 'Invalid or expired refresh token', 'details': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
