@@ -2,32 +2,93 @@
 
 export function renderGame() {
     return `
-    <h1>Pong Online</h1>
-	<canvas id="pong" width="600" height="400" style="border:1px solid #000;"></canvas> 
+    <div id="main-game-container">
+        <h1>Pong Online</h1>
+        <h2><span id="left-username"></span> <span id="left-score"></span> - <span id="right-score"></span> <span id="right-username"></span></h2>
+        <canvas id="pong-canvas" width="600" height="400" style="border:1px solid #000;"></canvas> 
+    </div>
     `;
 }
 
-export function initGame() {
+export async function initGame() {
 
     // game.js
+    if (!hasAccessToken()) {
+        // Redirect to login page
+        alert("Debes iniciar sesión para jugar");
+        window.sessionStorage.setItem("afterLoginRedirect", "#game");
+        window.location.hash = "#login"
+        return;
+    }
 
-    const canvas = document.getElementById('pong');
+    let userLoginData = decodeJWT(getCookie("accessToken"));
+
+    let socket = new WebSocket(`wss://${window.location.host}/ws/game/`);
+
+    const canvas = document.getElementById('pong-canvas');
     const context = canvas.getContext('2d');
+    const leftUsernameSpan = document.getElementById('left-username');
+    const rightUsernameSpan = document.getElementById('right-username');
+    const leftScoreSpan = document.getElementById('left-score');
+    const rightScoreSpan = document.getElementById('right-score');
+    let ballRadius;
+    let paddleHeight;
+    let paddleWidth;
+    let fps;
 
-    // Ball properties
-    let ballX = canvas.width / 2;
-    let ballY = canvas.height / 2;
-    let ballSpeedX = 5;
-    let ballSpeedY = 5;
-    const ballRadius = 10;
-	const speedIncrement = 1.1;
 
-    // Paddle properties
-    const paddleWidth = 10;
-    const paddleHeight = 100;
-    let paddleY = (canvas.height - paddleHeight) / 2;
-    const paddleSpeed = 10;
-    let paddleDirection = 0;
+    let ball = { x: canvas.height / 2, y: canvas.height / 2 }
+    let leftPaddleY;
+    let rightPaddleY;
+    // const angle = 45;
+    // const angleInRadians = angle * Math.PI / 180;
+    // const paddleRadius = (paddleHeight / 2) / Math.sin(angleInRadians);
+    // const paddleOffset = (paddleHeight / 2) / Math.tan(angleInRadians);
+
+    // Conectar al WebSocket
+    socket.onopen = function(event) {
+        console.log("Conectado al WebSocket.");
+    };
+
+    // Manejar mensajes entrantes del servidor
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'game_state_update') {
+            leftPaddleY = data.game_state.left.paddle_y;
+            rightPaddleY = data.game_state.right.paddle_y;
+            ball.x = data.game_state.ball.x;
+            ball.y = data.game_state.ball.y;
+            leftScoreSpan.innerText = data.game_state.left.score;
+            rightScoreSpan.innerText = data.game_state.right.score;
+            drawEverything();
+
+        } else if (data.type === 'initial_information') {
+            leftUsernameSpan.innerText = data.left_player_username;
+            rightUsernameSpan.innerText = data.right_player_username;
+            canvas.setAttribute('width', data.field_width);
+            canvas.setAttribute('height', data.field_height);
+            ballRadius = data.ball_radius;
+            paddleHeight = data.paddle_height;
+            paddleWidth = data.paddle_width;
+            fps = data.fps;
+
+            gameLoop();
+        } 
+        
+    };
+
+    socket.onclose = function(event) {
+        console.log("Desconectado del WebSocket.");
+    };
+
+    socket.onerror = function(event) {
+        deleteCookie("accessToken");
+        deleteCookie("refreshToken");
+        // Refresh the page
+        window.location.reload();
+    }
+
 
     // Draw everything on the canvas
     function drawEverything() {
@@ -35,89 +96,126 @@ export function initGame() {
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Draw the left paddle
+        context.fillStyle = 'white';
+        context.fillRect(0, leftPaddleY - paddleHeight/2, paddleWidth, paddleHeight);
+
+        // Draw the right paddle
+        context.fillStyle = 'white';
+        context.fillRect(canvas.width - paddleWidth, rightPaddleY - paddleHeight/2, paddleWidth, paddleHeight);
+
         // Draw the ball
         context.fillStyle = 'white';
         context.beginPath();
-        context.arc(ballX, ballY, ballRadius, 0, Math.PI * 2, true);
+        context.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2, true);
         context.fill();
-
-        // Draw the paddle
-        context.fillStyle = 'white';
-        context.fillRect(0, paddleY, paddleWidth, paddleHeight);
     }
 
-    // Move the ball and handle collisions
-    function moveEverything() {
-        ballX += ballSpeedX;
-        ballY += ballSpeedY;
 
-        // Ball collision with top and bottom walls
-        if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-            ballSpeedY = -ballSpeedY;
+    // Paddle controller
+
+    let keys = {
+        w: false,
+        s: false,
+        arrowUp: false,
+        arrowDown: false,
+    };
+    
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'w') {
+            keys.w = true;
+        } else if (event.key === 's') {
+            keys.s = true;
         }
-
-        // Ball collision with left wall (paddle)
-        if (ballX - ballRadius < paddleWidth && ballY > paddleY && ballY < paddleY + paddleHeight) {
-            ballSpeedX = -ballSpeedX;
-            ballX = paddleWidth + ballRadius; // Adjust ball position to avoid "getting inside" the paddle
-			ballSpeedX *= speedIncrement;
-			ballSpeedY *= speedIncrement;
-        } else if (ballX - ballRadius < 0) {
-            // Ball missed the paddle
-            resetBall();
+        if (event.key === 'ArrowUp') {
+            keys.arrowUp = true;
+        } else if (event.key === 'ArrowDown') {
+            keys.arrowDown = true;
         }
-
-        // Ball collision with right wall
-        if (ballX + ballRadius > canvas.width) {
-            ballSpeedX = -ballSpeedX;
+    });
+    
+    document.addEventListener('keyup', (event) => {
+        if (event.key === 'w') {
+            keys.w = false;
+        } else if (event.key === 's') {
+            keys.s = false;
         }
-
-        // Move the paddle
-        paddleY += paddleDirection * paddleSpeed;
-        paddleY = Math.max(Math.min(paddleY, canvas.height - paddleHeight), 0);
-    }
-
-    // Reset the ball to the center
-    function resetBall() {
-        ballX = canvas.width / 2;
-        ballY = canvas.height / 2;
-        ballSpeedX = 5;
-        ballSpeedY = 5;
-    }
-
-    // Handle key down events
-    function handleKeyDown(event) {
-        switch (event.key) {
-            case 'ArrowUp':
-                paddleDirection = -1;
-                break;
-            case 'ArrowDown':
-                paddleDirection = 1;
-                break;
+        if (event.key === 'ArrowUp') {
+            keys.arrowUp = false;
+        } else if (event.key === 'ArrowDown') {
+            keys.arrowDown = false;
         }
-    }
+    });
 
-    // Handle key up events
-    function handleKeyUp(event) {
-        switch (event.key) {
-            case 'ArrowUp':
-            case 'ArrowDown':
-                paddleDirection = 0;
-                break;
-        }
-    }
+    window.addEventListener('blur', () => {
+        keys.w = false;
+        keys.s = false;
+        keys.arrowUp = false;
+        keys.arrowDown = false;
+    });
 
     // Game loop
+    
     function gameLoop() {
-        moveEverything();
-        drawEverything();
+        let keysPressed = [];
+    
+        if (keys.w) {
+            keysPressed.push('w');
+        } else if (keys.s) {
+            keysPressed.push('s');
+        }
+        if (keys.arrowUp) {
+            keysPressed.push('arrowUp');
+        } else if (keys.arrowDown) {
+            keysPressed.push('arrowDown');
+        }
+    
+        if (keysPressed.length > 0 && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'paddle_move',
+                keys: keysPressed,
+            }));
+        }
+    
+        // Call gameLoop again after a short delay
+        setTimeout(gameLoop, 1000 / fps); // Approximately 60 frames per second
     }
 
-    // Event listeners for paddle movement
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+}
 
-    // Start the game loop
-    setInterval(gameLoop, 1000 / 30); // 30 frames per second
+function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+}
 
+function deleteCookie(cname) {
+    document.cookie = cname + '=;';
+}
+
+function decodeJWT(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+}
+
+function hasAccessToken() {
+    if (getCookie("accessToken") === "") {
+        return false;
+    }
+    return true;
 }

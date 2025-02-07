@@ -2,3 +2,4 @@ Django>=4.1,<4.2
 djangorestframework
 djangorestframework-simplejwt
 redis==4.6.0 
+celery==5.4.0

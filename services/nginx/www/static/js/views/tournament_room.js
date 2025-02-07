@@ -65,7 +65,7 @@ export function initTournamentRoom(tournamentId) {
         socket = startTournamentWebSocket(tournamentId);
     }
 
-    simulateTournamentProgress();
+    // simulateTournamentProgress();
 }
 
 function startTournamentWebSocket(tournamentId) {
@@ -83,6 +83,12 @@ function startTournamentWebSocket(tournamentId) {
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
         }
+        if (data.type === "start_tournament") {
+            start_tournament();
+        }
+        if (data.type === "game_end") {
+            update_tournament_tree(data);
+        }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
     };
@@ -98,6 +104,8 @@ function startTournamentWebSocket(tournamentId) {
     return socket;
 }
 
+
+
 function updateUserList(userList) {
     const userListContainer = document.getElementById("user-list");
 
@@ -110,10 +118,65 @@ function updateUserList(userList) {
 
     userList.forEach((user) => {
         const userElement = document.createElement("li");
-        userElement.textContent = user;
+        const [name, id] = user.split(":"); 
+        userElement.textContent = name;
         userListContainer.appendChild(userElement);
     });
 }
+
+/*
+    This function updates the tournament tree with the winner and loser of a match.
+    It also determines the next match where the winner will play.
+    (check at the back-end how the data is sent to the front-end!!)
+    @param {Object} data - The data of the match result:
+        - {number} match_id - The ID of the match
+        - {string} winner - The name of the winner
+        - {string} loser - The name of the loser
+*/
+function update_tournament_tree(data) {
+    const { match_id, winner, loser } = data;
+
+    // Encontrar el partido actual
+    const currentMatch = document.querySelector(`.match[data-match="${match_id}"]`);
+    if (!currentMatch) {
+        console.error(`No se encontró el partido con ID ${match_id}`);
+        return;
+    }
+
+    // Marcar al ganador y perdedor
+    const players = currentMatch.querySelectorAll(".player");
+    players.forEach(player => {
+        if (player.textContent === winner) {
+            player.classList.add("winner");
+        } else if (player.textContent === loser) {
+            player.classList.add("loser");
+        }
+    });
+
+    // Determinar el siguiente partido
+    const nextMatchId = Math.floor((match_id - 1) / 2) + 5;
+    const nextMatch = document.querySelector(`.match[data-match="${nextMatchId}"]`);
+    
+    if (nextMatch) {
+        // Encontrar un espacio disponible en el siguiente partido
+        const nextPlayers = nextMatch.querySelectorAll(".player");
+        for (let i = 0; i < nextPlayers.length; i++) {
+            if (nextPlayers[i].textContent.includes("Ganador")) {
+                nextPlayers[i].textContent = winner;
+                break;
+            }
+        }
+    }
+
+    // Actualizar campeón si es la final
+    if (match_id === 7) {
+        const champion = document.querySelector(".champion .player");
+        if (champion) {
+            champion.textContent = winner;
+        }
+    }
+}
+
 
 function simulateTournamentProgress() {
     const matches = document.querySelectorAll(".match");
@@ -141,4 +204,8 @@ function simulateTournamentProgress() {
         const champion = document.querySelector(".champion .player");
         champion.textContent = finalWinner.textContent;
     }
+}
+
+function start_tournament() {
+    alert("El torneo ha comenzado!");
 }

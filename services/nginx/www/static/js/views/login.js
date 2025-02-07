@@ -52,10 +52,12 @@ export function initLogin() {
 			console.log("Inicio de sesión ok");
 			localStorage.setItem("accessToken", data.access);
         	localStorage.setItem("refreshToken", data.refresh);
-			loginResponseMessage.innerText = "Inicio de sesión exitoswo";
+			loginResponseMessage.innerText = "Inicio de sesión exitoso";
 
 			document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
 			document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
+
+			handle_login_redirections();
 
 		} else {
 			console.log("Error al iniciar sesión");
@@ -63,4 +65,17 @@ export function initLogin() {
 		}
 	});
 
+	function handle_login_redirections() {
+		let afterLoginRedirect = window.sessionStorage.getItem("afterLoginRedirect");
+		if (afterLoginRedirect) {
+			window.sessionStorage.removeItem("afterLoginRedirect");
+			window.location.hash = afterLoginRedirect;
+		} else {
+			window.location.hash = "#index";
+		}
+	}
+
 }
+
+
+
