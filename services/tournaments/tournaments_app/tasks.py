@@ -110,9 +110,10 @@ def end_match(message):
         "loser": message["loser"],
         "tournament_id": message["tournament_id"],
         "game_id":   message["game_id"],
-    } 
+    }
+    channel = f"tournament_{message['tournament_id']}"
     print(f"El juego ha terminado. Ganador: {message['winner']}.")
-    redis_client.publish("tournaments_channel", json.dumps(message_redis))
+    redis_client.publish(channel, json.dumps(message_redis))
     # Aquí se puede agregar lógica adicional, como actualizar las puntuaciones de los jugadores.
     # Por ahora, simplemente imprimimos un mensaje.
     print("Fin del juego.")

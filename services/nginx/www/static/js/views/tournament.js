@@ -127,9 +127,9 @@ function startGlobalWebSocket() {
         const data = JSON.parse(event.data);
 		console.log("Mensaje WebSocket global:", data);
         // Si el evento contiene un "user_count" para un torneo específico
-        if (data.tournamentId && data.user_count !== undefined) {
+        if (data.tournament_id && data.user_count !== undefined) {
 			console.log("entered to if:", data);
-            const tournament = document.querySelector(`#tournament-${data.tournamentId}`);
+            const tournament = document.querySelector(`#tournament-${data.tournament_id}`);
             if (tournament) {
                 const userCountContainer = tournament.querySelector('.badge');
                 if (userCountContainer) {

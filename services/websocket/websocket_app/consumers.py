@@ -9,16 +9,12 @@ from .tasks import send_start_matchmaking_task, end_game_simulation
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Establecer la conexión con el WebSocket
+       
         print("Connecting to global WebSocket")
 
         # Conectar a Redis
-          # Conectar a Redis
         self.redis = redis.from_url("redis://redis:6379")  # Conexión a Redis
-        # self.redis = redis.Redis(
-        #     host="localhost", port=6379, decode_responses=True
-        # )  # Conexión a Redis
-        # Canal de Django para el WebSocket global
+        
         self.room_group_name = (
             "global_tournament_counter"  # Canal global para todos los torneos
         )
@@ -52,47 +48,9 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
                         {"tournament_id": tournament_id, 
                          "user_count": user_count}))
 
-                elif data["type"] == "game_end":  
-                    winner = data.get("winner")
-                    #Print with Color RED
-                    print(f"\033[91mGame ended LISTENED TO REDIS. Winner: {winner}\033[0m")
-
-                    await self.channel_layer.group_send(
-                        f"tournament_{tournament_id}",  
-                        {"type": "game_end_notification", 
-                         "tournament_id": tournament_id,
-                         "winner": winner,
-                         "loser": data.get("loser"),
-                         "match_id": data.get("game_id")
-                        }
-                    )
+            await asyncio.sleep(0.042)
 
 
-
-
-    # async def listen_to_redis(self):
-    #     # Bucle para escuchar los mensajes en el canal de Redis
-    #     while True:
-    #         message = await self.pubsub.get_message(ignore_subscribe_messages=True)
-    #         if message:
-    #             # Procesamos el mensaje recibido
-    #             print(f"Received message from Redis: {message}")
-    #             if message["type"] == "message":
-    #                 # Extraemos los datos del mensaje
-    #                 data = json.loads(message["data"])
-    #                 tournament_id = data.get("tournament_id")
-    #                 user_count = data.get("user_count")
-
-    #                 if tournament_id and user_count is not None:
-    #                     # Enviar los datos de actualización a todos los clientes conectados
-    #                     await self.send(
-    #                         text_data=json.dumps(
-    #                             {
-    #                                 "tournament_id": tournament_id,
-    #                                 "user_count": user_count,
-    #                             }
-    #                         )
-    #                     )
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo global
@@ -226,6 +184,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
             }
             end_game_simulation(message)
 
+        asyncio.create_task(self.listen_to_game_end())
+
 
 
     async def start_tournament(self, event):
@@ -324,4 +284,25 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         }))
 
+    
+
+    async def listen_to_game_end(self):
+        # Subscribirse al canal de Redis para recibir eventos de fin de juego
+        pubsub = self.redis.pubsub()
+        print("Listening to game end events")
+        #imprimir en colo rojo
+        print (f"\033[91m {self.room_group_name} <- room group name")
+        await pubsub.subscribe(self.room_group_name)  # Suscribir al canal de este torneo
+
+        while True:
+            message = await pubsub.get_message(ignore_subscribe_messages=True)
+            if message:
+                #imprimir en color ROJO
+                print (f"\033[91m {message} <- message")
+                data = json.loads(message["data"])
+                if data["type"] == "game_end":
+                   
+                    await self.game_end_notification(data)
+
+            await asyncio.sleep(0.1)  
 
