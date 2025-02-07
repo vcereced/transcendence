@@ -1,5 +1,3 @@
-version: '3.8'  # Docker Compose version
-
 services:
   nginx:
     image: nginx:1.23  # Specify the version for stability
@@ -19,6 +17,19 @@ services:
 
     networks:
       - app-network  # Shared network for internal communication
+
+
+  message-broker:
+    image: rabbitmq:4-management-alpine
+    container_name: message-broker
+    ports:
+        - 5672:5672
+        - 15672:15672
+    environment:
+      - RABBITMQ_LOGS=-error
+    networks:
+      - app-network
+    restart: always
 
   auth:
     build:
@@ -57,23 +68,87 @@ services:
     networks:
       - app-network
 
-  redis:
-    image: redis:alpine
-    container_name: redis
-    # ports:
-    #   - "6379:6379"  # Expose Redis port to manage WebSocket connections
+  tournaments_celery:
+    build:
+      context: ./services/tournaments
+    container_name: tournaments_celery
+    depends_on:
+      - tournaments
+      - message-broker
+    volumes:
+      - ./services/tournaments:/app
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@message-broker:5672//
+    command: [/bin/sh, celery_entrypoint.sh]
     networks:
       - app-network
 
 
-  # game:
-  #   build:
-  #     context: ./services/game  # Directory for game Dockerfile and code
-  #   container_name: game
-  #   volumes:
-  #     - ./services/game:/app  # Bind mount for code synchronization
-  #   networks:
-  #     - app-network
+  redis:
+    image: redis:alpine
+    container_name: redis
+    # ports:
+    #   # - "6379:6379"  # Expose Redis port to manage WebSocket connections
+    networks:
+      - app-network
+
+  game_drf:
+    build:
+      context: ./services/game  # Directory for game Dockerfile and code
+    container_name: game_drf
+    volumes:
+      - ./services/game:/app  # Bind mount for code synchronization
+    env_file:
+      - .env
+    command: [/bin/sh, drf_entrypoint.sh]
+    ports:
+      - "8014:8004"  # Expose port to access the Game service admin console
+    networks:
+      - app-network
+
+  game_daphne:
+    build:
+      context: ./services/game  # Ruta del microservicio de Game daphne
+    container_name: game_daphne
+    volumes:
+      - ./services/game:/app  
+    ports:
+      - "8015:8005"  # Exponer el puerto para WebSocket
+    environment:
+      - REDIS_HOST=redis  # Usaremos Redis para gestionar las conexiones de WebSocket
+    depends_on:
+      - redis
+    command: [/bin/sh, daphne_entrypoint.sh]
+    networks:
+      - app-network
+
+  game_celery:
+    build:
+        context: ./services/game
+    container_name: game_celery
+    volumes:
+      - ./services/game:/app
+    env_file :
+      - .env
+    networks :
+      - app-network
+    restart: always
+    command: [/bin/sh, celery_entrypoint.sh]
+
+  game_asyncio:
+    build:
+        context: ./services/game
+    container_name: game_asyncio
+    volumes:
+      - ./services/game:/app
+    env_file :
+      - .env
+    networks :
+      - app-network
+    restart: always
+    command: [/bin/sh, asyncio_entrypoint.sh]
+
+
 
   # tournament:
   #   build:

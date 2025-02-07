@@ -1,5 +1,5 @@
 # Base image with Python
-FROM python:3.10
+FROM python:3.11
 
 # Set working directory
 WORKDIR /app
@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && apt-get update \
     && apt-get install -y netcat-openbsd
 
-# Copy the Django project files
+# Copy the codebase
 COPY . /app/
 
 # Set environment variables for Django
@@ -18,7 +18,9 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Expose the port Django will use
-EXPOSE 8003
+EXPOSE 8004
 
-# Run Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8003"]
+# Expose the port Daphne will use
+EXPOSE 8005
+
+
