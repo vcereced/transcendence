@@ -27,7 +27,7 @@ SECRET_KEY = os.getenv("JWT_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'ngnix', '127.0.0.1', 'auth_service']
+ALLOWED_HOSTS = ['localhost', 'nginx', '127.0.0.1', 'auth_service', '*']
 
 
 # Application definition
