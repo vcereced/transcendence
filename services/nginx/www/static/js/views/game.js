@@ -1,3 +1,4 @@
+import { handleJwtToken } from './jwtValidator.js';
 //static/js/views/game.js
 
 export function renderGame() {
@@ -21,8 +22,8 @@ export async function initGame() {
         return;
     }
 
-    let userLoginData = decodeJWT(getCookie("accessToken"));
-
+    // let userLoginData = decodeJWT(getCookie("accessToken"));
+    await handleJwtToken();
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/`);
 
     const canvas = document.getElementById('pong-canvas');
