@@ -26,24 +26,32 @@ export async function initGame() {
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/`);
 
     const canvas = document.getElementById('pong-canvas');
+    const maxCanvasHeightToWindow = 0.6;
+    const maxCanvasWidthToWindow = 0.6;
     const context = canvas.getContext('2d');
     const leftUsernameSpan = document.getElementById('left-username');
     const rightUsernameSpan = document.getElementById('right-username');
     const leftScoreSpan = document.getElementById('left-score');
     const rightScoreSpan = document.getElementById('right-score');
-    let ballRadius;
-    let paddleHeight;
-    let paddleWidth;
-    let fps;
 
+    let fieldHeightProportion;
+    let fieldWidthProportion;
+    let ballRadiusProportion;
+    let paddleRadiusProportion;
+    let paddleOffsetProportion;
+
+    let fieldHeight;
+    let fieldWidth;
+    let ballRadius;
+    let paddleRadius;
+    let paddleOffset;
+
+    let angleInRadians;
+    let fps;
 
     let ball = { x: canvas.height / 2, y: canvas.height / 2 }
     let leftPaddleY;
     let rightPaddleY;
-    // const angle = 45;
-    // const angleInRadians = angle * Math.PI / 180;
-    // const paddleRadius = (paddleHeight / 2) / Math.sin(angleInRadians);
-    // const paddleOffset = (paddleHeight / 2) / Math.tan(angleInRadians);
 
     // Conectar al WebSocket
     socket.onopen = function(event) {
@@ -55,10 +63,10 @@ export async function initGame() {
         const data = JSON.parse(event.data);
 
         if (data.type === 'game_state_update') {
-            leftPaddleY = data.game_state.left.paddle_y;
-            rightPaddleY = data.game_state.right.paddle_y;
-            ball.x = data.game_state.ball.x;
-            ball.y = data.game_state.ball.y;
+            leftPaddleY = data.game_state.left.paddle_y * fieldHeight;
+            rightPaddleY = data.game_state.right.paddle_y * fieldHeight;
+            ball.x = data.game_state.ball.x * fieldHeight;
+            ball.y = data.game_state.ball.y * fieldHeight;
             leftScoreSpan.innerText = data.game_state.left.score;
             rightScoreSpan.innerText = data.game_state.right.score;
             drawEverything();
@@ -66,12 +74,28 @@ export async function initGame() {
         } else if (data.type === 'initial_information') {
             leftUsernameSpan.innerText = data.left_player_username;
             rightUsernameSpan.innerText = data.right_player_username;
-            canvas.setAttribute('width', data.field_width);
-            canvas.setAttribute('height', data.field_height);
-            ballRadius = data.ball_radius;
-            paddleHeight = data.paddle_height;
-            paddleWidth = data.paddle_width;
+
+            fieldHeightProportion = data.field_height;
+            fieldWidthProportion = data.field_width;
+            ballRadiusProportion = data.ball_radius;
+            paddleRadiusProportion = data.paddle_radius;
+            paddleOffsetProportion = data.paddle_offset;
+
+            fieldHeight = fieldHeightProportion * maxCanvasHeightToWindow * window.innerHeight;
+            fieldWidth = fieldWidthProportion * fieldHeight;
+            if (fieldWidth > maxCanvasWidthToWindow * window.innerWidth) {
+                fieldWidth = maxCanvasWidthToWindow * window.innerWidth;
+                fieldHeight = fieldWidth / fieldWidthProportion;
+            }
+
+            ballRadius = ballRadiusProportion * fieldHeight;
+            paddleOffset = paddleOffsetProportion * fieldHeight;
+            paddleRadius = paddleRadiusProportion * fieldHeight;
             fps = data.fps;
+            angleInRadians = data.paddle_edge_angle_radians;
+
+            canvas.setAttribute('height', fieldHeight);
+            canvas.setAttribute('width', fieldWidth);
 
             gameLoop();
         } 
@@ -96,13 +120,17 @@ export async function initGame() {
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw the left paddle
+        // Draw the left paddle as an arc
         context.fillStyle = 'white';
-        context.fillRect(0, leftPaddleY - paddleHeight/2, paddleWidth, paddleHeight);
+        context.beginPath();
+        context.arc(-paddleOffset, leftPaddleY, paddleRadius, angleInRadians, -angleInRadians, true);
+        context.fill();
 
-        // Draw the right paddle
-        context.fillStyle = 'white';
-        context.fillRect(canvas.width - paddleWidth, rightPaddleY - paddleHeight/2, paddleWidth, paddleHeight);
+        // Draw the right paddle as an arc
+        context.beginPath();
+        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, Math.PI + angleInRadians , Math.PI - angleInRadians, true);
+        context.fill();
+        
 
         // Draw the ball
         context.fillStyle = 'white';
@@ -153,6 +181,23 @@ export async function initGame() {
         keys.arrowUp = false;
         keys.arrowDown = false;
     });
+
+    window.addEventListener('resize', () => {
+        fieldHeight = fieldHeightProportion * maxCanvasHeightToWindow * window.innerHeight;
+        fieldWidth = fieldWidthProportion * fieldHeight;
+        if (fieldWidth > maxCanvasWidthToWindow * window.innerWidth) {
+            fieldWidth = maxCanvasWidthToWindow * window.innerWidth;
+            fieldHeight = fieldWidth / fieldWidthProportion;
+        }
+
+        ballRadius = ballRadiusProportion * fieldHeight;
+        paddleOffset = paddleOffsetProportion * fieldHeight;
+        paddleRadius = paddleRadiusProportion * fieldHeight;
+
+        canvas.setAttribute('height', fieldHeight);
+        canvas.setAttribute('width', fieldWidth);
+        drawEverything();
+    })
 
     // Game loop
     

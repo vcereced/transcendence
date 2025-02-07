@@ -5,13 +5,15 @@ import os
 import random
 import asyncio
 from asgiref.sync import sync_to_async
+import math
+import time
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "game.settings")
 django.setup()
 
 from game_app import serializers
 from game import settings as s
-from game_app.models import GameState, Game
+from game_app.models import GameState, Game, Ball
 
 
 async def discover_games():
@@ -21,12 +23,14 @@ async def discover_games():
         if not discovered_game_id:
             await asyncio.sleep(1)
             continue
-        await asyncio.sleep(0.1) # Small delay to allow the game state to be created in redis
+        await asyncio.sleep(
+            0.1
+        )  # Small delay to allow the game state to be created in redis
         asyncio.create_task(play_game(int(discovered_game_id)))
         print(f"Game discovered: {discovered_game_id}")
 
 
-async def play_game(game_id : int):
+async def play_game(game_id: int):
     redis_client = redis.Redis(host="redis", port=6379)
 
     game = await query_db_for_game(game_id)
@@ -56,36 +60,78 @@ def query_db_for_game(game_id):
 async def control_paddle_by_computer(game_id, side):
     redis_client = redis.Redis(host="redis", port=6379)
     final_paddle_y = 0
+    target_paddle_y = 0
+    last_seen_ball = Ball(
+        s.INITIAL_GAME_STATE["ball"]["x"], s.INITIAL_GAME_STATE["ball"]["y"], 0, 0
+    )
+    last_seen_time = time.time()
+    refresh_rate = 1 / 10
     while True:
         game_state = await load_game_state(redis_client, game_id)
-        if side == "left":
-            if game_state.ball.dx < 0:
-                if game_state.left.paddle_y < game_state.ball.y:
-                    game_state.left.paddle_y += s.PADDLE_MOVE_AMOUNT
-                elif game_state.left.paddle_y > game_state.ball.y:
-                    game_state.left.paddle_y -= s.PADDLE_MOVE_AMOUNT
-                game_state.left.paddle_y = max(
-                    s.PADDLE_HEIGHT / 2,
-                    min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, game_state.left.paddle_y),
-                )
-                final_paddle_y = game_state.left.paddle_y
-        elif side == "right":
-            if game_state.ball.dx > 0:
-                if game_state.right.paddle_y < game_state.ball.y:
-                    game_state.right.paddle_y += s.PADDLE_MOVE_AMOUNT
-                elif game_state.right.paddle_y > game_state.ball.y:
-                    game_state.right.paddle_y -= s.PADDLE_MOVE_AMOUNT
-                game_state.right.paddle_y = max(
-                    s.PADDLE_HEIGHT / 2,
-                    min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, game_state.right.paddle_y),
-                )
-                final_paddle_y = game_state.right.paddle_y
 
-        await redis_client.set(f"game:{game_id}:{side}_paddle_y", json.dumps(final_paddle_y))
+        if side == "left":
+            final_paddle_y = game_state.left.paddle_y
+        elif side == "right":
+            final_paddle_y = game_state.right.paddle_y
+
+        # Refresh the last seen ball position every refresh_rate seconds
+        if time.time() - last_seen_time > refresh_rate:
+            last_seen_time = time.time()
+            last_seen_ball = game_state.ball
+            target_paddle_y = determine_target_paddle_y(last_seen_ball, side, target_paddle_y)
+
+        final_paddle_y = approach_target_paddle_y(final_paddle_y, target_paddle_y)
+
+        await redis_client.set(
+            f"game:{game_id}:{side}_paddle_y", json.dumps(final_paddle_y)
+        )
         await asyncio.sleep(1 / s.FPS)
 
 
-async def load_game_state(redis_client : redis.Redis, game_id):
+def determine_target_paddle_y(last_seen_ball : Ball, side, target_paddle_y):
+    # Don't calculate target if ball is moving away from the computer paddle
+    if (side == "left" and last_seen_ball.dx > 0) or (side == "right" and last_seen_ball.dx < 0):
+        return target_paddle_y
+    
+    ball_velocity_angle = math.atan2(last_seen_ball.dy, last_seen_ball.dx)
+    x_distance_to_goal = s.FIELD_WIDTH - last_seen_ball.x if side == "right" else last_seen_ball.x
+    y_distance_to_goal = x_distance_to_goal * math.tan(ball_velocity_angle) # WARNING
+
+    target_paddle_y = last_seen_ball.y + y_distance_to_goal
+    
+    # There is at least one wall rebound
+    if target_paddle_y > s.FIELD_HEIGHT or target_paddle_y < 0:
+        distance_to_first_rebound = s.FIELD_HEIGHT - last_seen_ball.y if target_paddle_y > s.FIELD_HEIGHT else last_seen_ball.y
+        amount_of_rebounds = int(y_distance_to_goal - distance_to_first_rebound) // s.FIELD_HEIGHT
+        final_offset = int(y_distance_to_goal - distance_to_first_rebound) % s.FIELD_HEIGHT
+        if target_paddle_y > s.FIELD_HEIGHT:
+            if amount_of_rebounds % 2 == 0:
+                target_paddle_y = s.FIELD_HEIGHT - final_offset
+            else:
+                target_paddle_y = final_offset
+        else:
+            if amount_of_rebounds % 2 == 0:
+                target_paddle_y = final_offset
+            else:
+                target_paddle_y = s.FIELD_HEIGHT - final_offset
+
+    return target_paddle_y
+
+
+def approach_target_paddle_y(final_paddle_y, target_paddle_y):
+    if final_paddle_y < target_paddle_y - s.PADDLE_MOVE_AMOUNT:
+        final_paddle_y += s.PADDLE_MOVE_AMOUNT
+    elif final_paddle_y > target_paddle_y + s.PADDLE_MOVE_AMOUNT:
+        final_paddle_y -= s.PADDLE_MOVE_AMOUNT
+    final_paddle_y = max(
+        s.PADDLE_HEIGHT / 2,
+        min(s.FIELD_HEIGHT - s.PADDLE_HEIGHT / 2, final_paddle_y),
+    )
+
+    return final_paddle_y
+
+
+async def load_game_state(redis_client: redis.Redis, game_id):
     ball_data = await redis_client.get(f"game:{game_id}:ball")
     left_paddle_data = await redis_client.get(f"game:{game_id}:left_paddle_y")
     right_paddle_data = await redis_client.get(f"game:{game_id}:right_paddle_y")
@@ -95,11 +141,12 @@ async def load_game_state(redis_client : redis.Redis, game_id):
         game_state_data = {
             "ball": json.loads(ball_data),
             "left": {"paddle_y": json.loads(left_paddle_data), "score": scores["left"]},
-            "right": {"paddle_y": json.loads(right_paddle_data), "score": scores["right"]},
+            "right": {
+                "paddle_y": json.loads(right_paddle_data),
+                "score": scores["right"],
+            },
         }
-        game_state_serializer = serializers.GameStateSerializer(
-            data=game_state_data
-        )
+        game_state_serializer = serializers.GameStateSerializer(data=game_state_data)
         if game_state_serializer.is_valid():
             return GameState.from_dict(game_state_serializer.validated_data)
         else:
@@ -108,9 +155,14 @@ async def load_game_state(redis_client : redis.Redis, game_id):
         raise Exception("Game state not found")
 
 
-async def save_game_state(redis_client : redis.Redis, game_id, game_state : GameState):
-    await redis_client.set(f"game:{game_id}:ball", json.dumps(game_state.ball.to_dict()))
-    await redis_client.set(f"game:{game_id}:scores", json.dumps({"left": game_state.left.score, "right": game_state.right.score}))
+async def save_game_state(redis_client: redis.Redis, game_id, game_state: GameState):
+    await redis_client.set(
+        f"game:{game_id}:ball", json.dumps(game_state.ball.to_dict())
+    )
+    await redis_client.set(
+        f"game:{game_id}:scores",
+        json.dumps({"left": game_state.left.score, "right": game_state.right.score}),
+    )
 
 
 def check_collisions(game_state: GameState):
@@ -125,17 +177,17 @@ def check_collisions(game_state: GameState):
     # Left paddle
     game_state = check_paddle_collision(
         game_state,
-        s.PADDLE_WIDTH,
+        -s.PADDLE_OFFSET,
         game_state.left.paddle_y,
-        bounce_away_direction=1,
+        1,
     )
 
     # Right paddle
     game_state = check_paddle_collision(
         game_state,
-        s.FIELD_WIDTH - s.PADDLE_WIDTH,
+        s.FIELD_WIDTH + s.PADDLE_OFFSET,
         game_state.right.paddle_y,
-        bounce_away_direction=-1,
+        -1,
     )
 
     # Left wall
@@ -160,31 +212,41 @@ def check_collisions(game_state: GameState):
 
 
 def check_paddle_collision(
-    game_state: GameState, paddle_x_position, paddle_y_position, bounce_away_direction
+    game_state: GameState,
+    paddle_center_x_position,
+    paddle_center_y_position,
+    bounce_away_direction,
 ):
-    ball_left_border = game_state.ball.x - s.BALL_RADIUS
-    ball_right_border = game_state.ball.x + s.BALL_RADIUS
-    ball_top_border = game_state.ball.y - s.BALL_RADIUS
-    ball_bottom_border = game_state.ball.y + s.BALL_RADIUS
-    paddle_top_border = paddle_y_position - s.PADDLE_HEIGHT / 2
-    paddle_bottom_border = paddle_y_position + s.PADDLE_HEIGHT / 2
-
-    # If the ball is moving away from the paddle, it has already collided
-    if bounce_away_direction * game_state.ball.dx > 0:
+    # If the ball is not moving towards the paddle, no collision
+    if game_state.ball.dx * bounce_away_direction > 0:
         return game_state
 
-    # If the ball is not within the paddle's x position, it can't collide
-    if not (
-        ball_left_border <= paddle_x_position and ball_right_border >= paddle_x_position
-    ):
+    centers_distance = math.sqrt(
+        (game_state.ball.x - paddle_center_x_position) ** 2
+        + (game_state.ball.y - paddle_center_y_position) ** 2
+    )
+
+    # If the ball is not close enough to the paddle, no collision
+    if centers_distance > s.BALL_RADIUS + s.PADDLE_RADIUS:
         return game_state
 
-    if (
-        ball_top_border <= paddle_bottom_border
-        and ball_bottom_border >= paddle_top_border
-    ):
-        game_state.ball.dx *= -s.BALL_SPEED_INCREMENT
-        game_state.ball.dy *= s.BALL_SPEED_INCREMENT
+    # Bounce the ball away from the paddle
+    collision_angle = math.atan2(
+        game_state.ball.y - paddle_center_y_position,
+        game_state.ball.x - paddle_center_x_position,
+    )
+    initial_angle = math.atan2(game_state.ball.dy, game_state.ball.dx)
+    theta = math.pi + collision_angle - initial_angle
+    final_angle = collision_angle + theta
+    initial_magnitude = math.sqrt(game_state.ball.dx**2 + game_state.ball.dy**2)
+    final_magnitude = initial_magnitude * s.BALL_SPEED_INCREMENT
+    game_state.ball.dx = final_magnitude * math.cos(final_angle)
+    game_state.ball.dy = final_magnitude * math.sin(final_angle)
+
+    if abs(game_state.ball.dx) < s.MINIMUM_X_SPEED:
+        game_state.ball.dx = (
+            s.MINIMUM_X_SPEED if game_state.ball.dx > 0 else -s.MINIMUM_X_SPEED
+        )
 
     return game_state
 

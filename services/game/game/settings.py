@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+import math
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -165,14 +166,18 @@ CELERY_TASK_ROUTES = {
 # Game proportions settings
 
 FPS = 60
-FIELD_HEIGHT = 400
+FIELD_HEIGHT = 1
 FIELD_WIDTH = 1.5 * FIELD_HEIGHT
 BALL_RADIUS = FIELD_WIDTH / 50
 PADDLE_HEIGHT = FIELD_HEIGHT / 4
-PADDLE_WIDTH = FIELD_WIDTH / 50
+PADDLE_EDGE_ANGLE = 45
+PADDLE_EDGE_ANGLE_RADIANS = math.radians(PADDLE_EDGE_ANGLE)
+PADDLE_RADIUS = (PADDLE_HEIGHT / 2) / math.sin(PADDLE_EDGE_ANGLE_RADIANS)
+PADDLE_OFFSET = (PADDLE_HEIGHT / 2) / math.tan(PADDLE_EDGE_ANGLE_RADIANS)
 PADDLE_MOVE_AMOUNT = FIELD_HEIGHT / 50
 INITIAL_BALL_SPEED = FIELD_HEIGHT / 2 / FPS
 BALL_SPEED_INCREMENT = 1.1
+MINIMUM_X_SPEED = FIELD_HEIGHT / 6 / FPS
 
 INITIAL_GAME_STATE = {
     "ball": {
