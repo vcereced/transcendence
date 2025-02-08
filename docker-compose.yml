@@ -12,6 +12,7 @@ services:
       - ./services/nginx/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
     depends_on:
       - auth
+      - websocket
     env_file:
       - .env
 
