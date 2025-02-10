@@ -35,6 +35,7 @@ def create_game(game_data):
         serializer = GameSerializer(data=game_data)
         if not serializer.is_valid():
             print(f"Game creation failed. Invalid game data: {serializer.errors}")
+            return
         game = serializer.save()
         redis_client = redis.Redis(host="redis", port=6379)
         redis_client.set(f"game:{game.id}:ball", json.dumps(s.INITIAL_GAME_STATE["ball"]))
