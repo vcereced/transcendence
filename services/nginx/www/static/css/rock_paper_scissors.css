@@ -1,0 +1,105 @@
+.rock_paper_scissors {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: Arial, sans-serif;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.rock_paper_scissors .container {
+    display: flex;
+    justify-content: space-around;
+    width: 80%;
+}
+
+.rock_paper_scissors .player {
+    flex: 1;
+    padding: 20px;
+}
+
+.rock_paper_scissors .choices button {
+    background-color: var(--btn-bg-color);
+    border: 2px solid var(--btn-border-color);
+    color: var(--text-color);
+    font-size: 20px;
+    padding: 15px;
+    margin: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.rock_paper_scissors .choices button:hover {
+    background-color: var(--btn-hover-color);
+    box-shadow: 0 4px 12px var(--hover-shadow-color);
+}
+
+.rock_paper_scissors #result-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--btn-bg-color);
+    color: var(--text-color);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 1;
+}
+
+.rock_paper_scissors #timer {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.rock_paper_scissors .title-container {
+    color: var(--primary-color);
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.rock_paper_scissors .icon-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.rock_paper_scissors .profile-icon,
+.rock_paper_scissors .fullscreen-icon,
+.rock_paper_scissors .search-icon {
+    margin-left: 20px;
+    cursor: pointer;
+    transition: text-shadow 0.3s;
+}
+
+.rock_paper_scissors .profile-icon:hover,
+.rock_paper_scissors .fullscreen-icon:hover,
+.rock_paper_scissors .search-icon:hover {
+    text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
+}
+
+.rock_paper_scissors .profile-icon i,
+.rock_paper_scissors .fullscreen-icon i,
+.rock_paper_scissors .search-icon i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.rock_paper_scissors .site-title {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 2rem;
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+}
+
