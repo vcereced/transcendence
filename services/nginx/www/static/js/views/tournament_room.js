@@ -16,8 +16,8 @@ export function renderTournamentRoom(tournamentId) {
             <div class="tournament-tree">
                 <div class="round round-1">
                     <div class="match" data-match="1">
-                        <div class="player" data-player="1">Jugador 1</div>
-                        <div class="player" data-player="2">Jugador 2</div>
+                        <div class="player" data-player="1">jugador1dg</div>
+                        <div class="player" data-player="2">jugador2dg</div>
                     </div>
                     <div class="match" data-match="2">
                         <div class="player" data-player="3">Jugador 3</div>
@@ -135,7 +135,7 @@ function updateUserList(userList) {
 */
 function update_tournament_tree(data) {
     const { match_id, winner, loser } = data;
-
+    console.log("updating tournament tree with:", data);
     // Encontrar el partido actual
     const currentMatch = document.querySelector(`.match[data-match="${match_id}"]`);
     if (!currentMatch) {

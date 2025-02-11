@@ -68,7 +68,7 @@ class Game(models.Model):
     left_player_score = models.IntegerField(default=0)
     right_player_id = models.IntegerField()
     tournament_id = models.IntegerField(default=0)
-    game_id = models.CharField(max_length=100, default="")
+    tree_id = models.CharField(max_length=100, default="")
     right_player_username = models.CharField(max_length=100)
     right_player_score = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
