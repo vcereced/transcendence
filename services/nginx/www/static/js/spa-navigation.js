@@ -13,6 +13,7 @@ import { renderVersusWait, initVersusWait } from './views/versus_wait.js';
 import { renderNewTournamentRoom, initNewTournamentRoom } from './views/new_tournament_room.js';
 import { renderTournamentsList, initTournamentsList } from './views/tournaments_list.js';
 import { renderNewLogin, initNewLogin } from './views/new_login.js';
+import { renderRockPaperScissors, initRockPaperScissors } from './views/rock_paper_scissors.js';
 
 
 
@@ -33,6 +34,7 @@ const routes = {
     "/tournaments_list": { render: renderTournamentsList, init: initTournamentsList },
     "/new_tournament_room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
     "/new_login": { render: renderNewLogin, init: initNewLogin },
+    "/rock_paper_scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
 };
 
 function parseRoute(path) {

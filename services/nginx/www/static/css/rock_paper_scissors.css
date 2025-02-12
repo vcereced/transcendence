@@ -1,4 +1,4 @@
-.rock_paper_scissors {
+.rock-paper-scissors {
     background-color: var(--background-color);
     color: var(--text-color);
     font-family: Arial, sans-serif;
@@ -11,18 +11,20 @@
     margin: 0;
 }
 
-.rock_paper_scissors .container {
+.rock-paper-scissors .container {
     display: flex;
     justify-content: space-around;
     width: 80%;
 }
 
-.rock_paper_scissors .player {
+.rock-paper-scissors .player {
     flex: 1;
     padding: 20px;
+    background-color: transparent;
+    border: none;
 }
 
-.rock_paper_scissors .choices button {
+.rock-paper-scissors .choices button {
     background-color: var(--btn-bg-color);
     border: 2px solid var(--btn-border-color);
     color: var(--text-color);
@@ -35,12 +37,12 @@
     box-shadow: 0 4px 8px var(--shadow-color);
 }
 
-.rock_paper_scissors .choices button:hover {
+.rock-paper-scissors .choices button:hover {
     background-color: var(--btn-hover-color);
     box-shadow: 0 4px 12px var(--hover-shadow-color);
 }
 
-.rock_paper_scissors #result-popup {
+.rock-paper-scissors #result-popup {
     display: none;
     position: fixed;
     top: 50%;
@@ -53,18 +55,18 @@
     z-index: 1;
 }
 
-.rock_paper_scissors #timer {
+.rock-paper-scissors #timer {
     font-size: 20px;
     font-weight: bold;
     margin-top: 10px;
 }
 
-.rock_paper_scissors .title-container {
+.rock-paper-scissors .title-container {
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
-.rock_paper_scissors .icon-container {
+.rock-paper-scissors .icon-container {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -72,29 +74,29 @@
     align-items: center;
 }
 
-.rock_paper_scissors .profile-icon,
-.rock_paper_scissors .fullscreen-icon,
-.rock_paper_scissors .search-icon {
+.rock-paper-scissors .profile-icon,
+.rock-paper-scissors .fullscreen-icon,
+.rock-paper-scissors .search-icon {
     margin-left: 20px;
     cursor: pointer;
     transition: text-shadow 0.3s;
 }
 
-.rock_paper_scissors .profile-icon:hover,
-.rock_paper_scissors .fullscreen-icon:hover,
-.rock_paper_scissors .search-icon:hover {
+.rock-paper-scissors .profile-icon:hover,
+.rock-paper-scissors .fullscreen-icon:hover,
+.rock-paper-scissors .search-icon:hover {
     text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
 }
 
-.rock_paper_scissors .profile-icon i,
-.rock_paper_scissors .fullscreen-icon i,
-.rock_paper_scissors .search-icon i {
+.rock-paper-scissors .profile-icon i,
+.rock-paper-scissors .fullscreen-icon i,
+.rock-paper-scissors .search-icon i {
     font-size: 1.5rem;
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
-.rock_paper_scissors .site-title {
+.rock-paper-scissors .site-title {
     position: absolute;
     top: 20px;
     left: 20px;
