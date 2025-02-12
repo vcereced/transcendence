@@ -8,9 +8,9 @@ import { renderLogin, initLogin } from './views/login.js';
 import { renderGame, initGame } from './views/game.js';
 import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
-// import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
-import { renderVersusWait, initVersusWait } from './views/versus_wait.js';
 import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
+import { renderVersusWait, initVersusWait } from './views/versus_wait.js';
+import { renderNewTournamentRoom, initNewTournamentRoom } from './views/new_tournament_room.js';
 import { renderTournamentsList, initTournamentsList } from './views/tournaments_list.js';
 
 
@@ -27,9 +27,10 @@ const routes = {
     "/game": { render: renderGame, init: initGame },
     "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
-    // "/tournament/room/:id": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
+    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom },
     "/versus_wait": { render: renderVersusWait, init: initVersusWait },
-    "/tournaments_list": { render: renderTournamentsList, init: initTournamentsList }
+    "/tournaments_list": { render: renderTournamentsList, init: initTournamentsList },
+    "/new_tournament_room": { render: renderNewTournamentRoom, init: initNewTournamentRoom }
 };
 
 function parseRoute(path) {

@@ -1,4 +1,4 @@
-.tournament {
+.new-tournament-room {
     margin: 0;
     padding: 0;
     background-color: var(--background-color);
@@ -12,7 +12,7 @@
     position: relative;
 }
 
-.tournament .screen {
+.new-tournament-room .screen {
     text-align: center;
     padding: 10px;
     border: 2px solid var(--border-color);
@@ -25,14 +25,14 @@
     z-index: 10;
 }
 
-.tournament .ball {
+.new-tournament-room .ball {
     position: absolute;
     background-color: var(--primary-color);
     border-radius: 50%;
     box-shadow: 0 0 20px var(--shadow-color);
 }
 
-.tournament .obstacle {
+.new-tournament-room .obstacle {
     position: absolute;
     width: 40px;
     height: 40px;
@@ -41,7 +41,7 @@
     border-radius: 8px;
 }
 
-.tournament .exit-btn {
+.new-tournament-room .exit-btn {
     background: var(--border-color);
     color: var(--muted-color);
     border: none;
@@ -55,13 +55,13 @@
     margin: 10px;
 }
 
-.tournament .exit-btn:hover {
+.new-tournament-room .exit-btn:hover {
     background: var(--border-color);
     color: var(--muted-color);
 }
 
-.tournament .exit-btn:before,
-.tournament button:after {
+.new-tournament-room .exit-btn:before,
+.new-tournament-room button:after {
     content: '';
     position: absolute;
     top: 0;
@@ -72,20 +72,20 @@
     transition: 400ms ease all;
 }
 
-.tournament .exit-btn:after {
+.new-tournament-room .exit-btn:after {
     right: inherit;
     top: inherit;
     left: 0;
     bottom: 0;
 }
 
-.tournament .exit-btn:hover:before,
-.tournament .exit-btn:hover:after {
+.new-tournament-room .exit-btn:hover:before,
+.new-tournament-room .exit-btn:hover:after {
     width: 100%;
     transition: 800ms ease all;
 }
 
-.tournament .start-btn {
+.new-tournament-room .start-btn {
     background: var(--primary-color);
     color: var(--text-color);
     border: none;
@@ -99,13 +99,13 @@
     margin: 10px;
 }
 
-.tournament .start-btn:hover {
+.new-tournament-room .start-btn:hover {
     background: var(--border-color);
     color: var(--primary-color);
 }
 
-.tournament .start-btn:before,
-.tournament .start-btn:after {
+.new-tournament-room .start-btn:before,
+.new-tournament-room .start-btn:after {
     content: '';
     position: absolute;
     top: 0;
@@ -116,34 +116,34 @@
     transition: 400ms ease all;
 }
 
-.tournament .start-btn:after {
+.new-tournament-room .start-btn:after {
     right: inherit;
     top: inherit;
     left: 0;
     bottom: 0;
 }
 
-.tournament .start-btn:hover:before,
-.tournament .start-btn:hover:after {
+.new-tournament-room .start-btn:hover:before,
+.new-tournament-room .start-btn:hover:after {
     width: 100%;
     transition: 800ms ease all;
 }
 
-.tournament .bracket {
+.new-tournament-room .bracket {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 10px;
 }
 
-.tournament .column {
+.new-tournament-room .column {
     display: flex;
     flex-direction: column;
     gap: 10px;
     width: 20%;
 }
 
-.tournament .match {
+.new-tournament-room .match {
     width: 100%;
     height: 30px;
     background-color: var(--btn-bg-color);
@@ -155,19 +155,19 @@
     font-size: 12px;
 }
 
-.tournament .match.winner {
+.new-tournament-room .match.winner {
     /* background-color: var(--primary-color); */
     color: var(--primary-color);
     text-shadow: 0 0 10px var(--primary-color);
 }
 
-.tournament .match.loser {
+.new-tournament-room .match.loser {
     text-decoration: line-through;
     color: var(--muted-color);
     text-shadow: 0 0 10px var(--muted-color);
 }
 
-.tournament .retry-btn {
+.new-tournament-room .retry-btn {
     background-color: transparent;
     border: none;
     font-size: 12px;
@@ -176,19 +176,19 @@
     /* Puedes ajustar el color */
 }
 
-.tournament .retry-btn:hover {
+.new-tournament-room .retry-btn:hover {
     color: var(--primary-color);
     /* Cambia el color al pasar el ratón por encima */
 }
 
-.tournament .screen .icon {
+.new-tournament-room .screen .icon {
     font-size: 2.5rem;
     margin-bottom: 15px;
     color: var(--primary-color);
     text-shadow: 0 0 10px var(--primary-color);
 }
 
-.tournament .screen .icon:hover {
+.new-tournament-room .screen .icon:hover {
     color: var(--secondary-color);
     text-shadow: 0 0 10px var(--secondary-color);
     transition: 0.3s;
@@ -205,7 +205,7 @@
     }
 }
 
-.tournament .copy-container {
+.new-tournament-room .copy-container {
     display: absolute;
     align-items: center;
     justify-content: center;
@@ -216,11 +216,11 @@
     font-size: 1.2rem;
 }
 
-.tournament .copy-icon {
+.new-tournament-room .copy-icon {
     cursor: pointer;
 }
 
-.tournament .copied-message {
+.new-tournament-room .copied-message {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -234,7 +234,7 @@
     pointer-events: none;
 }
 
-.tournament .dots::after {
+.new-tournament-room .dots::after {
     content: '.';
     animation: dotsAnimation 2s infinite steps(1);
 }
@@ -262,12 +262,12 @@
 }
 
 
-.tournament .title-container {
+.new-tournament-room .title-container {
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
-.tournament .icon-container {
+.new-tournament-room .icon-container {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -275,29 +275,29 @@
     align-items: center;
 }
 
-.tournament .profile-icon,
-.tournament .fullscreen-icon,
-.tournament .search-icon {
+.new-tournament-room .profile-icon,
+.new-tournament-room .fullscreen-icon,
+.new-tournament-room .search-icon {
     margin-left: 20px;
     cursor: pointer;
     transition: text-shadow 0.3s;
 }
 
-.tournament .profile-icon:hover,
-.tournament .fullscreen-icon:hover,
-.tournament .search-icon:hover {
+.new-tournament-room .profile-icon:hover,
+.new-tournament-room .fullscreen-icon:hover,
+.new-tournament-room .search-icon:hover {
     text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
 }
 
-.tournament .profile-icon i,
-.tournament .fullscreen-icon i,
-.tournament .search-icon i {
+.new-tournament-room .profile-icon i,
+.new-tournament-room .fullscreen-icon i,
+.new-tournament-room .search-icon i {
     font-size: 1.5rem;
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
-.tournament .site-title {
+.new-tournament-room .site-title {
     position: absolute;
     top: 20px;
     left: 20px;
