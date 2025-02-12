@@ -9,6 +9,7 @@ import { renderGame, initGame } from './views/game.js';
 import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
 import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
+import { renderVersusWait, initVersusWait } from './views/versus_wait.js';
 
 
 
@@ -24,7 +25,8 @@ const routes = {
     "/game": { render: renderGame, init: initGame },
     "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
-    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom }
+    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom },
+    "/versus_wait": { render: renderVersusWait, init: initVersusWait }
 };
 
 function parseRoute(path) {
