@@ -12,6 +12,7 @@ import { renderTournamentRoom, initTournamentRoom } from './views/tournament_roo
 import { renderVersusWait, initVersusWait } from './views/versus_wait.js';
 import { renderNewTournamentRoom, initNewTournamentRoom } from './views/new_tournament_room.js';
 import { renderTournamentsList, initTournamentsList } from './views/tournaments_list.js';
+import { renderNewLogin, initNewLogin } from './views/new_login.js';
 
 
 
@@ -30,7 +31,8 @@ const routes = {
     "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom },
     "/versus_wait": { render: renderVersusWait, init: initVersusWait },
     "/tournaments_list": { render: renderTournamentsList, init: initTournamentsList },
-    "/new_tournament_room": { render: renderNewTournamentRoom, init: initNewTournamentRoom }
+    "/new_tournament_room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
+    "/new_login": { render: renderNewLogin, init: initNewLogin },
 };
 
 function parseRoute(path) {
