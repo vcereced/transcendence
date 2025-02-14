@@ -17,6 +17,11 @@ export function renderLogin() {
                 <input type="password" id="login-password" name="password" class="form-control" required placeholder="Ingresa tu contraseña">
             </div>
 
+			<div class="form-group">
+                <label for="otp_token">otp</label>
+                <input type="otp" id="login-otp" name="password" class="form-control" required placeholder="Ingresa tu otp">
+            </div>
+
             <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
         </form>
 
@@ -37,22 +42,23 @@ export function initLogin() {
 
 		const username = document.getElementById("login-username").value;
 		const password = document.getElementById("login-password").value;
+		const otp_token = document.getElementById("login-otp").value;
 
 		const response = await fetch("/api/usr/login", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({ username, password }),
+			body: JSON.stringify({ username, password, otp_token }),
 		});
 
 		const data = await response.json();
 
-		if (data.success) {
+		if (response.ok) {
 			console.log("Inicio de sesión ok");
 			localStorage.setItem("accessToken", data.access);
         	localStorage.setItem("refreshToken", data.refresh);
-			loginResponseMessage.innerText = "Inicio de sesión exitoso";
+			loginResponseMessage.innerText = data.message;
 
 			document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
 			document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
@@ -61,7 +67,7 @@ export function initLogin() {
 
 		} else {
 			console.log("Error al iniciar sesión");
-			loginResponseMessage.innerText = data.message;
+			loginResponseMessage.innerText = data.error;
 		}
 	});
 

@@ -42,6 +42,8 @@ INSTALLED_APPS = [
 	'auth_app',
 	'rest_framework',
 	'rest_framework_simplejwt',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
 ]
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
