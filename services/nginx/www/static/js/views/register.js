@@ -55,7 +55,6 @@ export function initRegister() {
         const data = await response.json();
 
         if (data.qr_code) {
-            // Mostrar la sección para ingresar el OTP
             qrSection.style.display = 'block';
             qrCodeImage.src = `data:image/png;base64,${data.qr_code}`;
             registerResponseMessage.innerText = data.message;
@@ -78,14 +77,14 @@ export function initRegister() {
             }),
         });
 
-        console.log("esperando a la respuesta del otp");
         const data = await response.json();
-        console.log("despues de la respuesta del otp");
+
         if (response.ok) {
             registerResponseMessage.innerText = data.message;
-            window.location.href = "/login";
+            //window.location.href = "/login";
+            //window.location.hash = "#login"
+            //................MAYBE CONFLICTO CON EL FLUJO DEL FRONT DE JAVI PREGUNTAR!!.....................
         } else {
-            console.log("entra en el error");
             registerResponseMessage.innerText = data.error;
         }
     });
