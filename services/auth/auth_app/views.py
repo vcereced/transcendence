@@ -9,6 +9,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 import jwt
 import os
+import qrcode
+import base64
+from io import BytesIO
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from django.contrib.auth.models import User
 
 SECRET_KEY = os.getenv("JWT_SECRET")
 # Create your views here.
@@ -30,15 +35,66 @@ def base_view(request):
 
 @api_view(['POST'])
 def register_view(request):
-    # Manejar el registro cuando es una petición POST
     print("Entrando en Serializer")
     print("Datos de la petición: ", request.data)
+    
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Usuario registrado correctamente."}, status=status.HTTP_201_CREATED)
-    print("Saliendo de Serializer Con Errores: ", serializer.errors) 
+        user = serializer.save()
+        user.is_active = False  # Desactivamos la cuenta hasta que confirme el OTP
+        user.save()
+
+        # Crear un dispositivo TOTP para el usuario
+        totp_device = TOTPDevice.objects.create(user=user, confirmed=False)
+
+        # Generar URL para Google Authenticator
+        otp_url = totp_device.config_url
+
+        # Generar QR code
+        qr = qrcode.make(otp_url)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+        return Response({
+            "message": "Usuario registrado correctamente. Escanea el QR para configurar 2FA.",
+            "qr_code": qr_base64,  # Enviar QR en base64 para mostrar en frontend
+            "otp_url": otp_url  # O enviar la URL para que el frontend genere el QR 
+        }, status=status.HTTP_201_CREATED)
+
+    print("Saliendo de Serializer Con Errores: ", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def verify_otp_view(request):
+    username = request.data.get("username")
+    otp_token = request.data.get("otp_token")
+
+    if not username or not otp_token:
+        return Response({"error": "Faltan datos (username y otp_token)."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Buscar el dispositivo TOTP del usuario
+    try:
+        totp_device = TOTPDevice.objects.get(user=user, confirmed=False)
+    except TOTPDevice.DoesNotExist:
+        return Response({"error": "No hay configuración de 2FA pendiente."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Verificar OTP
+    if totp_device.verify_token(otp_token):
+        totp_device.confirmed = True  # Confirmamos que el dispositivo es válido
+        totp_device.save()
+        
+        user.is_active = True  # Activamos la cuenta
+        user.save()
+
+        return Response({"message": "OTP válido. Usuario activado correctamente.Puedes iniciar sesión ahora."}, status=status.HTTP_200_OK)
+    
+    return Response({"error": "Código OTP incorrecto."}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def login_api_view(request):

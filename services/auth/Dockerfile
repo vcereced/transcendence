@@ -18,5 +18,10 @@ ENV PYTHONUNBUFFERED 1
 # Expose the port Django will use
 EXPOSE 8001
 
-# Run Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8001"]
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Use entrypoint script to apply migrations before running Django
+ENTRYPOINT ["/entrypoint.sh"]
+

@@ -14,4 +14,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password']
         )
+        user.is_active = False  # ❗ El usuario empieza inactivo hasta que valide OTP
+        user.save()
         return user
