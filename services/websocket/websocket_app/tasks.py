@@ -3,13 +3,11 @@ from celery import Celery
 
 app = Celery('websocket_project', broker='amqp://guest:guest@message-broker:5672//')
 
+#This task sends a message to the matchmaking service to start the matchmaking process
+
 @shared_task
 def send_start_matchmaking_task(message):
-    """
-    Esta tarea se ejecuta en el servicio 'websocket', y cuando se ejecuta, envía una tarea
-    a otro servicio para comenzar el emparejamiento de jugadores.
-    """
-    # Enviar la tarea al servicio 'tournaments' (asumiendo que la tarea se llama 'start_matchmaking')
+   
     app.send_task(
         'start_matchmaking',
         args=[message],
@@ -17,15 +15,15 @@ def send_start_matchmaking_task(message):
 
     print("Tarea  start Matchmaking enviada al servicio de torneos.")
 
+
+#THIS IS JUST A SIMULATION OF THE END GAME TASK, this call should be done
+#when the game ends, at game service.
 @shared_task
 def end_game_simulation(message):
-    """
-    Esta tarea se ejecuta en el servicio 'websocket', y cuando se ejecuta, envía una tarea
-    a otro servicio para finalizar la simulación de un juego.
-    """
+   
     # Enviar la tarea al servicio 'tournaments' (asumiendo que la tarea se llama 'end_game_simulation')
     app.send_task(
-        'end_match',
+        'game_end',
         args=[message],
         queue='matchmaking_tasks')
 

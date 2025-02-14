@@ -83,21 +83,6 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
             )
         )
 
-    # #MESSAGING FUNCTION FROM GLOBAL WS TO SPECIFIC ROOM WS
-    # async def game_end_notification(self, tournament_id, game_result):
-   
-    #     message = {
-    #         "type": "game_end",  # Tipo de evento
-    #         "tournament_id": tournament_id,
-    #         "game_result": game_result,  # Resultado del juego
-    #     }
-
-    #     # Enviar mensaje a los consumidores del torneo específico
-    #     await self.channel_layer.group_send(
-    #         f"tournament_{tournament_id}",  # El grupo específico del torneo
-    #         message
-    #     )
-
 
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -168,19 +153,33 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 "tournament_id": self.room_name,
             }
             send_start_matchmaking_task(message) #should this be async?
+            #obtain the tree of the tournament
+            tournament_tree_key = f"tournament_{self.room_name}_tree"
+            for _ in range(50):  
+                key_type = await self.redis.type(tournament_tree_key)
+                if key_type == b'hash':
+                    break
+            await asyncio.sleep(0.1)  
+            tournament_tree = await self.redis.hgetall(tournament_tree_key)
+            tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in (await self.redis.hgetall(tournament_tree_key)).items()}
+
+            print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "start_tournament",
+                    "message": "Tournament iss starting",
+                    "tournament_tree": tournament_tree,
                 },
             )
-    #JUST FOR TESTING PURPOSES
+    #JUST FOR TESTING PURPOSES GAME END SIMULATION
         if current_user_count == 4:
             message = {
                 "tournament_id": self.room_name,
-                "winner": "jugador1",
-                "loser": "jugador2",
-                "game_id": "1",
+                "winner": "jugador1dg",
+                "loser": "jugador2dg",
+                "tree_id": "1",
+                "type": "game_end"
             }
             end_game_simulation(message)
 
@@ -190,7 +189,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     async def start_tournament(self, event):
         # Send message to WebSocket
-        await self.send(text_data=json.dumps({"type": "start_tournament", "message": "Tournament is starting"}))
+        message = event["message"]
+        tournament_tree = event["tournament_tree"]
+        await self.send(text_data=json.dumps({"type": "start_tournament", "message": message, "tournament_tree": tournament_tree}))
+        # await self.send(text_data=json.dumps({"type": "start_tournament", "message": "Tournament is starting"}))
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo del torneo
@@ -220,7 +222,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         "Publica actualizacion de nombres de usuarios en el canal de Redis local"
         user_list = await self.redis.smembers(f"{self.room_group_name}_users")
         decoded_user_list = [user.decode("utf-8") for user in user_list]
-        message = {"tournament_id": self.room_name, "user_list": decoded_user_list}
+        message = {
+            "type": "user_list",
+            "tournament_id": self.room_name,
+            "user_list": decoded_user_list}
         await self.redis.publish(self.room_group_name, json.dumps(message))
         await self.channel_layer.group_send(
             self.room_group_name, {"type": "user_list", "user_list": decoded_user_list}
@@ -271,20 +276,18 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
 
-    #GAME END NOTIFICATION HANDLERS(THIS WILL BE CALLED FROM THE GLOBAL WS)  
+    #GAME END NOTIFICATION HANDLERS  
     async def game_end_notification(self, event):
-        usename = self.username
+        username = self.username
         await self.send(json.dumps({
             "type": "game_end",
             "tournament_id": event["tournament_id"],
             "winner": event["winner"],
             "loser": event["loser"],
-            "match_id": event["match_id"],
-            "username": usename
+            "match_id": event["tree_id"], #match id is for the frontend to know which match ended
+            "username": username
 
         }))
-
-    
 
     async def listen_to_game_end(self):
         # Subscribirse al canal de Redis para recibir eventos de fin de juego
@@ -298,11 +301,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
             message = await pubsub.get_message(ignore_subscribe_messages=True)
             if message:
                 #imprimir en color ROJO
-                print (f"\033[91m {message} <- message")
                 data = json.loads(message["data"])
                 if data["type"] == "game_end":
-                   
+                    print (f"\033[91m {data} <- data GAME END")
                     await self.game_end_notification(data)
 
-            await asyncio.sleep(0.1)  
+            await asyncio.sleep(0.042)  
 

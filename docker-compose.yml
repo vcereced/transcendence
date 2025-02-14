@@ -3,6 +3,7 @@ services:
     image: nginx:1.23  # Specify the version for stability
     build: ./services/nginx
     container_name: api-gateway
+    platform: linux/x86_64
     ports:
       - "8443:443"  # Expose port 80 to access the API Gateway from outside
       - "8000:80"  # Expose port 80 to access the API Gateway from outside
@@ -23,6 +24,7 @@ services:
   message-broker:
     image: rabbitmq:4-management-alpine
     container_name: message-broker
+    platform: linux/x86_64
     ports:
         - 5672:5672
         - 15672:15672

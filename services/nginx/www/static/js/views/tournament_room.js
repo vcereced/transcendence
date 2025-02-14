@@ -16,8 +16,8 @@ export function renderTournamentRoom(tournamentId) {
             <div class="tournament-tree">
                 <div class="round round-1">
                     <div class="match" data-match="1">
-                        <div class="player" data-player="1">Jugador 1</div>
-                        <div class="player" data-player="2">Jugador 2</div>
+                        <div class="player" data-player="1">jugador1dg</div>
+                        <div class="player" data-player="2">jugador2dg</div>
                     </div>
                     <div class="match" data-match="2">
                         <div class="player" data-player="3">Jugador 3</div>
@@ -84,7 +84,7 @@ function startTournamentWebSocket(tournamentId) {
             updateUserList(data.user_list);
         }
         if (data.type === "start_tournament") {
-            start_tournament();
+            start_tournament(data);
         }
         if (data.type === "game_end") {
             update_tournament_tree(data);
@@ -135,7 +135,7 @@ function updateUserList(userList) {
 */
 function update_tournament_tree(data) {
     const { match_id, winner, loser } = data;
-
+    console.log("updating tournament tree with:", data);
     // Encontrar el partido actual
     const currentMatch = document.querySelector(`.match[data-match="${match_id}"]`);
     if (!currentMatch) {
@@ -206,6 +206,30 @@ function simulateTournamentProgress() {
     }
 }
 
-function start_tournament() {
-    alert("El torneo ha comenzado!");
+// function start_tournament() {
+//     alert("El torneo ha comenzado!");
+// }
+
+function start_tournament(data) {
+    alert("¡El torneo ha comenzado!");
+    
+    // Parseamos los datos del árbol del torneo
+    const parsedTournamentTree = {};
+    for (const key in data.tournament_tree) {
+        parsedTournamentTree[key] = JSON.parse(data.tournament_tree[key]);
+    }
+
+    console.log("Árbol del torneo:", parsedTournamentTree);
+
+    // Iteramos sobre la primera ronda y actualizamos los jugadores
+    parsedTournamentTree.round_1.forEach((match) => {
+        const matchElement = document.querySelector(`.match[data-match="${match.tree_id}"]`);
+        if (matchElement) {
+            const players = matchElement.querySelectorAll(".player");
+            if (players.length >= 2) {
+                players[0].textContent = match.left_player;
+                players[1].textContent = match.right_player;
+            }
+        }
+    });
 }
