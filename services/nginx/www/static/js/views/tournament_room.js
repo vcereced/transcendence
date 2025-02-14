@@ -84,7 +84,7 @@ function startTournamentWebSocket(tournamentId) {
             updateUserList(data.user_list);
         }
         if (data.type === "start_tournament") {
-            start_tournament();
+            start_tournament(data);
         }
         if (data.type === "game_end") {
             update_tournament_tree(data);
@@ -206,6 +206,30 @@ function simulateTournamentProgress() {
     }
 }
 
-function start_tournament() {
-    alert("El torneo ha comenzado!");
+// function start_tournament() {
+//     alert("El torneo ha comenzado!");
+// }
+
+function start_tournament(data) {
+    alert("¡El torneo ha comenzado!");
+    
+    // Parseamos los datos del árbol del torneo
+    const parsedTournamentTree = {};
+    for (const key in data.tournament_tree) {
+        parsedTournamentTree[key] = JSON.parse(data.tournament_tree[key]);
+    }
+
+    console.log("Árbol del torneo:", parsedTournamentTree);
+
+    // Iteramos sobre la primera ronda y actualizamos los jugadores
+    parsedTournamentTree.round_1.forEach((match) => {
+        const matchElement = document.querySelector(`.match[data-match="${match.tree_id}"]`);
+        if (matchElement) {
+            const players = matchElement.querySelectorAll(".player");
+            if (players.length >= 2) {
+                players[0].textContent = match.left_player;
+                players[1].textContent = match.right_player;
+            }
+        }
+    });
 }

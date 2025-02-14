@@ -153,10 +153,23 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 "tournament_id": self.room_name,
             }
             send_start_matchmaking_task(message) #should this be async?
+            #obtain the tree of the tournament
+            tournament_tree_key = f"tournament_{self.room_name}_tree"
+            for _ in range(50):  
+                key_type = await self.redis.type(tournament_tree_key)
+                if key_type == b'hash':
+                    break
+            await asyncio.sleep(0.1)  
+            tournament_tree = await self.redis.hgetall(tournament_tree_key)
+            tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in (await self.redis.hgetall(tournament_tree_key)).items()}
+
+            print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "start_tournament",
+                    "message": "Tournament iss starting",
+                    "tournament_tree": tournament_tree,
                 },
             )
     #JUST FOR TESTING PURPOSES GAME END SIMULATION
@@ -176,7 +189,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     async def start_tournament(self, event):
         # Send message to WebSocket
-        await self.send(text_data=json.dumps({"type": "start_tournament", "message": "Tournament is starting"}))
+        message = event["message"]
+        tournament_tree = event["tournament_tree"]
+        await self.send(text_data=json.dumps({"type": "start_tournament", "message": message, "tournament_tree": tournament_tree}))
+        # await self.send(text_data=json.dumps({"type": "start_tournament", "message": "Tournament is starting"}))
 
     async def disconnect(self, close_code):
         # Quitar el canal del grupo del torneo
@@ -262,14 +278,14 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     #GAME END NOTIFICATION HANDLERS  
     async def game_end_notification(self, event):
-        usename = self.username
+        username = self.username
         await self.send(json.dumps({
             "type": "game_end",
             "tournament_id": event["tournament_id"],
             "winner": event["winner"],
             "loser": event["loser"],
             "match_id": event["tree_id"], #match id is for the frontend to know which match ended
-            "username": usename
+            "username": username
 
         }))
 

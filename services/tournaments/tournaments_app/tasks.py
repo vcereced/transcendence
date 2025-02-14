@@ -82,38 +82,6 @@ def start_next_round(tournament_id, round_id, winners):
         })
 
 
-# def start_next_round(tournament_id, round_id, winners):
-#     """
-#     Genera los emparejamientos de la siguiente ronda y envía las tareas a Celery.
-#     """
-#     next_round_id = str(int(round_id) + 1)  # Pasamos a la siguiente ronda
-#     tournament_tree_key = f"tournament_{tournament_id}_tree"
-
-#     # Guardar los ganadores de esta ronda en Redis
-#     redis_client.hset(tournament_tree_key, f"round_{next_round_id}", json.dumps(winners))
-    
-#     if len(winners) == 1:
-#         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
-#         return  # Fin del torneo
-
-#     # Emparejar ganadores
-#     new_pairs = []
-#     for i in range(0, len(winners) - 1, 2):
-#         new_pairs.append({
-#             "left_player_id": winners[i],
-#             "left_player_username": f"Jugador_{winners[i]}",
-#             "right_player_id": winners[i + 1],
-#             "right_player_username": f"Jugador_{winners[i + 1]}",
-#             "tournament_id": tournament_id,
-#             "tree_id": next_round_id
-#         })
-
-#     print(f"Iniciando ronda {next_round_id} con pares: {new_pairs}")
-
-#     # Enviar las nuevas partidas a game
-#     for pair in new_pairs:
-#         send_create_game_task(pair)
-
 def update_tournament_tree(tournament_id, tree_id, winner):
     """
     Guarda el resultado de un partido en la estructura del torneo en Redis.
@@ -150,42 +118,8 @@ def update_tournament_tree(tournament_id, tree_id, winner):
         print(f"Todos los partidos de la Ronda {round_number} han terminado.")
         start_next_round(tournament_id, round_number, [match["winner"] for match in completed_games])
 
-# def update_tournament_tree(tournament_id, tree_id, winner):
-#     """
-#     Guarda el ganador en el árbol del torneo en Redis.
-#     """
-#     tournament_tree_key = f"tournament_{tournament_id}_tree"
-    
-#     # Determinar en qué ronda estamos
-#     round_number = "1" if tree_id in ["1", "2", "3", "4"] else "2" if tree_id in ["5", "6"] else "3"
-#     round_key = f"round_{round_number}"
 
-#     # Obtener la ronda actual desde Redis
-#     current_round = redis_client.hget(tournament_tree_key, round_key)
-#     current_round = json.loads(current_round) if current_round else []
-
-#     # Buscar el partido con el tree_id dado y actualizar el ganador
-#     for match in current_round:
-#         if match["tree_id"] == tree_id:
-#             match["winner"] = winner
-#             break  # No necesitamos seguir buscando
-
-#     # Guardar la ronda actualizada en Redis
-#     redis_client.hset(tournament_tree_key, round_key, json.dumps(current_round))
-    
-#     print(f"🏆 Árbol actualizado en {round_key}: {current_round}")
-    
-#     # Verificar si todos los partidos de la ronda han terminado
-#     completed_games = [match for match in current_round if "winner" in match]
-#     total_games = len(current_round)
-
-#     if len(completed_games) == total_games:
-#         print(f"✅ Todos los partidos de la Ronda {round_number} han terminado.")
-        
-#         # Generar la siguiente ronda
-#         start_next_round(tournament_id, round_number, [match["winner"] for match in completed_games])
-
-#THIS IS JUST IN CASE WE NEED IT IT RETURNS THE TOURNAMENT HISTORY
+#THIS IS JUST IN CASE WE NEED IT. IT RETURNS THE TOURNAMENT HISTORY
 def get_tournament_history(tournament_id):
     """
     Recupera toda la información del torneo desde Redis.
@@ -270,7 +204,7 @@ def start_matchmaking(message):
         }
         for pair in pairs
     ]
-
+    #This is the whole tournament tree
     redis_client.hset(tournament_tree_key, "round_1", json.dumps(first_round))
     
     print("\033[33m" + f"🏆 Árbol del torneo inicializado en Redis: {first_round}" + "\033[0m")
