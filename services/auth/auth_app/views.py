@@ -10,7 +10,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 import jwt
 import os
 from django.contrib.auth.models import User
-from auth_app.utils.utils import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice
+from auth_app.utils.utils import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice, CustomError
 
 SECRET_KEY = os.getenv("JWT_SECRET")
 
@@ -29,7 +29,6 @@ def register_view(request):
             "message": "User register OK. Scan QR to set 2FA.",
             "qr_code": qr_base64,  # Enviar QR en base64 para mostrar en frontend
         }, status=status.HTTP_201_CREATED)
-
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -37,20 +36,24 @@ def verify_otp_view(request):
     username = request.data.get("username")
     otp_token = request.data.get("otp_token")
 
-    if not username or not otp_token:
-        return Response({"error": "not found username or otp."}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
+        if not username or not otp_token:
+            return Response({"error": "not found username or otp."}, status=status.HTTP_400_BAD_REQUEST)
+
         user = User.objects.get(username=username)
+
+        if activateTOPTDevice(user, otp_token):
+            user.is_active = True  # Activamos la cuenta
+            user.save()
+            return Response({"message": "OTP OK. User active, go to login."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Código OTP wrong."}, status=status.HTTP_400_BAD_REQUEST)
+
     except User.DoesNotExist:
         return Response({"error": "user not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    if activateTOPTDevice(user, otp_token):
-        user.is_active = True  # Activamos la cuenta
-        user.save()
-        return Response({"message": "OTP OK. User active, go to login."}, status=status.HTTP_200_OK)
-    
-    return Response({"error": "Código OTP wrong."}, status=status.HTTP_400_BAD_REQUEST)
+    except CustomError as e:
+        return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def login_api_view(request):
@@ -61,8 +64,12 @@ def login_api_view(request):
 
 	user = authenticate(username=username, password=password)
 
-	if user is not None and verifyTOPTDevice(user, otp_token) is not None:
-        
+	if user is None:
+		return Response({"error": "Credenciales inválidas."}, status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		verifyTOPTDevice(user, otp_token)
+
 		refresh = RefreshToken.for_user(user)
 		refresh['username'] = user.username
 
@@ -71,23 +78,26 @@ def login_api_view(request):
 			'refresh': str(refresh),
 			'access': str(refresh.access_token)
 		}, status=status.HTTP_200_OK)
-	else:
-		return Response({'error': 'Credenciales inválidas.'}, status=status.HTTP_400_BAD_REQUEST)
-	
+		
+	except CustomError as e:
+		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET'])
 def validate_token_view(request):
 
     token = request.COOKIES.get('accessToken')
 
     if not token:
-        return Response({'error': 'accessToken is required in cookies'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "accessToken is required in cookies"}, status=status.HTTP_400_BAD_REQUEST)
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        return Response({'valid': True, 'payload': payload}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
+
     except jwt.ExpiredSignatureError:
-        return Response({'error': 'Token has expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"error": "Token has expired"}, status=status.HTTP_401_UNAUTHORIZED)
+
     except jwt.InvalidTokenError:
-        return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED)
     
 @api_view(['POST'])
 def refresh_token_view(request):

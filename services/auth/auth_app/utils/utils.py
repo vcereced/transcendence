@@ -5,6 +5,11 @@ import qrcode
 import base64
 from io import BytesIO
 
+class CustomError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+
 #argument must be the user serialized(username and password)
 def genTOPTDevice(user):
 
@@ -27,24 +32,24 @@ def activateTOPTDevice(user, otp_token):
 	try:
 		totp_device = TOTPDevice.objects.get(user=user, confirmed=False)
 	except TOTPDevice.DoesNotExist:
-		return Response({"error": "No hay configuración de 2FA pendiente."}, status=status.HTTP_400_BAD_REQUEST)
-	
-	 # Verificar OTP
+		raise CustomError("2FA activated already")
+
+	# Verificar OTP
 	if totp_device.verify_token(otp_token):
 		totp_device.confirmed = True  # Confirmamos que el dispositivo es válido
 		totp_device.save()
 		return True
 	else:
 		return False
-	
+
 def verifyTOPTDevice(user, otp_token):
 
 	try:
 		totp_device = TOTPDevice.objects.get(user=user, confirmed=True)
 	except TOTPDevice.DoesNotExist:
-		return Response({'error': 'No tiene activado 2FA esta cuenta.'}, status=status.HTTP_401_UNAUTHORIZED)
+		raise CustomError("this account dont have 2FA activated")
 
 	if not totp_device.verify_token(otp_token):
-		return Response({'error': 'Código OTP incorrecto.'}, status=status.HTTP_400_BAD_REQUEST)
+		raise CustomError("OTP code wrong!!")
 	else:
 		return True
