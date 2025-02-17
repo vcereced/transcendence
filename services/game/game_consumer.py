@@ -7,27 +7,34 @@ import asyncio
 from asgiref.sync import sync_to_async
 import math
 import time
+from celery import current_app
+from django.utils.timezone import now
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "game.settings")
 django.setup()
 
 from game_app import serializers
 from game import settings as s
-from game_app.models import GameState, Game, Ball
+from game_app.models import GameState, Game, Ball, RockPaperScissorsGame
 
 
 async def discover_games():
     redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
     while True:
+        discovered_rps_id = await redis_client.lpop("rps_queue")
         discovered_game_id = await redis_client.lpop("game_queue")
-        if not discovered_game_id:
+        if not discovered_game_id or not discovered_rps_id:
             await asyncio.sleep(1)
             continue
         await asyncio.sleep(
             0.1
         )  # Small delay to allow the game state to be created in redis
-        asyncio.create_task(play_game(int(discovered_game_id)))
-        print(f"Game discovered: {discovered_game_id}")
+        if discovered_rps_id:
+            asyncio.create_task(play_rock_paper_scissors(int(discovered_rps_id)))
+            print(f"Rock Paper Scissors discovered: {discovered_rps_id}")
+        if discovered_game_id:
+            asyncio.create_task(play_game(int(discovered_game_id)))
+            print(f"Game discovered: {discovered_game_id}")
 
 
 async def play_game(game_id: int):
@@ -43,13 +50,27 @@ async def play_game(game_id: int):
 
         game_state = await load_game_state(redis_client, game_id)
 
-        while game_state.left.score < 500 and game_state.right.score < 500:
+        while (
+            game_state.left.score < s.WINNER_SCORE
+            and game_state.right.score < s.WINNER_SCORE
+        ):
             game_state = await load_game_state(redis_client, game_id)
             game_state = check_collisions(game_state)
             game_state.ball.x += game_state.ball.dx
             game_state.ball.y += game_state.ball.dy
             await save_game_state(redis_client, game_id, game_state)
             await asyncio.sleep(1 / s.FPS)
+
+    game.is_finished = True
+    game.finished_at = now()
+    game.winner_id = (
+        game.left_player_id
+        if game_state.left.score == s.WINNER_SCORE
+        else game.right_player_id
+    )
+    game.left_player_score = game_state.left.score
+    game.right_player_score = game_state.right.score
+    game.save()
 
 
 @sync_to_async
@@ -78,7 +99,9 @@ async def control_paddle_by_computer(game_id, side):
         if time.time() - last_seen_time > refresh_rate:
             last_seen_time = time.time()
             last_seen_ball = game_state.ball
-            target_paddle_y = determine_target_paddle_y(last_seen_ball, side, target_paddle_y)
+            target_paddle_y = determine_target_paddle_y(
+                last_seen_ball, side, target_paddle_y
+            )
 
         final_paddle_y = approach_target_paddle_y(final_paddle_y, target_paddle_y)
 
@@ -88,22 +111,34 @@ async def control_paddle_by_computer(game_id, side):
         await asyncio.sleep(1 / s.FPS)
 
 
-def determine_target_paddle_y(last_seen_ball : Ball, side, target_paddle_y):
+def determine_target_paddle_y(last_seen_ball: Ball, side, target_paddle_y):
     # Don't calculate target if ball is moving away from the computer paddle
-    if (side == "left" and last_seen_ball.dx > 0) or (side == "right" and last_seen_ball.dx < 0):
+    if (side == "left" and last_seen_ball.dx > 0) or (
+        side == "right" and last_seen_ball.dx < 0
+    ):
         return target_paddle_y
-    
+
     ball_velocity_angle = math.atan2(last_seen_ball.dy, last_seen_ball.dx)
-    x_distance_to_goal = s.FIELD_WIDTH - last_seen_ball.x if side == "right" else last_seen_ball.x
-    y_distance_to_goal = x_distance_to_goal * math.tan(ball_velocity_angle) # WARNING
+    x_distance_to_goal = (
+        s.FIELD_WIDTH - last_seen_ball.x if side == "right" else last_seen_ball.x
+    )
+    y_distance_to_goal = x_distance_to_goal * math.tan(ball_velocity_angle)  # WARNING
 
     target_paddle_y = last_seen_ball.y + y_distance_to_goal
-    
+
     # There is at least one wall rebound
     if target_paddle_y > s.FIELD_HEIGHT or target_paddle_y < 0:
-        distance_to_first_rebound = s.FIELD_HEIGHT - last_seen_ball.y if target_paddle_y > s.FIELD_HEIGHT else last_seen_ball.y
-        amount_of_rebounds = int(y_distance_to_goal - distance_to_first_rebound) // s.FIELD_HEIGHT
-        final_offset = int(y_distance_to_goal - distance_to_first_rebound) % s.FIELD_HEIGHT
+        distance_to_first_rebound = (
+            s.FIELD_HEIGHT - last_seen_ball.y
+            if target_paddle_y > s.FIELD_HEIGHT
+            else last_seen_ball.y
+        )
+        amount_of_rebounds = (
+            int(y_distance_to_goal - distance_to_first_rebound) // s.FIELD_HEIGHT
+        )
+        final_offset = (
+            int(y_distance_to_goal - distance_to_first_rebound) % s.FIELD_HEIGHT
+        )
         if target_paddle_y > s.FIELD_HEIGHT:
             if amount_of_rebounds % 2 == 0:
                 target_paddle_y = s.FIELD_HEIGHT - final_offset
@@ -249,6 +284,87 @@ def check_paddle_collision(
         )
 
     return game_state
+
+
+@sync_to_async
+def query_db_for_rps(game_id):
+    return RockPaperScissorsGame.objects.get(pk=game_id)
+
+
+async def play_rock_paper_scissors(rps_id: int):
+    redis_client = redis.Redis(host="redis", port=6379)
+
+    rps_record = await query_db_for_rps(rps_id)
+
+    winner_id = await play_rps_round(rps_record, redis_client)
+
+    while winner_id == 0:
+        await asyncio.sleep(2)  # Wait before the next round
+        await redis_client.set(
+            f"rps:{rps_record.id}:time_left", str(s.RPS_GAME_TIMER_LENGTH)
+        )
+        winner_id = await play_rps_round(rps_record, redis_client)
+
+    rps_record.winner_id = winner_id
+    rps_record.left_player_choice = await redis_client.get(
+        f"rps:{rps_record.id}:left_choice"
+    )
+    rps_record.right_player_choice = await redis_client.get(
+        f"rps:{rps_record.id}:right_choice"
+    )
+    rps_record.is_finished = True
+    rps_record.finished_at = now()
+    rps_record.save()
+    game_data = {
+        "left_player_id": rps_record.left_player_id,
+        "left_player_username": rps_record.left_player_username,
+        "right_player_id": rps_record.right_player_id,
+        "right_player_username": rps_record.right_player_username,
+        "tournament_id": rps_record.tournament_id,
+        "tree_index": rps_record.tree_index,
+        "rock_paper_scissors_id": rps_record.id,
+    }
+    current_app.send_task(
+        "launch_game",
+        args=[game_data],
+        queue="game_tasks",
+    )
+
+
+async def play_rps_round(rps_record: RockPaperScissorsGame, redis_client: redis.Redis):
+    time_left = int(await redis_client.get(f"rps:{rps_record.id}:time_left"))
+
+    # Initial countdown
+    while time_left > 0:
+        await asyncio.sleep(1)
+        time_left -= 1
+        await redis_client.set(f"rps:{rps_record.id}:time_left", str(time_left))
+
+    left_choice = await redis_client.get(f"rps:{rps_record.id}:left_choice")
+    right_choice = await redis_client.get(f"rps:{rps_record.id}:right_choice")
+
+    winner_id = determine_winner(
+        left_choice,
+        right_choice,
+        rps_record.left_player_id,
+        rps_record.right_player_id,
+    )
+
+    await redis_client.set(f"rps:{rps_record.id}:winner_id", str(winner_id))
+
+    return int(winner_id)
+
+
+def determine_winner(left_choice, right_choice, left_player_id, right_player_id):
+    if left_choice == right_choice:
+        return 0
+    if left_choice == "rock":
+        return right_player_id if right_choice == "paper" else left_player_id
+    if left_choice == "paper":
+        return right_player_id if right_choice == "scissors" else left_player_id
+    if left_choice == "scissors":
+        return right_player_id if right_choice == "rock" else left_player_id
+    return -1
 
 
 if __name__ == "__main__":
