@@ -26,3 +26,12 @@ def trigger_create_game_task(request):
         queue="game_tasks",
     )
     return Response(status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def trigger_launch_game_task(request):
+    current_app.send_task(
+        "launch_game",
+        args=[request.data],
+        queue="game_tasks",
+    )
+    return Response(status=status.HTTP_200_OK)

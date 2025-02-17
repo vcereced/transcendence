@@ -25,3 +25,8 @@ class GameSerializer(serializers.ModelSerializer):
         model = models.Game
         fields = '__all__'
 
+class RockPaperScissorsGameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.RockPaperScissorsGame
+        fields = '__all__'
+
