@@ -160,6 +160,9 @@ CELERY_TASK_ROUTES = {
     'game_app.tasks.create_game': {
         'queue': 'game_tasks',
     },
+    'game_app.tasks.launch_game': {
+        'queue': 'game_tasks',
+    },
 }
 
 
@@ -190,4 +193,11 @@ INITIAL_GAME_STATE = {
     "left_paddle_y": FIELD_HEIGHT / 2,
     "right_paddle_y": FIELD_HEIGHT / 2,
 }
+
+
+# RPS GAME SETTINGS
+
+RPS_GAME_TIMER_LENGTH = 10
+RPS_CHOICES = ["rock", "paper", "scissors"]
+
 
