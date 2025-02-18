@@ -24,7 +24,7 @@ export async function initGame() {
 
     // let userLoginData = decodeJWT(getCookie("accessToken"));
     await handleJwtToken();
-    let socket = new WebSocket(`wss://${window.location.host}/ws/game/`);
+    let socket = new WebSocket(`wss://${window.location.host}/ws/game/pong/`);
 
     const canvas = document.getElementById('pong-canvas');
     const maxCanvasHeightToWindow = 0.6;
