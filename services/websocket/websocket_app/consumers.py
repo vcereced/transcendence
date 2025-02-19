@@ -57,8 +57,7 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        # Manejar cualquier mensaje recibido (por ejemplo, actualizaciones de contador de jugadores)
-        pass
+       pass
 
     async def update_user_count(self, tournament_id, user_count):
         # Actualizar el contador de jugadores en todos los torneos a través del WebSocket global
@@ -147,31 +146,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.send_message("Hello from the server mr. " + self.username)
         # Aceptar la conexión WebSocket
         await self.accept()
-        #Discover if 8 players are already in the tournament. TESTING
-        if current_user_count == 3:
-            message = {
-                "tournament_id": self.room_name,
-            }
-            send_start_matchmaking_task(message) #should this be async?
-            #obtain the tree of the tournament
-            tournament_tree_key = f"tournament_{self.room_name}_tree"
-            for _ in range(50):  
-                key_type = await self.redis.type(tournament_tree_key)
-                if key_type == b'hash':
-                    break
-            await asyncio.sleep(0.1)  
-            tournament_tree = await self.redis.hgetall(tournament_tree_key)
-            tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in (await self.redis.hgetall(tournament_tree_key)).items()}
-
-            print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "start_tournament",
-                    "message": "Tournament iss starting",
-                    "tournament_tree": tournament_tree,
-                },
-            )
+        
     #JUST FOR TESTING PURPOSES GAME END SIMULATION
         if current_user_count == 4:
             message = {
@@ -276,7 +251,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": message}))
 
-    #GAME END NOTIFICATION HANDLERS  
+    #GAME END NOTIFICATION HANDLERS
+    # This will send a message to the frontend when a game ends
     async def game_end_notification(self, event):
         username = self.username
         await self.send(json.dumps({
@@ -308,3 +284,40 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
             await asyncio.sleep(0.042)  
 
+    #Handle messages from the frontend tournament room
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        message_type = data.get("type")
+        print (f"\033[91m Received message type: {message_type} \033[0m")
+        if message_type == "start_tournament":
+            print("\033[92mRecibido evento para iniciar torneo\033[0m")
+
+            # Enviar mensaje a Redis para iniciar el torneo
+            message = {
+                "tournament_id": self.room_name,
+            }
+
+            send_start_matchmaking_task(message)  
+            # Esperar a que se cree el árbol del torneo
+            tournament_tree_key = f"tournament_{self.room_name}_tree"
+            for _ in range(50):  
+                key_type = await self.redis.type(tournament_tree_key)
+                if key_type == b'hash':
+                    break
+                await asyncio.sleep(0.1)  
+
+            # Obtener el árbol del torneo
+            tournament_tree = await self.redis.hgetall(tournament_tree_key)
+            tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in tournament_tree.items()}
+
+            print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
+
+            # Enviar el mensaje a todos los jugadores
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "start_tournament",
+                    "message": "Tournament is starting",
+                    "tournament_tree": tournament_tree,
+                },
+            )

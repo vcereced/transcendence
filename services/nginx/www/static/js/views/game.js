@@ -99,7 +99,10 @@ export async function initGame() {
             canvas.setAttribute('width', fieldWidth);
 
             gameLoop();
-        } 
+        } else if (data.type === 'game_end') {
+            winner = data.winner;
+            alert(`El ganador es ${winner}`);
+        }
         
     };
 

@@ -4,7 +4,7 @@ from game_app.serializers import GameSerializer
 import redis
 from game import settings as s
 import json
-from celery import current_app
+from celery import Celery
 from django.db import transaction
 import random
 
@@ -43,3 +43,33 @@ def create_game(game_data):
         redis_client.set(f"game:{game.id}:right_paddle_y", json.dumps(s.INITIAL_GAME_STATE["right_paddle_y"]))
         redis_client.set(f"game:{game.id}:scores", json.dumps(s.INITIAL_GAME_STATE["scores"]))
         redis_client.rpush("game_queue", f"{game.id}")
+############################################################################################################
+#MODIFIED BY GARYDD1 FOR TESTING PURPOSES
+
+app = Celery('game', broker='amqp://guest:guest@message-broker:5672//')
+
+async def send_game_end_task(self, winner):
+    #print en ROJO
+    print("\033[91m" + "send_game_end_task from GAME_APP")
+    
+    loser = (
+        self.game.left_player_username
+        if winner == self.game.right_player_username
+        else self.game.right_player_username
+    )
+    print (f"winner: {winner}")
+    print (f"loser: {loser}")
+    message = {
+        "tournament_id": self.game.tournament_id,
+        "winner": winner,
+        "loser": loser,
+        "tree_id": self.game.tree_id,
+        "type": "game_end",
+
+    }
+
+    await app.send_task(
+        "game_end",
+        args=[message],
+        queue="matchmaking_tasks",
+    )

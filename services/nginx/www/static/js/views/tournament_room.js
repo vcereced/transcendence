@@ -12,6 +12,9 @@ export function renderTournamentRoom(tournamentId) {
                 <ul id="user-list"></ul>
             </div>
 
+            <button id="start-tournament-btn" class="start-btn">Iniciar Torneo</button>
+
+
             <!-- Árbol de clasificación -->
             <div class="tournament-tree">
                 <div class="round round-1">
@@ -65,7 +68,12 @@ export function initTournamentRoom(tournamentId) {
         socket = startTournamentWebSocket(tournamentId);
     }
 
-    // simulateTournamentProgress();
+    const startButton = document.getElementById("start-tournament-btn");
+    if (startButton) {
+        startButton.addEventListener("click", () => {
+            sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
+        });
+    }
 }
 
 function startTournamentWebSocket(tournamentId) {
@@ -80,6 +88,20 @@ function startTournamentWebSocket(tournamentId) {
         const data = JSON.parse(event.data);
         console.log("Mensaje WebSocket del torneo:", data);
 
+        // switch (data.type) {
+        //     case "user_list":
+        //         updateUserList(data.user_list);
+        //         break;
+        //     case "start_tournament":
+        //         start_tournament(data);
+        //         break;
+        //     case "game_end":
+        //         update_tournament_tree(data);
+        //         break;
+        //     default:
+        //         console.error("Tipo de mensaje desconocido:", data.type);
+        //         break;
+        // }
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
         }
@@ -206,10 +228,6 @@ function simulateTournamentProgress() {
     }
 }
 
-// function start_tournament() {
-//     alert("El torneo ha comenzado!");
-// }
-
 function start_tournament(data) {
     alert("¡El torneo ha comenzado!");
     
@@ -227,9 +245,19 @@ function start_tournament(data) {
         if (matchElement) {
             const players = matchElement.querySelectorAll(".player");
             if (players.length >= 2) {
-                players[0].textContent = match.left_player;
-                players[1].textContent = match.right_player;
+                players[0].textContent = match.players.left.username;
+                players[1].textContent = match.players.right.username;
             }
         }
     });
 }
+
+function sendWebSocketMessage(type, data) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log("Enviando mensaje WebSocket:", { type, ...data });
+        socket.send(JSON.stringify({ type, ...data }));
+    } else {
+        console.error("WebSocket no está conectado.");
+    }
+}
+
