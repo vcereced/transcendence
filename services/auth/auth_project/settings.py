@@ -46,6 +46,11 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#MAIL_HOST = "localhost"
+#EMAIL_PORT = 1025  # Puerto de prueba para un servidor SMTP local
+
+
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
 
 MIDDLEWARE = [
@@ -147,3 +152,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+AUTH_USER_MODEL = 'auth_app.CustomUser'

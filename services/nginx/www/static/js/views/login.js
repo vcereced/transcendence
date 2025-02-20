@@ -58,7 +58,8 @@ export function initLogin() {
 			console.log("Inicio de sesión ok");
 			localStorage.setItem("accessToken", data.access);
         	localStorage.setItem("refreshToken", data.refresh);
-			loginResponseMessage.innerText = data.message;
+			// loginResponseMessage.innerText = data.message;
+			loginResponseMessage.innerHTML = data.message;
 
 			document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
 			document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
@@ -67,7 +68,7 @@ export function initLogin() {
 
 		} else {
 			console.log("Error al iniciar sesión");
-			loginResponseMessage.innerText = data.error;
+			loginResponseMessage.innerHTML = data.error;
 		}
 	});
 

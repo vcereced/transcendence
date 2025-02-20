@@ -17,6 +17,7 @@ ENV PYTHONUNBUFFERED 1
 
 # Expose the port Django will use
 EXPOSE 8001
+EXPOSE 1025
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
