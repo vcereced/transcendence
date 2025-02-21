@@ -34,6 +34,7 @@ export async function initGame() {
     const rightUsernameSpan = document.getElementById('right-username');
     const leftScoreSpan = document.getElementById('left-score');
     const rightScoreSpan = document.getElementById('right-score');
+    const popup = document.getElementById('result-popup');
 
 
     // --- VARIABLES AND CONSTANTS ---
@@ -68,6 +69,8 @@ export async function initGame() {
         arrowUp: false,
         arrowDown: false,
     };
+
+    let popupShown = false;
 
 
     // --- FUNCTIONS ---
@@ -137,6 +140,17 @@ export async function initGame() {
         }
     }
 
+    window.showPopup = function showPopup(message) {
+        popup.textContent = message;
+        popup.style.display = "block";
+        popupShown = true;
+    }
+
+    window.hidePopup = function hidePopup() {
+        popup.style.display = "none";
+        popupShown = false;
+    }
+
 
     // --- EVENT LISTENERS ---
 
@@ -155,6 +169,12 @@ export async function initGame() {
             leftScoreSpan.innerText = data.game_state.left.score;
             rightScoreSpan.innerText = data.game_state.right.score;
             drawEverything();
+
+            if (data.game_state.is_finished && !popupShown) {
+                showPopup(`${data.game_state.winner_username} gana!`);
+            } else if (!data.game_state.is_finished && popupShown) {
+                hidePopup();
+            }
 
         } else if (data.type === 'initial_information') {
             leftUsernameSpan.innerText = data.left_player_username;

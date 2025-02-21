@@ -30,7 +30,7 @@ class Side:
     @classmethod
     def from_dict(cls, data: dict):
         return cls(data["paddle_y"], data["score"])
-    
+
     def to_dict(self):
         return {
             "paddle_y": self.paddle_y,
@@ -40,11 +40,18 @@ class Side:
 
 class GameState:
     def __init__(
-        self, ball: Ball, left: Side, right: Side
+        self,
+        ball: Ball,
+        left: Side,
+        right: Side,
+        winner_username: str,
+        is_finished: int,
     ):
         self.ball = ball
         self.left = left
         self.right = right
+        self.winner_username = winner_username
+        self.is_finished = is_finished
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -52,15 +59,19 @@ class GameState:
             Ball.from_dict(data["ball"]),
             Side.from_dict(data["left"]),
             Side.from_dict(data["right"]),
+            data["winner_username"],
+            data["is_finished"],
         )
-    
+
     def to_dict(self):
         return {
             "ball": self.ball.to_dict(),
             "left": self.left.to_dict(),
             "right": self.right.to_dict(),
+            "winner_username": self.winner_username,
+            "is_finished": self.is_finished,
         }
-    
+
 
 class Game(models.Model):
     left_player_id = models.IntegerField()

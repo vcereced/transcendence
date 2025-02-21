@@ -129,8 +129,10 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         )
         
         scores_data = await redis_client.get(f"game:{self.game.id}:scores")
+        winner_username_data = await redis_client.get(f"game:{self.game.id}:winner_username")
+        is_finished_data = await redis_client.get(f"game:{self.game.id}:is_finished")
         
-        if ball_data and left_paddle_data and right_paddle_data and scores_data:
+        if ball_data and left_paddle_data and right_paddle_data and scores_data and is_finished_data:
             
             scores = json.loads(scores_data)
             game_state_data = {
@@ -143,6 +145,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                     "paddle_y": json.loads(right_paddle_data),
                     "score": scores["right"],
                 },
+                "winner_username": str(winner_username_data),
+                "is_finished": int(is_finished_data),
             }
             
             game_state_serializer = serializers.GameStateSerializer(
