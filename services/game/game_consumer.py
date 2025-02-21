@@ -56,7 +56,10 @@ async def play_game(game_id: int):
             elif game.right_player_id == 0:
                 tg.create_task(control_paddle_by_computer(game_id, "right"))
 
-            game_state = await load_game_state(redis_client, game_id)
+            game_state = await determine_initial_serve(
+                game, await load_game_state(redis_client, game_id)
+            )
+            await save_game_state(redis_client, game_id, game_state)
 
             while (
                 game_state.left.score < s.WINNER_SCORE
@@ -315,6 +318,33 @@ def check_paddle_collision(
 @sync_to_async
 def save_game_ending(game: Game):
     game.save()
+
+
+@sync_to_async
+def determine_initial_serve(game: Game, game_state: GameState):
+    game_state.ball.dy *= random.choice([-1, 1])
+
+    if not game.rock_paper_scissors_id or game.rock_paper_scissors_id <= 0:
+        game_state.ball.dx *= random.choice([-1, 1])  # Serve to a random side
+        return game_state
+
+    try:
+        rps_record = RockPaperScissorsGame.objects.get(pk=game.rock_paper_scissors_id)
+        if (
+            rps_record.winner_username == game.left_player_username
+        ):  # Left player won the RPS, serves
+            game_state.ball.dx = -s.INITIAL_BALL_SPEED
+        elif (
+            rps_record.winner_username == game.right_player_username
+        ):  # Right player won the RPS, serves
+            game_state.ball.dx = s.INITIAL_BALL_SPEED
+        else:
+            game_state.ball.dx *= random.choice([-1, 1])  # Serve to a random side
+
+    except RockPaperScissorsGame.DoesNotExist:
+        game_state.ball.dx *= random.choice([-1, 1])  # Serve to a random side
+
+    return game_state
 
 
 async def play_rock_paper_scissors(rps_id: int):
