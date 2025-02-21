@@ -1,4 +1,4 @@
-.rock-paper-scissors {
+.game-view {
     background-color: var(--background-color);
     color: var(--text-color);
     font-family: Arial, sans-serif;
@@ -11,20 +11,44 @@
     margin: 0;
 }
 
-.rock-paper-scissors .container {
+.game-view .score-container {
     display: flex;
     justify-content: space-around;
-    width: 80%;
+    width: 50%;
 }
 
-.rock-paper-scissors .player {
+.game-view .divider {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.game-view .container {
+    display: flex;
+    justify-content: space-around;
+    margin: 1rem 0;
+    background-color: var(--btn-bg-color);
+    border: 2px solid var(--btn-border-color);
+    color: var(--primary-color);
+    border-radius: 10px;
+    box-shadow: 0 0px 8px var(--shadow-color);
+    padding: 15px;
+}
+
+.game-view #pong-canvas {
+    margin: 3rem 0 0 0;
+    border-radius: 10px;
+    box-shadow: 0 0px 20px var(--shadow-color);
+}
+
+.game-view .player {
     flex: 1;
     padding: 20px;
     background-color: transparent;
     border: none;
 }
 
-.rock-paper-scissors .choices button {
+.game-view .choices button {
     background-color: var(--btn-bg-color);
     border: 2px solid var(--btn-border-color);
     color: var(--text-color);
@@ -37,12 +61,12 @@
     box-shadow: 0 4px 8px var(--shadow-color);
 }
 
-.rock-paper-scissors .choices button:hover {
+.game-view .choices button:hover {
     background-color: var(--btn-hover-color);
     box-shadow: 0 4px 12px var(--hover-shadow-color);
 }
 
-.rock-paper-scissors #result-popup {
+.game-view #result-popup {
     display: none;
     position: fixed;
     top: 50%;
@@ -55,18 +79,18 @@
     z-index: 1;
 }
 
-.rock-paper-scissors #timer {
+.game-view #timer {
     font-size: 20px;
     font-weight: bold;
     margin-top: 10px;
 }
 
-.rock-paper-scissors .title-container {
+.game-view .title-container {
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
-.rock-paper-scissors .icon-container {
+.game-view .icon-container {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -74,29 +98,29 @@
     align-items: center;
 }
 
-.rock-paper-scissors .profile-icon,
-.rock-paper-scissors .fullscreen-icon,
-.rock-paper-scissors .search-icon {
+.game-view .profile-icon,
+.game-view .fullscreen-icon,
+.game-view .search-icon {
     margin-left: 20px;
     cursor: pointer;
     transition: text-shadow 0.3s;
 }
 
-.rock-paper-scissors .profile-icon:hover,
-.rock-paper-scissors .fullscreen-icon:hover,
-.rock-paper-scissors .search-icon:hover {
+.game-view .profile-icon:hover,
+.game-view .fullscreen-icon:hover,
+.game-view .search-icon:hover {
     text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
 }
 
-.rock-paper-scissors .profile-icon i,
-.rock-paper-scissors .fullscreen-icon i,
-.rock-paper-scissors .search-icon i {
+.game-view .profile-icon i,
+.game-view .fullscreen-icon i,
+.game-view .search-icon i {
     font-size: 1.5rem;
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
 }
 
-.rock-paper-scissors .site-title {
+.game-view .site-title {
     position: absolute;
     top: 20px;
     left: 20px;

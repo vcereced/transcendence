@@ -1,7 +1,29 @@
 <div class="game-view">
-    <div id="main-game-container">
-        <h1>Pong Online</h1>
-        <h2><span id="left-username"></span> <span id="left-score"></span> - <span id="right-score"></span> <span id="right-username"></span></h2>
-        <canvas id="pong-canvas" width="600" height="400" style="border:1px solid #000;"></canvas> 
+    <h1 class="site-title">TheAnswerIsPong</h1>
+    <div class="icon-container">
+        <div class="fullscreen-icon" onclick="toggleFullscreen()">
+            <i class="fas fa-expand"></i>
+        </div>
     </div>
+
+    <div class="score-container">
+        <div class="divider">
+            <div class="container">
+                <h2><span id="left-username"></span></h2>
+            </div>
+        </div>
+        <div class="divider">
+            <div class="container">
+                <h2><span id="left-score"></span> - <span id="right-score"></span></h2>
+
+            </div>
+        </div>
+        <div class="divider">
+            <div class="container">
+                <h2><span id="right-username"></span></h2>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="pong-canvas" width="600" height="400"></canvas>
 </div>

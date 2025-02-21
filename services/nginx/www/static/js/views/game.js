@@ -25,12 +25,23 @@ export async function initGame() {
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/pong/`);
 
 
+    // --- DOM ELEMENTS ---
+
+    const title = document.querySelector('.site-title');
+    const canvas = document.getElementById('pong-canvas');
+    const context = canvas.getContext('2d');
+    const leftUsernameSpan = document.getElementById('left-username');
+    const rightUsernameSpan = document.getElementById('right-username');
+    const leftScoreSpan = document.getElementById('left-score');
+    const rightScoreSpan = document.getElementById('right-score');
+
+
     // --- VARIABLES AND CONSTANTS ---
 
     const eventManager = new EventListenerManager();
 
-    const maxCanvasHeightToWindow = 0.6;
-    const maxCanvasWidthToWindow = 0.6;
+    const maxCanvasHeightToWindow = 0.5;
+    const maxCanvasWidthToWindow = 0.5;
 
     let fieldHeightProportion;
     let fieldWidthProportion;
@@ -59,16 +70,6 @@ export async function initGame() {
     };
 
 
-    // --- DOM ELEMENTS ---
-
-    const canvas = document.getElementById('pong-canvas');
-    const context = canvas.getContext('2d');
-    const leftUsernameSpan = document.getElementById('left-username');
-    const rightUsernameSpan = document.getElementById('right-username');
-    const leftScoreSpan = document.getElementById('left-score');
-    const rightScoreSpan = document.getElementById('right-score');
-
-
     // --- FUNCTIONS ---
 
     window.drawEverything = function drawEverything() {
@@ -76,23 +77,29 @@ export async function initGame() {
         context.fillStyle = 'black';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Set the blur effect and color
+        context.shadowBlur = 15;
+        context.shadowColor = '#16a085';
+
         // Draw the left paddle as an arc
-        context.fillStyle = 'white';
+        context.fillStyle = '#1abc9c';
         context.beginPath();
-        context.arc(-paddleOffset, leftPaddleY, paddleRadius, angleInRadians, -angleInRadians, true);
+        context.arc(-paddleOffset, leftPaddleY, paddleRadius, 0, Math.PI * 2, true);
         context.fill();
 
         // Draw the right paddle as an arc
         context.beginPath();
-        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, Math.PI + angleInRadians, Math.PI - angleInRadians, true);
+        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, 0, Math.PI * 2, true);
         context.fill();
 
-
         // Draw the ball
-        context.fillStyle = 'white';
         context.beginPath();
         context.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2, true);
         context.fill();
+
+        // Reset the shadowBlur and shadowColor to avoid affecting other drawings
+        context.shadowBlur = 0;
+        context.shadowColor = 'transparent';
     }
 
     window.gameLoop = function gameLoop() {
@@ -118,6 +125,16 @@ export async function initGame() {
 
         // Call gameLoop again after a short delay
         setTimeout(gameLoop, 1000 / fps); // Approximately 60 frames per second
+    }
+
+    window.toggleFullscreen = function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
     }
 
 
@@ -230,6 +247,16 @@ export async function initGame() {
         canvas.setAttribute('width', fieldWidth);
         drawEverything();
     })
+
+    eventManager.addEventListener(title, 'mouseenter', () => {
+        title.classList.add('glitch');
+        title.style.transform = 'translateY(-5px)';
+    });
+
+    eventManager.addEventListener(title, 'mouseleave', () => {
+        title.classList.remove('glitch');
+        title.style.transform = 'translateY(0)';
+    });
 
 
     return () => eventManager.removeAllEventListeners();
