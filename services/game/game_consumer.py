@@ -342,6 +342,19 @@ async def play_rps_round(rps_record: RockPaperScissorsGame, redis_client: redis.
     while time_left > 0:
         await asyncio.sleep(1)
         time_left -= 1
+        
+        # AI players
+        if rps_record.left_player_id == 0:
+            await redis_client.set(
+                f"rps:{rps_record.id}:left_choice",
+                random.choice(s.RPS_CHOICES),
+            )
+        if rps_record.right_player_id == 0:
+            await redis_client.set(
+                f"rps:{rps_record.id}:right_choice",
+                random.choice(s.RPS_CHOICES),
+            )
+
         await redis_client.set(f"rps:{rps_record.id}:time_left", str(time_left))
 
     left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
