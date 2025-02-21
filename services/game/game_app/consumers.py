@@ -21,7 +21,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         if not await self.find_out_game():
             return
 
-        self.redis = redis.Redis(host="redis", port=6379)
+        self.redis = redis.Redis(host="redis", port=6379, decode_responses=True)
 
         self.determine_controllers()
         self.last_paddle_update = 0
@@ -251,7 +251,7 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
         if not await self.find_out_game():
             return
 
-        self.redis = redis.Redis(host="redis", port=6379)
+        self.redis = redis.Redis(host="redis", port=6379, decode_responses=True)
 
         await self.send_initial_information()
 
@@ -265,10 +265,10 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
 
         try:
             self.game = await self.query_db_for_game()
-        except models.Game.DoesNotExist:
+        except models.RockPaperScissorsGame.DoesNotExist:
             await self.send_error_and_close("User not registered in any game")
             return False
-        except models.Game.MultipleObjectsReturned:
+        except models.RockPaperScissorsGame.MultipleObjectsReturned:
             await self.send_error_and_close("User registered in multiple games")
             return False
 
@@ -313,6 +313,9 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
                     "right_player_id": self.game.right_player_id,
                     "left_player_username": self.game.left_player_username,
                     "right_player_username": self.game.right_player_username,
+                    "left_player_choice": await self.redis.get(f"rps:{self.game.id}:left_choice"),
+                    "right_player_choice": await self.redis.get(f"rps:{self.game.id}:right_choice"),
+                    "timer_start": s.RPS_GAME_TIMER_LENGTH,
                 }
             )
         )
@@ -325,15 +328,15 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
         time_left_data = await redis_client.get(f"rps:{self.game.id}:time_left")
         left_choice_data = await redis_client.get(f"rps:{self.game.id}:left_choice")
         right_choice_data = await redis_client.get(f"rps:{self.game.id}:right_choice")
-        winner_id_data = await redis_client.get(f"rps:{self.game.id}:winner_id")
+        winner_username_data = await redis_client.get(f"rps:{self.game.id}:winner_username")
         is_finished_data = await redis_client.get(f"rps:{self.game.id}:is_finished")
         
-        if (time_left_data and left_choice_data and right_choice_data and winner_id_data and is_finished_data):
+        if (time_left_data and left_choice_data and right_choice_data and is_finished_data):
             self.game_state = {
                 "time_left": int(time_left_data),
-                "left_choice": left_choice_data,
-                "right_choice": right_choice_data,
-                "winner_id": int(winner_id_data),
+                "left_choice": str(left_choice_data),
+                "right_choice": str(right_choice_data),
+                "winner_username": str(winner_username_data),
                 "is_finished": int(is_finished_data),
             }
         else:
@@ -354,22 +357,22 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
         if text_data:
             event = json.loads(text_data)
 
-            handlers = {"choice_made": self.choice_update}
+            handlers = {"choice_change": self.choice_update}
 
             if "type" in event:
                 await handlers[event["type"]](event)
 
     async def choice_update(self, event):
-        if not event.get("choice"):
+        if not event.get("choices"):
             return
 
         if self.user_data["user_id"] == self.game.left_player_id:
             await self.redis.set(
-                f"rps:{self.game.id}:left_choice", event["choice"]
+                f"rps:{self.game.id}:left_choice", str(event["choices"]["leftPlayer"])
             )
-        elif self.user_data["user_id"] == self.game.right_player_id:
+        if self.user_data["user_id"] == self.game.right_player_id:
             await self.redis.set(
-                f"rps:{self.game.id}:right_choice", event["choice"]
+                f"rps:{self.game.id}:right_choice", str(event["choices"]["rightPlayer"])
             )
 
     async def update_game_state(self):
@@ -378,6 +381,6 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
 
             await self.send_game_state()
 
-            await asyncio.sleep(1 / 4)
+            await asyncio.sleep(1 / s.FPS)
 
 

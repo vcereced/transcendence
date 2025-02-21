@@ -23,7 +23,7 @@ async def discover_games():
     while True:
         discovered_rps_id = await redis_client.lpop("rps_queue")
         discovered_game_id = await redis_client.lpop("game_queue")
-        if not discovered_game_id or not discovered_rps_id:
+        if not discovered_game_id and not discovered_rps_id:
             await asyncio.sleep(1)
             continue
         await asyncio.sleep(
@@ -38,7 +38,7 @@ async def discover_games():
 
 
 async def play_game(game_id: int):
-    redis_client = redis.Redis(host="redis", port=6379)
+    redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
 
     game = await query_db_for_game(game_id)
 
@@ -63,14 +63,14 @@ async def play_game(game_id: int):
 
     game.is_finished = True
     game.finished_at = now()
-    game.winner_id = (
-        game.left_player_id
+    game.winner_username = (
+        game.left_player_username
         if game_state.left.score == s.WINNER_SCORE
-        else game.right_player_id
+        else game.right_player_username
     )
     game.left_player_score = game_state.left.score
     game.right_player_score = game_state.right.score
-    game.save()
+    await save_game_ending(game)
 
 
 @sync_to_async
@@ -79,7 +79,7 @@ def query_db_for_game(game_id):
 
 
 async def control_paddle_by_computer(game_id, side):
-    redis_client = redis.Redis(host="redis", port=6379)
+    redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
     final_paddle_y = 0
     target_paddle_y = 0
     last_seen_ball = Ball(
@@ -287,34 +287,33 @@ def check_paddle_collision(
 
 
 @sync_to_async
-def query_db_for_rps(game_id):
-    return RockPaperScissorsGame.objects.get(pk=game_id)
+def save_game_ending(game: Game):
+    game.save()
 
 
 async def play_rock_paper_scissors(rps_id: int):
-    redis_client = redis.Redis(host="redis", port=6379)
+    redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
 
     rps_record = await query_db_for_rps(rps_id)
 
-    winner_id = await play_rps_round(rps_record, redis_client)
+    winner_username = await play_rps_round(rps_record, redis_client)
 
-    while winner_id == 0:
+    while winner_username == "":
         await asyncio.sleep(2)  # Wait before the next round
         await redis_client.set(
             f"rps:{rps_record.id}:time_left", str(s.RPS_GAME_TIMER_LENGTH)
         )
-        winner_id = await play_rps_round(rps_record, redis_client)
+        await redis_client.set(f"rps:{rps_record.id}:is_finished", "0")
+        winner_username = await play_rps_round(rps_record, redis_client)
 
-    rps_record.winner_id = winner_id
-    rps_record.left_player_choice = await redis_client.get(
-        f"rps:{rps_record.id}:left_choice"
-    )
-    rps_record.right_player_choice = await redis_client.get(
-        f"rps:{rps_record.id}:right_choice"
-    )
+    rps_record.winner_username = winner_username
+    left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
+    right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
+    rps_record.left_player_choice = str(left_choice_data)
+    rps_record.right_player_choice = str(right_choice_data)
     rps_record.is_finished = True
     rps_record.finished_at = now()
-    rps_record.save()
+    await save_rps_ending(rps_record)
     game_data = {
         "left_player_id": rps_record.left_player_id,
         "left_player_username": rps_record.left_player_username,
@@ -331,6 +330,11 @@ async def play_rock_paper_scissors(rps_id: int):
     )
 
 
+@sync_to_async
+def query_db_for_rps(game_id):
+    return RockPaperScissorsGame.objects.get(pk=game_id)
+
+
 async def play_rps_round(rps_record: RockPaperScissorsGame, redis_client: redis.Redis):
     time_left = int(await redis_client.get(f"rps:{rps_record.id}:time_left"))
 
@@ -340,31 +344,39 @@ async def play_rps_round(rps_record: RockPaperScissorsGame, redis_client: redis.
         time_left -= 1
         await redis_client.set(f"rps:{rps_record.id}:time_left", str(time_left))
 
-    left_choice = await redis_client.get(f"rps:{rps_record.id}:left_choice")
-    right_choice = await redis_client.get(f"rps:{rps_record.id}:right_choice")
+    left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
+    left_choice = str(left_choice_data)
+    right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
+    right_choice = str(right_choice_data)
 
-    winner_id = determine_winner(
+    winner_username = determine_winner(
         left_choice,
         right_choice,
-        rps_record.left_player_id,
-        rps_record.right_player_id,
+        rps_record.left_player_username,
+        rps_record.right_player_username,
     )
 
-    await redis_client.set(f"rps:{rps_record.id}:winner_id", str(winner_id))
+    await redis_client.set(f"rps:{rps_record.id}:winner_username", winner_username)
+    await redis_client.set(f"rps:{rps_record.id}:is_finished", "1")
 
-    return int(winner_id)
+    return winner_username
 
 
-def determine_winner(left_choice, right_choice, left_player_id, right_player_id):
+def determine_winner(left_choice, right_choice, left_player_username, right_player_username):
     if left_choice == right_choice:
-        return 0
+        return ""
     if left_choice == "rock":
-        return right_player_id if right_choice == "paper" else left_player_id
+        return right_player_username if right_choice == "paper" else left_player_username
     if left_choice == "paper":
-        return right_player_id if right_choice == "scissors" else left_player_id
+        return right_player_username if right_choice == "scissors" else left_player_username
     if left_choice == "scissors":
-        return right_player_id if right_choice == "rock" else left_player_id
-    return -1
+        return right_player_username if right_choice == "rock" else left_player_username
+    raise Exception(f"Invalid choices: {left_choice}, {right_choice}")
+
+
+@sync_to_async
+def save_rps_ending(rps_record: RockPaperScissorsGame):
+    rps_record.save()
 
 
 if __name__ == "__main__":

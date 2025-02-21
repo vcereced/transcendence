@@ -21,9 +21,10 @@ def create_game(game_data):
         rps_record = serializer.save()
         redis_client = redis.Redis(host="redis", port=6379)
         redis_client.set(f"rps:{rps_record.id}:time_left", str(s.RPS_GAME_TIMER_LENGTH))
-        redis_client.set(f"rps:{rps_record.id}:left_choice", random.choice(s.RPS_CHOICES))
-        redis_client.set(f"rps:{rps_record.id}:right_choice", random.choice(s.RPS_CHOICES))
-        redis_client.set(f"rps:{rps_record.id}:winner_id", "0")
+        redis_client.set(f"rps:{rps_record.id}:left_choice", str(random.choice(s.RPS_CHOICES)))
+        redis_client.set(f"rps:{rps_record.id}:right_choice", str(random.choice(s.RPS_CHOICES)))
+        redis_client.set(f"rps:{rps_record.id}:winner_username", "")
+        redis_client.set(f"rps:{rps_record.id}:is_finished", "0")
         redis_client.rpush("rps_queue", f"{rps_record.id}")
 
 

@@ -1,4 +1,6 @@
 // static/js/views/rock_paper_scissors.js
+import { handleJwtToken } from './jwtValidator.js';
+import { deleteCookie, hasAccessToken } from '../utils/auth_management.js';
 
 import EventListenerManager from '../utils/eventListenerManager.js';
 
@@ -8,98 +10,70 @@ export async function renderRockPaperScissors() {
     return htmlContent;
 }
 
-export function initRockPaperScissors() {
+export async function initRockPaperScissors() {
+
+    // --- INITIALIZATION ---
+
+    if (!hasAccessToken()) {
+        alert("Debes iniciar sesión para jugar");
+        window.sessionStorage.setItem("afterLoginRedirect", "#rock_paper_scissors");
+        window.location.hash = "#login"
+        return;
+    }
+    await handleJwtToken();
+
+    let socket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
+
 
     // --- VARIABLES AND CONSTANTS ---
 
     const eventManager = new EventListenerManager();
-    let choices = { player1: null, player2: null };
-    let timer = 10;
-    let interval;
+    let leftPlayer = { id: null, username: null };
+    let rightPlayer = { id: null, username: null };
+    let requestedChoices = { leftPlayer: null, rightPlayer: null };
+    let gameFinished = false;
+    let popupShown = false;
+
+
+    // --- DOM ELEMENTS ---
+
+    const title = document.querySelector('.site-title');
+    const timerValue = document.querySelector('#timer span');
+    const leftPlayerUsername = document.querySelector('#leftPlayer .username');
+    const rightPlayerUsername = document.querySelector('#rightPlayer .username');
+    const popup = document.getElementById("result-popup");
 
     // --- FUNCTIONS ---
 
-    window.startTimer = function startTimer() {
-        interval = setInterval(() => {
-            if (timer > 0) {
-                document.getElementById("timer").textContent = `Tiempo restante: ${timer}s`;
-                timer--;
-                highlightRandomChoice(1);
-                highlightRandomChoice(2);
-            } else {
-                clearInterval(interval);
-                finalizeChoices();
-            }
-        }, 1000);
-    }
-
     window.choose = function choose(option, player) {
-        choices[`player${player}`] = option;
-        document.getElementById(`choice${player}`).textContent = option;
-        freezeChoices(player, option);
-        checkWinner();
-    }
-
-    window.checkWinner = function checkWinner() {
-        if (choices.player1 && choices.player2) {
-            clearInterval(interval);
-            let winner = getWinner(choices.player1, choices.player2);
-            showPopup(winner);
-            setTimeout(resetGame, 2000);
-        }
-    }
-
-    window.getWinner = function getWinner(choice1, choice2) {
-        if (choice1 === choice2) return "Empate, jueguen de nuevo";
-        if (
-            (choice1 === "piedra" && choice2 === "tijeras") ||
-            (choice1 === "papel" && choice2 === "piedra") ||
-            (choice1 === "tijeras" && choice2 === "papel")
-        ) {
-            return "¡Player1 gana!";
-        } else {
-            return "¡Player2 gana!";
+        requestedChoices[`${player}Player`] = option;
+        if (requestedChoices.leftPlayer && requestedChoices.rightPlayer) {
+            socket.send(JSON.stringify({
+                type: 'choice_change',
+                choices: requestedChoices,
+            }));
         }
     }
 
     window.showPopup = function showPopup(message) {
-        let popup = document.getElementById("result-popup");
         popup.textContent = message;
         popup.style.display = "block";
-        setTimeout(() => popup.style.display = "none", 2000);
+        popupShown = true;
     }
 
-    window.highlightRandomChoice = function highlightRandomChoice(player) {
-        if (!choices[`player${player}`]) {
-            let buttons = document.querySelectorAll(`#player${player} .choices button`);
-            buttons.forEach(btn => btn.style.backgroundColor = "var(--btn-bg-color)");
-            let randomButton = buttons[Math.floor(Math.random() * buttons.length)];
-            randomButton.style.backgroundColor = "var(--primary-color)";
-        }
+    window.hidePopup = function hidePopup() {
+        popup.style.display = "none";
+        popupShown = false;
     }
 
-    window.freezeChoices = function freezeChoices(player, option) {
-        document.querySelectorAll(`#player${player} .choices button`).forEach(button => {
+    window.freezeChoice = function freezeChoice(option, player) {
+        document.querySelectorAll(`#${player}Player .choices button`).forEach(button => {
             if (button.getAttribute("data-choice") === option) {
                 button.style.backgroundColor = "var(--primary-color)";
             } else {
                 button.style.backgroundColor = "var(--btn-bg-color)";
             }
         });
-    }
-
-    window.finalizeChoices = function finalizeChoices() {
-        if (!choices.player1) choose(['piedra', 'papel', 'tijeras'][Math.floor(Math.random() * 3)], 1);
-        if (!choices.player2) choose(['piedra', 'papel', 'tijeras'][Math.floor(Math.random() * 3)], 2);
-    }
-
-    window.resetGame = function resetGame() {
-        choices = { player1: null, player2: null };
-        document.getElementById("choice1").textContent = "?";
-        document.getElementById("choice2").textContent = "?";
-        timer = 10;
-        document.getElementById("timer").textContent = "Tiempo restante: 10s";
-        startTimer();
     }
 
     window.toggleFullscreen = function toggleFullscreen() {
@@ -114,7 +88,57 @@ export function initRockPaperScissors() {
 
     // --- EVENT LISTENERS ---
 
-    const title = document.querySelector('.site-title');
+    socket.onopen = function (event) {
+        console.log("Conectado al WebSocket.");
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'game_state_update') {
+            timerValue.textContent = data.game_state.time_left;
+            gameFinished = data.game_state.is_finished;
+            freezeChoice(data.game_state.left_choice, 'left');
+            freezeChoice(data.game_state.right_choice, 'right');
+
+            if (data.game_state.is_finished && !popupShown) {
+                if (data.game_state.winner_username !== "") {
+                    showPopup(`${data.game_state.winner_username} gana!`);
+                } else {
+                    showPopup("Empate!");
+                }
+            } else if (!data.game_state.is_finished && popupShown) {
+                hidePopup();
+            }
+
+        } else if (data.type === 'initial_information') {
+            timerValue.textContent = data.timer_start;
+            leftPlayer.id = data.left_player_id;
+            leftPlayer.username = data.left_player_username;
+            requestedChoices.leftPlayer = data.left_player_choice;
+            rightPlayer.id = data.right_player_id;
+            rightPlayer.username = data.right_player_username;
+            requestedChoices.rightPlayer = data.right_player_choice;
+            leftPlayerUsername.textContent = data.left_player_username;
+            rightPlayerUsername.textContent = data.right_player_username;
+            freezeChoice(data.left_player_choice, 'left');
+            freezeChoice(data.right_player_choice, 'right');
+        }
+
+    };
+
+    socket.onclose = function (event) {
+        console.log("Desconectado del WebSocket.");
+    };
+
+    socket.onerror = function (event) {
+        deleteCookie("accessToken");
+        deleteCookie("refreshToken");
+        // Refresh the page
+        window.location.reload();
+    }
+
+
     eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
@@ -125,9 +149,31 @@ export function initRockPaperScissors() {
         title.style.transform = 'translateY(0)';
     });
 
-    // --- INITIALIZATION ---
+    eventManager.addEventListener(document, 'keydown', (event) => {
+        if (gameFinished) return;
+        if (event.key === 'a') {
+            choose('rock', 'left');
+        }
+        if (event.key === 's') {
+            choose('paper', 'left');
+        }
+        if (event.key === 'd') {
+            choose('scissors', 'left');
+        }
+        if (event.key === 'ArrowLeft') {
+            choose('rock', 'right');
+        }
+        if (event.key === 'ArrowDown') {
+            choose('paper', 'right');
+        }
+        if (event.key === 'ArrowRight') {
+            choose('scissors', 'right');
+        }
+    });
 
-    startTimer();
 
     return () => eventManager.removeAllEventListeners();
 }
+
+
+

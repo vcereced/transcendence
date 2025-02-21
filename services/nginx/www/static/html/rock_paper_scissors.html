@@ -8,28 +8,26 @@
 
     <div class="title-container">
         <h1>Piedra, Papel o Tijeras</h1>
-        <div id="timer">Tiempo restante: 10s</div>
+        <div id="timer">Tiempo restante: <span>10</span>s</div>
         <p>¡El ganador saca la bola!</p>
     </div>
 
     <div class="container">
-        <div class="player" id="player1">
-            <h2>Player1</h2>
+        <div class="player" id="leftPlayer">
+            <h2 class="username">Player1</h2>
             <div class="choices">
-                <button data-choice="piedra" onclick="choose('piedra', 1)">🪨</button>
-                <button data-choice="papel" onclick="choose('papel', 1)">📜</button>
-                <button data-choice="tijeras" onclick="choose('tijeras', 1)">✂️</button>
+                <button data-choice="rock" onclick="choose('rock', 'left')">🪨<br><br>(a)</button>
+                <button data-choice="paper" onclick="choose('paper', 'left')">📜<br><br>(s)</button>
+                <button data-choice="scissors" onclick="choose('scissors', 'left')">✂️<br><br>(d)</button>
             </div>
-            <p>Elección: <span id="choice1">?</span></p>
         </div>
-        <div class="player" id="player2">
-            <h2>Player2</h2>
+        <div class="player" id="rightPlayer">
+            <h2 class="username">Player2</h2>
             <div class="choices">
-                <button data-choice="piedra" onclick="choose('piedra', 2)">🪨</button>
-                <button data-choice="papel" onclick="choose('papel', 2)">📜</button>
-                <button data-choice="tijeras" onclick="choose('tijeras', 2)">✂️</button>
+                <button data-choice="rock" onclick="choose('rock', 'right')">🪨<br><br>(⬅️)</button>
+                <button data-choice="paper" onclick="choose('paper', 'right')">📜<br><br>(⬇️)</button>
+                <button data-choice="scissors" onclick="choose('scissors', 'right')">✂️<br><br>(➡️)</button>
             </div>
-            <p>Elección: <span id="choice2">?</span></p>
         </div>
     </div>
     <div id="result-popup"></div>
