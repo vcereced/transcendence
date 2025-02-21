@@ -62,6 +62,7 @@ export async function initGame() {
     let ball = { x: canvas.height / 2, y: canvas.height / 2 }
     let leftPaddleY;
     let rightPaddleY;
+    let startCountdown;
 
     let keys = {
         w: false,
@@ -168,11 +169,16 @@ export async function initGame() {
             ball.y = data.game_state.ball.y * fieldHeight;
             leftScoreSpan.innerText = data.game_state.left.score;
             rightScoreSpan.innerText = data.game_state.right.score;
+            startCountdown = data.game_state.start_countdown;
             drawEverything();
+
+            if (data.game_state.start_countdown !== 0) {
+                showPopup(`Comenzando en ${startCountdown}`);
+            }
 
             if (data.game_state.is_finished && !popupShown) {
                 showPopup(`${data.game_state.winner_username} gana!`);
-            } else if (!data.game_state.is_finished && popupShown) {
+            } else if (!data.game_state.is_finished && popupShown && startCountdown === 0) {
                 hidePopup();
             }
 

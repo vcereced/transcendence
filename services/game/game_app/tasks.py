@@ -57,4 +57,5 @@ def launch_game(game_data):
         )
         redis_client.set(f"game:{game.id}:winner_username", "")
         redis_client.set(f"game:{game.id}:is_finished", "0")
+        redis_client.set(f"game:{game.id}:start_countdown", str(s.START_COUNTDOWN))
         redis_client.rpush("game_queue", f"{game.id}")

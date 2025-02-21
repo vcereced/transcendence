@@ -21,6 +21,7 @@ class GameStateSerializer(serializers.Serializer):
     right = SideSerializer()
     winner_username = serializers.CharField(max_length=100, allow_blank=True)
     is_finished = serializers.IntegerField()
+    start_countdown = serializers.IntegerField()
 
 class GameSerializer(serializers.ModelSerializer):
     class Meta:

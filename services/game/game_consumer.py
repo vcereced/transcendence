@@ -61,6 +61,13 @@ async def play_game(game_id: int):
             )
             await save_game_state(redis_client, game_id, game_state)
 
+            while game_state.start_countdown > 0:
+                await asyncio.sleep(1)
+                game_state.start_countdown -= 1
+                await redis_client.set(
+                    f"game:{game_id}:start_countdown", str(game_state.start_countdown)
+                )
+
             while (
                 game_state.left.score < s.WINNER_SCORE
                 and game_state.right.score < s.WINNER_SCORE
@@ -191,6 +198,7 @@ async def load_game_state(redis_client: redis.Redis, game_id):
     scores_data = await redis_client.get(f"game:{game_id}:scores")
     winner_username_data = await redis_client.get(f"game:{game_id}:winner_username")
     is_finished_data = await redis_client.get(f"game:{game_id}:is_finished")
+    start_countdown_data = await redis_client.get(f"game:{game_id}:start_countdown")
 
     if (
         ball_data
@@ -198,6 +206,7 @@ async def load_game_state(redis_client: redis.Redis, game_id):
         and right_paddle_data
         and scores_data
         and is_finished_data
+        and start_countdown_data
     ):
         scores = json.loads(scores_data)
         game_state_data = {
@@ -209,6 +218,7 @@ async def load_game_state(redis_client: redis.Redis, game_id):
             },
             "winner_username": winner_username_data,
             "is_finished": int(is_finished_data),
+            "start_countdown": int(start_countdown_data),
         }
         game_state_serializer = serializers.GameStateSerializer(data=game_state_data)
         if game_state_serializer.is_valid():
