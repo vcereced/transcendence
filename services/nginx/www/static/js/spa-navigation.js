@@ -8,12 +8,12 @@ import { renderLogin, initLogin } from './views/login.js';
 import { renderGame, initGame } from './views/game.js';
 import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
-import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
-import { renderVersusWait, initVersusWait } from './views/versus_wait.js';
-import { renderNewTournamentRoom, initNewTournamentRoom } from './views/new_tournament_room.js';
-import { renderTournamentsList, initTournamentsList } from './views/tournaments_list.js';
-import { renderNewLogin, initNewLogin } from './views/new_login.js';
-import { renderRockPaperScissors, initRockPaperScissors } from './views/rock_paper_scissors.js';
+import { renderTournamentRoom, initTournamentRoom } from './views/tournamentRoom.js';
+import { renderVersusWait, initVersusWait } from './views/versusWait.js';
+import { renderNewTournamentRoom, initNewTournamentRoom } from './views/newTournamentRoom.js';
+import { renderTournamentsList, initTournamentsList } from './views/tournamentsList.js';
+import { renderNewLogin, initNewLogin } from './views/newLogin.js';
+import { renderRockPaperScissors, initRockPaperScissors } from './views/rockPaperScissors.js';
 
 
 
@@ -30,11 +30,11 @@ const routes = {
     "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
     "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom },
-    "/versus_wait": { render: renderVersusWait, init: initVersusWait },
-    "/tournaments_list": { render: renderTournamentsList, init: initTournamentsList },
-    "/new_tournament_room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
-    "/new_login": { render: renderNewLogin, init: initNewLogin },
-    "/rock_paper_scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
+    "/versus-wait": { render: renderVersusWait, init: initVersusWait },
+    "/tournaments-list": { render: renderTournamentsList, init: initTournamentsList },
+    "/new-tournament-room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
+    "/new-login": { render: renderNewLogin, init: initNewLogin },
+    "/rock-paper-scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
 };
 
 function parseRoute(path) {
