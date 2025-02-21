@@ -1,40 +1,36 @@
 import { handleJwtToken } from './jwtValidator.js';
-import { getCookie, deleteCookie, hasAccessToken } from '../utils/auth_management.js';
+import { deleteCookie, hasAccessToken } from '../utils/auth_management.js';
+import EventListenerManager from '../utils/eventListenerManager.js';
 //static/js/views/game.js
 
-export function renderGame() {
-    return `
-    <div id="main-game-container">
-        <h1>Pong Online</h1>
-        <h2><span id="left-username"></span> <span id="left-score"></span> - <span id="right-score"></span> <span id="right-username"></span></h2>
-        <canvas id="pong-canvas" width="600" height="400" style="border:1px solid #000;"></canvas> 
-    </div>
-    `;
+export async function renderGame() {
+    const response = await fetch('static/html/game.html');
+    const htmlContent = await response.text();
+    return htmlContent;
 }
 
 export async function initGame() {
 
-    // game.js
+
+    // --- INITIALIZATION ---
+
     if (!hasAccessToken()) {
-        // Redirect to login page
         alert("Debes iniciar sesión para jugar");
         window.sessionStorage.setItem("afterLoginRedirect", "#game");
         window.location.hash = "#login"
         return;
     }
 
-    // let userLoginData = decodeJWT(getCookie("accessToken"));
     await handleJwtToken();
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/pong/`);
 
-    const canvas = document.getElementById('pong-canvas');
+
+    // --- VARIABLES AND CONSTANTS ---
+
+    const eventManager = new EventListenerManager();
+
     const maxCanvasHeightToWindow = 0.6;
     const maxCanvasWidthToWindow = 0.6;
-    const context = canvas.getContext('2d');
-    const leftUsernameSpan = document.getElementById('left-username');
-    const rightUsernameSpan = document.getElementById('right-username');
-    const leftScoreSpan = document.getElementById('left-score');
-    const rightScoreSpan = document.getElementById('right-score');
 
     let fieldHeightProportion;
     let fieldWidthProportion;
@@ -55,13 +51,83 @@ export async function initGame() {
     let leftPaddleY;
     let rightPaddleY;
 
-    // Conectar al WebSocket
-    socket.onopen = function(event) {
+    let keys = {
+        w: false,
+        s: false,
+        arrowUp: false,
+        arrowDown: false,
+    };
+
+
+    // --- DOM ELEMENTS ---
+
+    const canvas = document.getElementById('pong-canvas');
+    const context = canvas.getContext('2d');
+    const leftUsernameSpan = document.getElementById('left-username');
+    const rightUsernameSpan = document.getElementById('right-username');
+    const leftScoreSpan = document.getElementById('left-score');
+    const rightScoreSpan = document.getElementById('right-score');
+
+
+    // --- FUNCTIONS ---
+
+    window.drawEverything = function drawEverything() {
+        // Clear the canvas
+        context.fillStyle = 'black';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the left paddle as an arc
+        context.fillStyle = 'white';
+        context.beginPath();
+        context.arc(-paddleOffset, leftPaddleY, paddleRadius, angleInRadians, -angleInRadians, true);
+        context.fill();
+
+        // Draw the right paddle as an arc
+        context.beginPath();
+        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, Math.PI + angleInRadians, Math.PI - angleInRadians, true);
+        context.fill();
+
+
+        // Draw the ball
+        context.fillStyle = 'white';
+        context.beginPath();
+        context.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2, true);
+        context.fill();
+    }
+
+    window.gameLoop = function gameLoop() {
+        let keysPressed = [];
+
+        if (keys.w) {
+            keysPressed.push('w');
+        } else if (keys.s) {
+            keysPressed.push('s');
+        }
+        if (keys.arrowUp) {
+            keysPressed.push('arrowUp');
+        } else if (keys.arrowDown) {
+            keysPressed.push('arrowDown');
+        }
+
+        if (keysPressed.length > 0 && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'paddle_move',
+                keys: keysPressed,
+            }));
+        }
+
+        // Call gameLoop again after a short delay
+        setTimeout(gameLoop, 1000 / fps); // Approximately 60 frames per second
+    }
+
+
+    // --- EVENT LISTENERS ---
+
+    socket.onopen = function (event) {
         console.log("Conectado al WebSocket.");
     };
 
-    // Manejar mensajes entrantes del servidor
-    socket.onmessage = function(event) {
+    socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
 
         if (data.type === 'game_state_update') {
@@ -100,58 +166,22 @@ export async function initGame() {
             canvas.setAttribute('width', fieldWidth);
 
             gameLoop();
-        } 
-        
+        }
+
     };
 
-    socket.onclose = function(event) {
+    socket.onclose = function (event) {
         console.log("Desconectado del WebSocket.");
     };
 
-    socket.onerror = function(event) {
+    socket.onerror = function (event) {
         deleteCookie("accessToken");
         deleteCookie("refreshToken");
-        // Refresh the page
         window.location.reload();
     }
 
 
-    // Draw everything on the canvas
-    function drawEverything() {
-        // Clear the canvas
-        context.fillStyle = 'black';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the left paddle as an arc
-        context.fillStyle = 'white';
-        context.beginPath();
-        context.arc(-paddleOffset, leftPaddleY, paddleRadius, angleInRadians, -angleInRadians, true);
-        context.fill();
-
-        // Draw the right paddle as an arc
-        context.beginPath();
-        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, Math.PI + angleInRadians , Math.PI - angleInRadians, true);
-        context.fill();
-        
-
-        // Draw the ball
-        context.fillStyle = 'white';
-        context.beginPath();
-        context.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2, true);
-        context.fill();
-    }
-
-
-    // Paddle controller
-
-    let keys = {
-        w: false,
-        s: false,
-        arrowUp: false,
-        arrowDown: false,
-    };
-    
-    document.addEventListener('keydown', (event) => {
+    eventManager.addEventListener(document, 'keydown', (event) => {
         if (event.key === 'w') {
             keys.w = true;
         } else if (event.key === 's') {
@@ -163,8 +193,8 @@ export async function initGame() {
             keys.arrowDown = true;
         }
     });
-    
-    document.addEventListener('keyup', (event) => {
+
+    eventManager.addEventListener(document, 'keyup', (event) => {
         if (event.key === 'w') {
             keys.w = false;
         } else if (event.key === 's') {
@@ -177,14 +207,14 @@ export async function initGame() {
         }
     });
 
-    window.addEventListener('blur', () => {
+    eventManager.addEventListener(window, 'blur', () => {
         keys.w = false;
         keys.s = false;
         keys.arrowUp = false;
         keys.arrowDown = false;
     });
 
-    window.addEventListener('resize', () => {
+    eventManager.addEventListener(window, 'resize', () => {
         fieldHeight = fieldHeightProportion * maxCanvasHeightToWindow * window.innerHeight;
         fieldWidth = fieldWidthProportion * fieldHeight;
         if (fieldWidth > maxCanvasWidthToWindow * window.innerWidth) {
@@ -201,31 +231,6 @@ export async function initGame() {
         drawEverything();
     })
 
-    // Game loop
-    
-    function gameLoop() {
-        let keysPressed = [];
-    
-        if (keys.w) {
-            keysPressed.push('w');
-        } else if (keys.s) {
-            keysPressed.push('s');
-        }
-        if (keys.arrowUp) {
-            keysPressed.push('arrowUp');
-        } else if (keys.arrowDown) {
-            keysPressed.push('arrowDown');
-        }
-    
-        if (keysPressed.length > 0 && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
-                type: 'paddle_move',
-                keys: keysPressed,
-            }));
-        }
-    
-        // Call gameLoop again after a short delay
-        setTimeout(gameLoop, 1000 / fps); // Approximately 60 frames per second
-    }
 
+    return () => eventManager.removeAllEventListeners();
 }
