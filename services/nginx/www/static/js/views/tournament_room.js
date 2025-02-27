@@ -109,7 +109,10 @@ function startTournamentWebSocket(tournamentId) {
             start_tournament(data);
         }
         if (data.type === "game_end") {
-            update_tournament_tree(data);
+            // update after a small delay to see the changesk
+            setTimeout(() => {
+                update_tournament_tree(data);
+            }, 0.1);
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
@@ -158,6 +161,7 @@ function updateUserList(userList) {
 function update_tournament_tree(data) {
     const { match_id, winner, loser } = data;
     console.log("updating tournament tree with:", data);
+    console.log('match_id>', match_id);
     // Encontrar el partido actual
     const currentMatch = document.querySelector(`.match[data-match="${match_id}"]`);
     if (!currentMatch) {
@@ -168,6 +172,8 @@ function update_tournament_tree(data) {
     // Marcar al ganador y perdedor
     const players = currentMatch.querySelectorAll(".player");
     players.forEach(player => {
+        console.log('player>', player);
+        console.log('player.textContent>', player.textContent);
         if (player.textContent === winner) {
             player.classList.add("winner");
         } else if (player.textContent === loser) {
@@ -191,7 +197,8 @@ function update_tournament_tree(data) {
     }
 
     // Actualizar campeón si es la final
-    if (match_id === 7) {
+    if (Number(match_id) === 7) {
+        console.log("The champion is:", winner);
         const champion = document.querySelector(".champion .player");
         if (champion) {
             champion.textContent = winner;
