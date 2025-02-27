@@ -24,12 +24,12 @@ class EmailOTPDevice(Device):
         self.save()
 
     def send_otp(self):
-        print("ENVIANDO OTP:", self.otp_token)
+        print("ENVIANDO al email: ", self.user.email, "el token: ", self.otp_token)
 
         send_mail(
-            'Tu código OTP',
-            f'Tu código de autenticación es: {self.otp_token}',
-            'no-reply@tuapp.com',
+            'OTP sended by PONG',
+            f'Tu código de autenticación es: {self.otp_token}\n\nRecordatorio del dia:\nPues hay un momento en la vida de un hombre pues que fluya lo que tenga que fluyar y que vaya lo que se tenga que vayar...',
+            'victorcerecedagonzalez@gmail.com',
             [self.user.email],
             fail_silently=False,
         )

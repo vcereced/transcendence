@@ -15,6 +15,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             auth_method=validated_data['auth_method']
         )
-        user.is_active = False  # ❗ CREO QUE ESTA DUB¿PLICADO
+        #user.is_active = False  # ❗ CREO QUE ESTA DUB¿PLICADO
         user.save()
         return user

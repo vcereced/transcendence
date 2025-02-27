@@ -26,7 +26,6 @@ export function renderRegister() {
 
         <!-- Sección para mostrar el QR -->
         <div id="qr-section" style="display: none;">
-            <h3>Escanea el QR con tu aplicación de autenticación</h3>
             <img id="qr-code" src="" alt="QR Code" />
             <label for="otp-token">Introduce el código OTP</label>
             <input type="text" id="otp-token" name="otp-token" required>
@@ -71,9 +70,6 @@ function qrRegister(data) {
 
         if (response.ok) {
             registerResponseMessage.innerText = data.message;
-            //window.location.href = "/login";
-            //window.location.hash = "#login"
-            //................MAYBE CONFLICTO CON EL FLUJO DEL FRONT DE JAVI PREGUNTAR!!.....................
         } else if  (data.error) {
             registerResponseMessage.innerText = data.error;
         }
@@ -86,15 +82,12 @@ function noneRegister(data, response)
 
     if (response.ok) {
         registerResponseMessage.innerText = data.message;
-        //window.location.href = "/login";
-        //window.location.hash = "#login"
-        //................MAYBE CONFLICTO CON EL FLUJO DEL FRONT DE JAVI PREGUNTAR!!.....................
     } else if  (data.error) {
         registerResponseMessage.innerText = data.error;
     }
 }
 
-function emailRegister(data, response){
+function emailRegister(data){
 
 	const registerResponseMessage = document.getElementById("register-response-message");
     const qrSection = document.getElementById("qr-section");
@@ -123,10 +116,7 @@ function emailRegister(data, response){
 
         if (response.ok) {
             registerResponseMessage.innerText = data.message;
-            //window.location.href = "/login";
-            //window.location.hash = "#login"
-            //................MAYBE CONFLICTO CON EL FLUJO DEL FRONT DE JAVI PREGUNTAR!!.....................
-        } else if  (data.error) {
+        } else if (data.error) {
             registerResponseMessage.innerText = data.error;
         }
     });
@@ -161,7 +151,7 @@ export function initRegister() {
         if (data.auth_method === "None")
 			noneRegister(data, response)
 		else if(data.auth_method === "Qr")
-            qrRegister(data, response)
+            qrRegister(data)
 		else if(data.auth_method === "Email")
 			emailRegister(data, response)
 		else
