@@ -1,6 +1,7 @@
 // static/js/views/tournaments_list.js
 
 import EventListenerManager from '../utils/eventListenerManager.js';
+import { handleJwtToken } from './jwtValidator.js';
 
 export async function renderTournamentsList() {
     const response = await fetch('static/html/tournaments_list.html');
@@ -8,34 +9,63 @@ export async function renderTournamentsList() {
     return htmlContent;
 }
 
+let socket = null;
 export function initTournamentsList() {
 
     // --- VARIABLES AND CONSTANTS ---
 
     const eventManager = new EventListenerManager();
 
-    const availableGames = [
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 5 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 2 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-        { name: 'TOR-A', date: '01/02/2025 18:42', users: 6 },
-    ];
-
+   
        
     // --- DOM ELEMENTS ---
     
     
     const gameLists = document.querySelectorAll('.game-list');
     const title = document.querySelector('.site-title');
+    const availableContainer = document.getElementById('available-games');
     
 
     // --- FUNCTIONS ---
+
+    async function loadTournaments() {
+        availableContainer.innerHTML = "";
+
+        try {
+            await handleJwtToken();
+            const [tournamentResponse, playerCountsResponse] = await Promise.all([
+                fetch('/api/tournament/'),
+                fetch('/api/tournament/player_counts')
+            ]);
+
+            if (!tournamentResponse.ok || !playerCountsResponse.ok) {
+                console.error("Error al obtener torneos o contadores de jugadores");
+                alert("Hubo un problema al cargar los torneos.");
+                return;
+            }
+
+            const tournaments = await tournamentResponse.json();
+            const playerCounts = await playerCountsResponse.json();
+
+            tournaments.forEach(tournament => {
+                const gameItem = createGameItem({
+                    id: tournament.id,
+                    name: tournament.name,
+                    date: "-", // No hay fecha en la API
+                    users: playerCounts[tournament.id] || 0
+                }, 'available');
+                const joinButton = gameItem.querySelector('.btn');
+                joinButton.addEventListener('click', () => joinTournament(tournament.id));
+                availableContainer.appendChild(gameItem);
+            });
+
+            if (socket === null) {
+                socket = startGlobalWebSocket();
+            }
+        } catch (error) {
+            console.error("Error al cargar los torneos:", error);
+        }
+    }
 
     window.createGameItem = function createGameItem(game, type) {
         const gameItem = document.createElement('div');
@@ -60,6 +90,52 @@ export function initTournamentsList() {
             availableContainer.appendChild(gameItem);
         });
 
+    }
+
+    async function joinTournament(tournamentId) {
+        try {
+            await handleJwtToken(); // Verificar el token de JWT
+            const response = await fetch(`/api/tournament/${tournamentId}/join`, {
+                method: 'POST',
+            });
+
+            if (response.ok) {
+                alert("Te has unido al torneo exitosamente!");
+                // Redirigir a la sala del torneo después de un pequeño delay
+                setTimeout(() => {
+                    location.hash = `tournament/room/${tournamentId}`;
+                }, 700);
+            } else {
+                alert("Error al unirse al torneo.");
+            }
+        } catch (error) {
+            console.error("Error al unirse al torneo:", error);
+            alert("Error de conexión.");
+        }
+    }
+
+    function startGlobalWebSocket() {
+        handleJwtToken().then(() => {
+            const ws = new WebSocket(`wss://${window.location.host}/ws/global_tournament_counter/`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const tournament = document.querySelector(`#tournament-${data.tournament_id}`);
+                if (tournament) {
+                    const userCountContainer = tournament.querySelector('.badge');
+                    if (userCountContainer) {
+                        userCountContainer.textContent = `${data.user_count}`;
+                    }
+                }
+            };
+
+            ws.onerror = (error) => console.error("WebSocket Error:", error);
+            ws.onclose = () => {
+                console.log("WebSocket closed. Reconnecting in 5 seconds...");
+                setTimeout(startGlobalWebSocket, 5000);
+            };
+            return ws;
+        });
     }
 
     window.toggleFullscreen = function toggleFullscreen() {
@@ -117,9 +193,11 @@ export function initTournamentsList() {
     });
 
     // --- INITIALIZATION ---
-
-    displayGames();
+    loadTournaments();
+    // displayGames();
 
 
     return () => eventManager.removeAllEventListeners();
 }
+
+
