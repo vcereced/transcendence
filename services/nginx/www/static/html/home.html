@@ -27,10 +27,16 @@
                 <h2>Torneos</h2>
                 <i class="fas fa-trophy"></i>
                 <p>Demuestra tus habilidades.</p>
-                <button onmouseover="buttonHold(this, '¡Crea tu propio torneo!')"
-                    onmouseout="buttonRelease(this, 'Crear torneo')">Crear torneo</button>
-                <button onmouseover="buttonHold(this, '¡Únete a salas creadas!')"
-                    onmouseout="buttonRelease(this, 'Unirse')">Unirse</button>
+                <button onclick="location.hash = '#/tournament'"
+                    onmouseover="buttonHold(this, '¡Crea tu propio torneo!')"
+                    onmouseout="buttonRelease(this, 'Crear torneo')">
+                    Crear torneo
+                </button>
+                <button  onclick="location.hash = '#/tournaments-list'"   
+                    onmouseover="buttonHold(this, '¡Únete a salas creadas!')"
+                    onmouseout="buttonRelease(this, 'Unirse')">
+                    Unirse
+                </button>
             </div>
             <div class="card" style="transform: rotateY(90deg) translateZ(320px);">
                 <h2>Juego contra IA</h2>
