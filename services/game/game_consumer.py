@@ -59,6 +59,7 @@ async def play_game(game_id: int):
             game_state = await determine_initial_serve(
                 game, await load_game_state(redis_client, game_id)
             )
+            game_state.next_side_to_collide = "left" if game_state.ball.dx < 0 else "right"
             await save_game_state(redis_client, game_id, game_state)
 
             while game_state.start_countdown > 0:
@@ -109,7 +110,7 @@ async def control_paddle_by_computer(game_id, side):
             s.INITIAL_GAME_STATE["ball"]["x"], s.INITIAL_GAME_STATE["ball"]["y"], 0, 0
         )
         last_seen_time = time.time()
-        refresh_rate = 1 / 10
+        refresh_rate = s.AI_REFRESH_RATE
         while True:
             game_state = await load_game_state(redis_client, game_id)
 
@@ -199,6 +200,9 @@ async def load_game_state(redis_client: redis.Redis, game_id):
     winner_username_data = await redis_client.get(f"game:{game_id}:winner_username")
     is_finished_data = await redis_client.get(f"game:{game_id}:is_finished")
     start_countdown_data = await redis_client.get(f"game:{game_id}:start_countdown")
+    next_side_to_collide_data = await redis_client.get(
+        f"game:{game_id}:next_side_to_collide"
+    )
 
     if (
         ball_data
@@ -207,6 +211,7 @@ async def load_game_state(redis_client: redis.Redis, game_id):
         and scores_data
         and is_finished_data
         and start_countdown_data
+        and next_side_to_collide_data
     ):
         scores = json.loads(scores_data)
         game_state_data = {
@@ -219,6 +224,7 @@ async def load_game_state(redis_client: redis.Redis, game_id):
             "winner_username": winner_username_data,
             "is_finished": int(is_finished_data),
             "start_countdown": int(start_countdown_data),
+            "next_side_to_collide": next_side_to_collide_data,
         }
         game_state_serializer = serializers.GameStateSerializer(data=game_state_data)
         if game_state_serializer.is_valid():
@@ -237,6 +243,9 @@ async def save_game_state(redis_client: redis.Redis, game_id, game_state: GameSt
         f"game:{game_id}:scores",
         json.dumps({"left": game_state.left.score, "right": game_state.right.score}),
     )
+    await redis_client.set(
+        f"game:{game_id}:next_side_to_collide", game_state.next_side_to_collide
+    )
 
 
 def check_collisions(game_state: GameState):
@@ -253,7 +262,7 @@ def check_collisions(game_state: GameState):
         game_state,
         -s.PADDLE_OFFSET,
         game_state.left.paddle_y,
-        1,
+        "left",
     )
 
     # Right paddle
@@ -261,7 +270,7 @@ def check_collisions(game_state: GameState):
         game_state,
         s.FIELD_WIDTH + s.PADDLE_OFFSET,
         game_state.right.paddle_y,
-        -1,
+        "right",
     )
 
     # Left wall
@@ -270,6 +279,7 @@ def check_collisions(game_state: GameState):
         game_state.ball.x = s.FIELD_WIDTH / 2
         game_state.ball.y = s.FIELD_HEIGHT / 2
         game_state.ball.dx = s.INITIAL_BALL_SPEED  # Serve to the right
+        game_state.next_side_to_collide = "right"
         game_state.ball.dy = random.choice([-1, 1]) * s.INITIAL_BALL_SPEED
         return game_state
 
@@ -279,6 +289,7 @@ def check_collisions(game_state: GameState):
         game_state.ball.x = s.FIELD_WIDTH / 2
         game_state.ball.y = s.FIELD_HEIGHT / 2
         game_state.ball.dx = -s.INITIAL_BALL_SPEED  # Serve to the left
+        game_state.next_side_to_collide = "left"
         game_state.ball.dy = random.choice([-1, 1]) * s.INITIAL_BALL_SPEED
         return game_state
 
@@ -289,10 +300,9 @@ def check_paddle_collision(
     game_state: GameState,
     paddle_center_x_position,
     paddle_center_y_position,
-    bounce_away_direction,
+    paddle_side,
 ):
-    # If the ball is not moving towards the paddle, no collision
-    if game_state.ball.dx * bounce_away_direction > 0:
+    if paddle_side != game_state.next_side_to_collide:
         return game_state
 
     centers_distance = math.sqrt(
@@ -316,11 +326,14 @@ def check_paddle_collision(
     final_magnitude = initial_magnitude * s.BALL_SPEED_INCREMENT
     game_state.ball.dx = final_magnitude * math.cos(final_angle)
     game_state.ball.dy = final_magnitude * math.sin(final_angle)
+    game_state.next_side_to_collide = "left" if paddle_side == "right" else "right"
 
-    if abs(game_state.ball.dx) < s.MINIMUM_X_SPEED:
-        game_state.ball.dx = (
-            s.MINIMUM_X_SPEED if game_state.ball.dx > 0 else -s.MINIMUM_X_SPEED
-        )
+    # Ensure the ball is always moving towards the opposite side of the last collision
+    if game_state.next_side_to_collide == "left" and game_state.ball.dx > -s.MINIMUM_X_SPEED:
+        game_state.ball.dx = -s.MINIMUM_X_SPEED
+    elif game_state.next_side_to_collide == "right" and game_state.ball.dx < s.MINIMUM_X_SPEED:
+        game_state.ball.dx = s.MINIMUM_X_SPEED
+
 
     return game_state
 

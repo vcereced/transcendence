@@ -47,6 +47,7 @@ class GameState:
         winner_username: str,
         is_finished: int,
         start_countdown: int,
+        next_side_to_collide: str,
     ):
         self.ball = ball
         self.left = left
@@ -54,6 +55,7 @@ class GameState:
         self.winner_username = winner_username
         self.is_finished = is_finished
         self.start_countdown = start_countdown
+        self.next_side_to_collide = next_side_to_collide
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -64,6 +66,7 @@ class GameState:
             data["winner_username"],
             data["is_finished"],
             data["start_countdown"],
+            data["next_side_to_collide"],
         )
 
     def to_dict(self):
@@ -74,6 +77,7 @@ class GameState:
             "winner_username": self.winner_username,
             "is_finished": self.is_finished,
             "start_countdown": self.start_countdown,
+            "next_side_to_collide": self.next_side_to_collide,
         }
 
 

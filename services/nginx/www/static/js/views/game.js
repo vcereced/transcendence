@@ -88,12 +88,12 @@ export async function initGame() {
         // Draw the left paddle as an arc
         context.fillStyle = '#1abc9c';
         context.beginPath();
-        context.arc(-paddleOffset, leftPaddleY, paddleRadius, 0, Math.PI * 2, true);
+        context.arc(-paddleOffset, leftPaddleY, paddleRadius * 0.96, 0, Math.PI * 2, true);
         context.fill();
 
         // Draw the right paddle as an arc
         context.beginPath();
-        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius, 0, Math.PI * 2, true);
+        context.arc(canvas.width + paddleOffset, rightPaddleY, paddleRadius * 0.96, 0, Math.PI * 2, true);
         context.fill();
 
         // Draw the ball
