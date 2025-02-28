@@ -44,14 +44,14 @@ function handle_login_redirections() {
 
 function handle_login_2fa(data) {
 	const loginResponseMessage = document.getElementById("login-response-message");
+	const loginForm = document.getElementById("login-form");
+	const otp_div = document.getElementById("div_otp");
 
 	if (data.auth_method == "None") {
 		document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
 		document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
 		handle_login_redirections();
 	} else if (data.auth_method == "Qr") {
-		const loginForm = document.getElementById("login-form");
-		const otp_div = document.getElementById("div_otp");
 		otp_div.style.display = 'block';
 		
 		loginForm.addEventListener("submit", async (event) => {
@@ -87,8 +87,6 @@ function handle_login_2fa(data) {
 		});
 		
 	} else if (data.auth_method == "Email") {
-		const loginForm = document.getElementById("login-form");
-		const otp_div = document.getElementById("div_otp");
 		otp_div.style.display = 'block';
 		
 		loginForm.addEventListener("submit", async (event) => {

@@ -126,7 +126,7 @@ def verify_email_otp_view(request):
 	except (CustomUser.DoesNotExist):
 		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
 	except (EmailOTPDevice.DoesNotExist):
-		return Response({"error": "Email Device doesnt exist."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "OTP Wrong."}, status=status.HTTP_400_BAD_REQUEST)
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -138,6 +138,7 @@ def login_api_view(request):
 
 	if verifyUser(username, password) != 'ok':
 		return Response({"error": verifyUser(username, password)}, status=status.HTTP_400_BAD_REQUEST)
+		
 	else:
 		user = CustomUser.objects.get(username=username)
 
@@ -228,7 +229,7 @@ def login_email_view(request):
 	except (CustomUser.DoesNotExist):
 		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
 	except (EmailOTPDevice.DoesNotExist):
-		return Response({"error": "Email Device doesnt exist."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "OTP WRONG."}, status=status.HTTP_400_BAD_REQUEST)
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 

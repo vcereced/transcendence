@@ -28,7 +28,7 @@ class EmailOTPDevice(Device):
 
         send_mail(
             'OTP sended by PONG',
-            f'Tu código de autenticación es: {self.otp_token}\n\nRecordatorio del dia:\nPues hay un momento en la vida de un hombre pues que fluya lo que tenga que fluyar y que vaya lo que se tenga que vayar...',
+            f'Tu código de autenticación es: {self.otp_token} ',
             'victorcerecedagonzalez@gmail.com',
             [self.user.email],
             fail_silently=False,

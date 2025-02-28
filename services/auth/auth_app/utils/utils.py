@@ -22,5 +22,5 @@ def verifyUser(username, password):
 	elif user.is_active == False:
 		return "user pending to validate"
 	else:
-		"ok"
+		return "ok"
 
