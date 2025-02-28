@@ -62,6 +62,7 @@ function qrRegister(data) {
             body: JSON.stringify({
                 auth_method : "Qr",
                 username: document.getElementById("register-username").value,
+                password: document.getElementById("register-password").value,
                 otp_token: otpToken
             }),
         });
@@ -108,6 +109,7 @@ function emailRegister(data){
             body: JSON.stringify({
                 auth_method : "Email",
                 username: document.getElementById("register-username").value,
+                password: document.getElementById("register-password").value,
                 otp_token: otpToken
             }),
         });
@@ -154,6 +156,8 @@ export function initRegister() {
             qrRegister(data)
 		else if(data.auth_method === "Email")
 			emailRegister(data, response)
+        else if (data.error)
+            registerResponseMessage.innerText = data.error;
 		else
 			registerResponseMessage.innerText = data.username;
     });

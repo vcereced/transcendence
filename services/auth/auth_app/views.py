@@ -24,6 +24,7 @@ def register_view(request):
 
 	serializer = RegisterSerializer(data=request.data)
 
+	print("debugeo====", request.data.get("username"), request.data.get("password"))
 	if serializer.is_valid():
 		user = serializer.save()
 		user.is_active = False  # Desactivamos la cuenta hasta que confirme el OTP
@@ -48,8 +49,9 @@ def register_view(request):
 			"qr_code"		: qr_base64,  # Enviar QR en base64 para mostrar en frontend
 		}, status=status.HTTP_201_CREATED)
 	
-	elif CustomUser.objects.get(username=request.data.get("username")).is_active == False:
+	elif CustomUser.objects.filter(username=request.data.get("username")).first().is_active == False and CustomUser.objects.filter(username=request.data.get("username")).first().email == request.data.get("email"):
 
+		print("entrooooo")
 		user = CustomUser.objects.get(username=request.data.get("username"))
 
 		if user.auth_method == "None":
@@ -71,13 +73,18 @@ def register_view(request):
 			"qr_code"		: qr_base64,  # Enviar QR en base64 para mostrar en frontend
 		}, status=status.HTTP_201_CREATED)
 	
+	#elif CustomUser.objects.filter(username=request.data.get("username")).first().email != request.data.get("email"):
+	#	return Response({"error": "email wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
 	else:
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		#return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": verifyUser(request.data.get("username"), request.data.get("password"))}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def verify_otp_view(request):
 	username = request.data.get("username")
 	otp_token = request.data.get("otp_token")
+	password = request.data.get('password')
 
 	try:
 		if not username or not otp_token:
@@ -89,6 +96,7 @@ def verify_otp_view(request):
 			return Response({"error": "user not in bbdd (verify_otp_view)."}, status=status.HTTP_400_BAD_REQUEST)
 
 		if activateTOPTDevice(user, otp_token):
+			user.password = password  
 			user.is_active = True  # Activate the account
 			user.save()
 			return Response({"message": "OTP OK. User active, go to login."}, status=status.HTTP_200_OK)
@@ -105,6 +113,7 @@ def verify_otp_view(request):
 def verify_email_otp_view(request):
 	username = request.data.get('username')
 	otp_token = request.data.get('otp_token')
+	password = request.data.get('password')
 
 	try:
 		if not username or not otp_token:
@@ -116,6 +125,8 @@ def verify_email_otp_view(request):
 			return Response({"error": "user not in bbdd (verify_email_otp_view)."}, status=status.HTTP_400_BAD_REQUEST)
 		
 		if verifyEmailTOPTDevice(user, otp_token):
+			print("debugeooooo== ", request.data.get('password'))
+			user.password = password  
 			user.is_active = True
 			user.save()
 
@@ -136,7 +147,10 @@ def login_api_view(request):
 	username = request.data.get('username')
 	password = request.data.get('password')
 
+	print("login api view username, password ", username, password)
+
 	if verifyUser(username, password) != 'ok':
+		print("EEEERRRROORRR")
 		return Response({"error": verifyUser(username, password)}, status=status.HTTP_400_BAD_REQUEST)
 		
 	else:
@@ -206,13 +220,14 @@ def login_qr_view(request):
 def login_email_view(request):
 
 	username = request.data.get('username')
+	password = request.data.get('password')
 	otp_token = request.data.get('otp_token')
 
 	try:
 		user = CustomUser.objects.get(username=username, is_active = True)
 
-		if user is None:
-			return Response({"error": "usuario no guardado o sin confirmar en bbdd (verify_email_otp_view)."}, status=status.HTTP_400_BAD_REQUEST)
+		if user.password != password:
+			return Response({"error": "password wrong."}, status=status.HTTP_400_BAD_REQUEST)
 		
 		if verifyEmailTOPTDevice(user, otp_token):
 
