@@ -68,7 +68,8 @@ def login_api_view(request):
 		return Response({"error": "Credenciales inválidas."}, status=status.HTTP_400_BAD_REQUEST)
 
 	try:
-		verifyTOPTDevice(user, otp_token)
+        # Descomentar para activar 2FA. LO DEJAMOS COMENTADO PARA NO TENER QUE INGRESAR EL OTP CADA VEZ QUE QUERAMOS INICIAR SESIÓN
+		# verifyTOPTDevice(user, otp_token) 
 
 		refresh = RefreshToken.for_user(user)
 		refresh['username'] = user.username

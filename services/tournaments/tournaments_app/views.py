@@ -47,12 +47,6 @@ def join_tournament(request, tournament_id):
     	# "tournamentId": tournament.id,
     	# "user_count": redis_client.get(f'tournament_{tournament.id}_player_count')}))
         #This is for testing sending tasks to the game service
-        players = {
-        "left_player_id": 3,
-        "left_player_username": "jugador1dgt",
-        "right_player_id": 4,
-        "right_player_username": "jugador2sgt",
-        }
         # send_create_game_task(players)
         return Response({"message": f"Te has unido al torneo '{tournament.name}'."}, status=status.HTTP_200_OK)
     except Tournament.DoesNotExist:

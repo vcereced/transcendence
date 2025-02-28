@@ -96,3 +96,18 @@
     opacity: 0;
     transform: translateY(-10px);
 }
+
+.start-btn {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.start-btn:hover {
+    background-color: #218838;
+}

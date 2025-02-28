@@ -4,7 +4,7 @@ from game_app.serializers import GameSerializer, RockPaperScissorsGameSerializer
 import redis
 from game import settings as s
 import json
-from celery import current_app
+from celery import Celery
 from django.db import transaction
 import random
 

@@ -3,29 +3,25 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import redis.asyncio as redis
 import asyncio
 import jwt
-import random
 from .tasks import send_start_matchmaking_task, end_game_simulation
+from .redis_manager import RedisManager 
+
 
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
+    """Maneja la conexión de WebSocket global para los torneos."""
+
     async def connect(self):
-       
+        """Conecta al WebSocket global y se suscribe al canal de Redis."""
         print("Connecting to global WebSocket")
 
-        # Conectar a Redis
-        self.redis = redis.from_url("redis://redis:6379")  # Conexión a Redis
-        
-        self.room_group_name = (
-            "global_tournament_counter"  # Canal global para todos los torneos
-        )
+        self.redis_manager = RedisManager()  # Instanciamos RedisManager
+        self.room_group_name = "global_tournament_counter"
 
-        # Crear un objeto pubsub para escuchar el canal de Redis
-        self.pubsub = self.redis.pubsub()
+        # Suscribirse al canal de Redis
+        self.pubsub = await self.redis_manager.subscribe("tournaments_channel")
 
-        # Suscribirse al canal de Redis 'tournaments_channel'
-        await self.pubsub.subscribe("tournaments_channel")
-
-        # Añadir el canal del WebSocket al grupo global de canales de Django
+        # Añadir el canal del WebSocket al grupo de Django
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         # Aceptar la conexión WebSocket
@@ -35,33 +31,24 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         asyncio.create_task(self.listen_to_redis())
 
     async def listen_to_redis(self):
+        """Escucha los mensajes de Redis y envía actualizaciones de conteo."""
         while True:
             message = await self.pubsub.get_message(ignore_subscribe_messages=True)
             if message:
                 data = json.loads(message["data"])
-                tournament_id = data.get("tournament_id")
-
                 if data["type"] == "user_count_update":
-                    user_count = data.get("user_count")
-                    await self.send(
-                        json.dumps(
-                        {"tournament_id": tournament_id, 
-                         "user_count": user_count}))
-
+                    await self.send(json.dumps({
+                        "tournament_id": data.get("tournament_id"),
+                        "user_count": data.get("user_count")
+                    }))
             await asyncio.sleep(0.042)
 
-
-
     async def disconnect(self, close_code):
-        # Quitar el canal del grupo global
+        """Maneja la desconexión y limpia el WebSocket."""
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-    async def receive(self, text_data):
-        # Manejar cualquier mensaje recibido (por ejemplo, actualizaciones de contador de jugadores)
-        pass
-
     async def update_user_count(self, tournament_id, user_count):
-        # Actualizar el contador de jugadores en todos los torneos a través del WebSocket global
+        """Envía una actualización de conteo de jugadores al grupo global."""
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -72,239 +59,223 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
         )
 
     async def tournament_user_count(self, event):
-        # Recibir actualizaciones del contador de jugadores de Redis
-        tournament_id = event["tournament_id"]
-        user_count = event["user_count"]
-
-        # Enviar la actualización a todos los clientes conectados
-        await self.send(
-            text_data=json.dumps(
-                {"tournament_id": tournament_id, "user_count": user_count}
-            )
-        )
+        """Recibe actualizaciones del contador de jugadores desde Redis."""
+        await self.send(json.dumps({
+            "tournament_id": event["tournament_id"],
+            "user_count": event["user_count"]
+        }))
 
 
 class RoomConsumer(AsyncWebsocketConsumer):
+    """Maneja la conexión de WebSocket para un torneo específico."""
+
+    # ============================
+    #           WebSocket Connect
+    # ============================
+
     async def connect(self):
+        """Conecta el WebSocket de un torneo específico y maneja la conexión del usuario."""
         print("Connecting to specific tournament WebSocket")
         self.user = self.scope.get("user")
 
         # Obtener el nombre del torneo desde la URL
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = (
-            f"tournament_{self.room_name}"  # Canal específico del torneo
-        )
-        print(f"someone connected to {self.room_group_name}")
-        # Conectar a Redis
-        self.redis = redis.Redis(host="redis", port=6379)
+        self.room_group_name = f"tournament_{self.room_name}"
 
-        # Definir la clave para el contador de jugadores en este torneo
+        self.redis_manager = RedisManager()  # Instanciamos RedisManager
         self.user_count_key = f"{self.room_group_name}_player_count"
 
         # Añadir el canal al grupo del torneo
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         # Incrementar el contador de jugadores en Redis
-        print("Incrementing player count", self.user_count_key)
-
-        current_user_count = await self.redis.incr(self.user_count_key)
+        current_user_count = await self.redis_manager.incr_value(self.user_count_key)
 
         # Publicar actualización en Redis (para el consumidor global)
         await self.publish_global_update(current_user_count)
 
-        # FOR TESTING PURPOSES. HERE WE CAN OBTAIN THE JWT TOKEN FROM THE SCOPE
+        # Extraer información del usuario desde el JWT
+        await self.extract_user_info()
 
-        headers = dict(self.scope["headers"])
-        cookie_header = headers[b"cookie"]
-        if cookie_header:
-            for c in cookie_header.decode().split(";"):
-                if "accessToken" in c:
-                    print("access token found:")
-                    jwt_token = c.split("=")[1]
-                    print(jwt_token)
-                    try:
-                        payload = jwt.decode(
-                            jwt_token, options={"verify_signature": False}
-                        )
-                        print("Decoded Payload:", payload)
+        # Almacenar información del usuario en Redis
+        await self.redis_manager.set_value(f"user_channel:{self.username}", self.channel_name)
+        
+        # Añadir el usuario al set de usuarios en el torneo
+        await self.redis_manager.add_user_to_tournament(self.room_group_name, self.username, self.user_id)
 
-                        username = payload.get("username")
-                        user_id = payload.get("user_id")
-                        self.username = username
-                        self.user_id = user_id
-                        print(f"Username: {username}")
-                        print(f"User ID: {user_id}")
-                    except jwt.DecodeError as e:
-                        print(f"Error decoding token: {e}")
-                    break
-        print("publishing local update")
-        await self.redis.set(f"user_channel:{self.username}", self.channel_name)
-        await self.redis.sadd(
-            f"{self.room_group_name}_users", f"{self.username}: {self.user_id}"
-        )  # Create a set of users in the tournament
+        # Publicar actualización en el torneo
         await self.publish_local_update()
-        print("sending message directly to user")
-        await self.send_message("Hello from the server mr. " + self.username)
+
+        # Enviar un mensaje de bienvenida
+        await self.send_message(f"Hello from the server, {self.username}")
+
         # Aceptar la conexión WebSocket
         await self.accept()
-        #Discover if 8 players are already in the tournament. TESTING
-        if current_user_count == 3:
-            message = {
-                "tournament_id": self.room_name,
-            }
-            send_start_matchmaking_task(message) #should this be async?
-            #obtain the tree of the tournament
-            tournament_tree_key = f"tournament_{self.room_name}_tree"
-            for _ in range(50):  
-                key_type = await self.redis.type(tournament_tree_key)
-                if key_type == b'hash':
-                    break
-            await asyncio.sleep(0.1)  
-            tournament_tree = await self.redis.hgetall(tournament_tree_key)
-            tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in (await self.redis.hgetall(tournament_tree_key)).items()}
 
-            print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "start_tournament",
-                    "message": "Tournament iss starting",
-                    "tournament_tree": tournament_tree,
-                },
-            )
-    #JUST FOR TESTING PURPOSES GAME END SIMULATION
-        if current_user_count == 4:
-            message = {
-                "tournament_id": self.room_name,
-                "winner": "jugador1dg",
-                "loser": "jugador2dg",
-                "tree_id": "1",
-                "type": "game_end"
-            }
-            end_game_simulation(message)
+        # Simulación de fin de juego (solo para pruebas)
+        # if current_user_count == 4:
+        #     message = {
+        #         "tournament_id": self.room_name,
+        #         "winner": "jugador1dg",
+        #         "loser": "jugador2dg",
+        #         "tree_id": "1",
+        #         "type": "game_end"
+        #     }
+        #     end_game_simulation(message)
 
         asyncio.create_task(self.listen_to_game_end())
 
-
-
-    async def start_tournament(self, event):
-        # Send message to WebSocket
-        message = event["message"]
-        tournament_tree = event["tournament_tree"]
-        await self.send(text_data=json.dumps({"type": "start_tournament", "message": message, "tournament_tree": tournament_tree}))
-        # await self.send(text_data=json.dumps({"type": "start_tournament", "message": "Tournament is starting"}))
+    # ============================
+    #           WebSocket Disconnect
+    # ============================
 
     async def disconnect(self, close_code):
-        # Quitar el canal del grupo del torneo
+        """Maneja la desconexión de un usuario."""
         print(f"User {self.username} disconnected")
-        await self.redis.srem(f"{self.room_group_name}_users", self.username)
+        await self.redis_manager.remove_user_from_tournament(self.room_group_name, self.username)
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.publish_local_update()
 
-        # Disminuir el contador de jugadores en Redis
-        current_user_count = await self.redis.decr(self.user_count_key)
-
-        # Publicar actualización en Redis (para el consumidor global)
+        # Disminuir el contador de jugadores
+        current_user_count = await self.redis_manager.decr_value(self.user_count_key)
         await self.publish_global_update(current_user_count)
 
-#This will update the global user count in the frontend main tournament page
+    # ============================
+    #           Data Publication
+    # ============================
+
     async def publish_global_update(self, user_count):
         """Publica la actualización de conteo en el canal de Redis global."""
         message = {
             "type": "user_count_update",
-            "tournament_id": self.room_name,  # El ID del torneo (extraído de la URL)
+            "tournament_id": self.room_name,
             "user_count": user_count,
         }
-        await self.redis.publish("tournaments_channel", json.dumps(message))
+        await self.redis_manager.publish("tournaments_channel", message)
 
-#This will be used to send the updated user list to the clients
     async def publish_local_update(self):
-        "Publica actualizacion de nombres de usuarios en el canal de Redis local"
-        user_list = await self.redis.smembers(f"{self.room_group_name}_users")
-        decoded_user_list = [user.decode("utf-8") for user in user_list]
+        """Publica actualización de la lista de usuarios en el canal de Redis local."""
+        user_list = await self.redis_manager.get_tournament_users(self.room_group_name)
         message = {
             "type": "user_list",
             "tournament_id": self.room_name,
-            "user_list": decoded_user_list}
-        await self.redis.publish(self.room_group_name, json.dumps(message))
+            "user_list": user_list
+        }
+        await self.redis_manager.publish(self.room_group_name, message)
         await self.channel_layer.group_send(
-            self.room_group_name, {"type": "user_list", "user_list": decoded_user_list}
+            self.room_group_name, {"type": "user_list", "user_list": user_list}
         )
+
+    # ============================
+    #           Message Handlers
+    # ============================
 
     async def user_list(self, event):
         """Maneja el mensaje de tipo 'user_list'."""
-
-        # Sends the updated user list to the client
-        await self.send(
-            text_data=json.dumps({"type": "user_list", "user_list": event["user_list"]})
-        )
-
-    async def update_user_count(self):
-        # Obtener el número actualizado de jugadores en este torneo
-        current_user_count = await self.redis.get(self.user_count_key)
-
-        # Enviar el número actualizado de jugadores conectados a todos los usuarios del torneo
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "user_count",
-                "count": (
-                    int(current_user_count) if current_user_count is not None else 0
-                ),
-            },
-        )
-
-    async def user_count(self, event):
-        # Recibe el número actualizado de jugadores conectados en el torneo y lo envía al WebSocket
-        count = event["count"]
-        await self.send(text_data=json.dumps({"user_count": count}))
+        await self.send(json.dumps({"type": "user_list", "user_list": event["user_list"]}))
 
     async def send_message(self, message):
-        # Send message to specific channel
-        channel_name = await self.redis.get(f"user_channel:{self.username}")
-
+        """Envía un mensaje directo a un usuario."""
+        channel_name = await self.redis_manager.get_value(f"user_channel:{self.username}")
         if channel_name:
             await self.channel_layer.send(
-                channel_name.decode("utf-8"),
+                channel_name,
                 {"type": "direct_message", "message": message},
             )
 
     async def direct_message(self, event):
-        # Receive message from room group
-        message = event["message"]
+        """Maneja mensajes directos a usuarios."""
+        await self.send(json.dumps({"message": event["message"]}))
 
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({"message": message}))
-
-    #GAME END NOTIFICATION HANDLERS  
     async def game_end_notification(self, event):
-        username = self.username
+        """Envía una notificación cuando termina un juego."""
         await self.send(json.dumps({
             "type": "game_end",
             "tournament_id": event["tournament_id"],
             "winner": event["winner"],
             "loser": event["loser"],
-            "match_id": event["tree_id"], #match id is for the frontend to know which match ended
-            "username": username
-
+            "match_id": event["tree_id"],
+            "username": self.username
         }))
 
+    # ============================
+    #           Game End Listener
+    # ============================
+
     async def listen_to_game_end(self):
-        # Subscribirse al canal de Redis para recibir eventos de fin de juego
-        pubsub = self.redis.pubsub()
-        print("Listening to game end events")
-        #imprimir en colo rojo
-        print (f"\033[91m {self.room_group_name} <- room group name")
-        await pubsub.subscribe(self.room_group_name)  # Suscribir al canal de este torneo
+        """Escucha eventos de fin de juego en Redis."""
+        pubsub = await self.redis_manager.subscribe(self.room_group_name)
+        print(f"Listening to game end events in {self.room_group_name}")
 
         while True:
             message = await pubsub.get_message(ignore_subscribe_messages=True)
             if message:
-                #imprimir en color ROJO
                 data = json.loads(message["data"])
                 if data["type"] == "game_end":
-                    print (f"\033[91m {data} <- data GAME END")
+                    print(f"\033[91m {data} <- data GAME END \033[0m")
                     await self.game_end_notification(data)
 
-            await asyncio.sleep(0.042)  
+            await asyncio.sleep(0.042)
 
+    # ============================
+    #           Helper Methods
+    # ============================
+
+    async def extract_user_info(self):
+        """Extrae información del usuario desde el JWT en las cookies."""
+        headers = dict(self.scope["headers"])
+        cookie_header = headers.get(b"cookie", b"")
+
+        if cookie_header:
+            for c in cookie_header.decode().split(";"):
+                if "accessToken" in c:
+                    jwt_token = c.split("=")[1]
+                    try:
+                        payload = jwt.decode(jwt_token, options={"verify_signature": False})
+                        self.username = payload.get("username")
+                        self.user_id = payload.get("user_id")
+                        print(f"User connected: {self.username} (ID: {self.user_id})")
+                    except jwt.DecodeError as e:
+                        print(f"Error decoding token: {e}")
+                    break
+
+    async def receive(self, text_data):
+        """Maneja los mensajes entrantes del frontend."""
+        data = json.loads(text_data)
+        message_type = data.get("type")
+        print(f"\033[91m Received message type: {message_type} \033[0m")
+
+        if message_type == "start_tournament":
+            print("\033[92mRecibido evento para iniciar torneo\033[0m")
+            message = {"tournament_id": self.room_name}
+            send_start_matchmaking_task(message)
+
+            # Esperar a que se cree el árbol del torneo en Redis
+            tournament_tree_key = f"tournament_{self.room_name}_tree"
+            for _ in range(50):
+                key_type = await self.redis_manager.redis.type(tournament_tree_key)
+                if key_type == b'hash':
+                    break
+                await asyncio.sleep(0.1)
+
+            # Obtener el árbol del torneo
+            tournament_tree = await self.redis_manager.redis.hgetall(tournament_tree_key)
+            tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in tournament_tree.items()}
+
+            print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
+
+            # Enviar el mensaje a todos los jugadores
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "start_tournament",
+                    "message": "Tournament is starting",
+                    "tournament_tree": tournament_tree,
+                },
+            )
+
+    async def start_tournament(self, event):
+        """Inicia el torneo y envía la notificación a los jugadores."""
+        message = event["message"]
+        tournament_tree = event["tournament_tree"]
+        await self.send(text_data=json.dumps({"type": "start_tournament", "message": message, "tournament_tree": tournament_tree}))

@@ -12,6 +12,9 @@ export function renderTournamentRoom(tournamentId) {
                 <ul id="user-list"></ul>
             </div>
 
+            <button id="start-tournament-btn" class="start-btn">Iniciar Torneo</button>
+
+
             <!-- Árbol de clasificación -->
             <div class="tournament-tree">
                 <div class="round round-1">
@@ -65,7 +68,12 @@ export function initTournamentRoom(tournamentId) {
         socket = startTournamentWebSocket(tournamentId);
     }
 
-    // simulateTournamentProgress();
+    const startButton = document.getElementById("start-tournament-btn");
+    if (startButton) {
+        startButton.addEventListener("click", () => {
+            sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
+        });
+    }
 }
 
 function startTournamentWebSocket(tournamentId) {
@@ -80,6 +88,20 @@ function startTournamentWebSocket(tournamentId) {
         const data = JSON.parse(event.data);
         console.log("Mensaje WebSocket del torneo:", data);
 
+        // switch (data.type) {
+        //     case "user_list":
+        //         updateUserList(data.user_list);
+        //         break;
+        //     case "start_tournament":
+        //         start_tournament(data);
+        //         break;
+        //     case "game_end":
+        //         update_tournament_tree(data);
+        //         break;
+        //     default:
+        //         console.error("Tipo de mensaje desconocido:", data.type);
+        //         break;
+        // }
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
         }
@@ -87,7 +109,10 @@ function startTournamentWebSocket(tournamentId) {
             start_tournament(data);
         }
         if (data.type === "game_end") {
-            update_tournament_tree(data);
+            // update after a small delay to see the changesk
+            setTimeout(() => {
+                update_tournament_tree(data);
+            }, 0.1);
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
@@ -136,6 +161,7 @@ function updateUserList(userList) {
 function update_tournament_tree(data) {
     const { match_id, winner, loser } = data;
     console.log("updating tournament tree with:", data);
+    console.log('match_id>', match_id);
     // Encontrar el partido actual
     const currentMatch = document.querySelector(`.match[data-match="${match_id}"]`);
     if (!currentMatch) {
@@ -146,6 +172,8 @@ function update_tournament_tree(data) {
     // Marcar al ganador y perdedor
     const players = currentMatch.querySelectorAll(".player");
     players.forEach(player => {
+        console.log('player>', player);
+        console.log('player.textContent>', player.textContent);
         if (player.textContent === winner) {
             player.classList.add("winner");
         } else if (player.textContent === loser) {
@@ -169,7 +197,8 @@ function update_tournament_tree(data) {
     }
 
     // Actualizar campeón si es la final
-    if (match_id === 7) {
+    if (Number(match_id) === 7) {
+        console.log("The champion is:", winner);
         const champion = document.querySelector(".champion .player");
         if (champion) {
             champion.textContent = winner;
@@ -206,10 +235,6 @@ function simulateTournamentProgress() {
     }
 }
 
-// function start_tournament() {
-//     alert("El torneo ha comenzado!");
-// }
-
 function start_tournament(data) {
     alert("¡El torneo ha comenzado!");
     
@@ -227,9 +252,19 @@ function start_tournament(data) {
         if (matchElement) {
             const players = matchElement.querySelectorAll(".player");
             if (players.length >= 2) {
-                players[0].textContent = match.left_player;
-                players[1].textContent = match.right_player;
+                players[0].textContent = match.players.left.username;
+                players[1].textContent = match.players.right.username;
             }
         }
     });
 }
+
+function sendWebSocketMessage(type, data) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log("Enviando mensaje WebSocket:", { type, ...data });
+        socket.send(JSON.stringify({ type, ...data }));
+    } else {
+        console.error("WebSocket no está conectado.");
+    }
+}
+
