@@ -1,0 +1,27 @@
+<div class="TWOFA">
+    <h1 class="site-title">TheAnswerIsPong</h1>
+    <div class="icon-container">
+        <div class="fullscreen-icon" onclick="toggleFullscreen()">
+            <i class="fas fa-expand"></i>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Bienvenido <span id="username">@username</span></h2>
+        
+        <div class="input-group">
+            <label for="code">Introduce el código recibido por correo</label>
+            <div id="code-container">
+                <input type="text" maxlength="1" class="code-input" oninput="handleInput(this, 0)" onkeydown="moveToPrev(event, this, 0)">
+                <input type="text" maxlength="1" class="code-input" oninput="handleInput(this, 1)" onkeydown="moveToPrev(event, this, 1)">
+                <input type="text" maxlength="1" class="code-input" oninput="handleInput(this, 2)" onkeydown="moveToPrev(event, this, 2)">
+                <input type="text" maxlength="1" class="code-input" oninput="handleInput(this, 3)" onkeydown="moveToPrev(event, this, 3)">
+                <input type="text" maxlength="1" class="code-input" oninput="handleInput(this, 4)" onkeydown="moveToPrev(event, this, 4)">
+                <input type="text" maxlength="1" class="code-input" oninput="handleInput(this, 5)" onkeydown="moveToPrev(event, this, 5)">
+            </div>
+        </div>
+        
+        <button id="verify-button" onclick="verifyCode()">Validar Código</button>
+        <button id="resend-button" onclick="resendCode()" disabled>Reenviar Código <span id="timer">30</span><span id="seconds">s</span></button>
+    </div>
+</div>

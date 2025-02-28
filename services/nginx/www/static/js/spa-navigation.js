@@ -14,6 +14,7 @@ import { renderNewTournamentRoom, initNewTournamentRoom } from './views/newTourn
 import { renderTournamentsList, initTournamentsList } from './views/tournamentsList.js';
 import { renderNewLogin, initNewLogin } from './views/newLogin.js';
 import { renderRockPaperScissors, initRockPaperScissors } from './views/rockPaperScissors.js';
+import { render2FA, init2FA } from './views/2FA.js';
 
 
 
@@ -35,6 +36,7 @@ const routes = {
     "/new-tournament-room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
     "/new-login": { render: renderNewLogin, init: initNewLogin },
     "/rock-paper-scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
+    "/2FA": { render: render2FA, init: init2FA },
 };
 
 function parseRoute(path) {

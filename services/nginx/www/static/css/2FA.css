@@ -1,0 +1,137 @@
+.TWOFA {
+    background: var(--background-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.TWOFA .container {
+    background: var(--border-color);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 15px var(--shadow-color);
+    width: 320px;
+    text-align: center;
+}
+
+.TWOFA h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.TWOFA .input-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.TWOFA label {
+    color: var(--muted-color);
+    font-size: 0.9rem;
+}
+
+.TWOFA input {
+    width: 100%;
+    padding: 0.7rem;
+    margin-top: 0.3rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: #222;
+    color: var(--text-color);
+}
+
+.TWOFA button {
+    width: 100%;
+    padding: 0.7rem;
+    background: var(--primary-color);
+    border: none;
+    color: var(--text-color);
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.TWOFA button:hover {
+    background: var(--secondary-color);
+    box-shadow: 0 0 10px var(--hover-shadow-color);
+}
+
+.TWOFA .switch {
+    margin-top: 1rem;
+    color: var(--muted-color);
+    font-size: 0.9rem;
+}
+
+.TWOFA .switch a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.TWOFA .icon-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.TWOFA .profile-icon,
+.TWOFA .fullscreen-icon,
+.TWOFA .search-icon {
+    margin-left: 20px;
+    cursor: pointer;
+    transition: text-shadow 0.3s;
+}
+
+.TWOFA .profile-icon:hover,
+.TWOFA .fullscreen-icon:hover,
+.TWOFA .search-icon:hover {
+    text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
+}
+
+.TWOFA .profile-icon i,
+.TWOFA .fullscreen-icon i,
+.TWOFA .search-icon i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-shadow: 0 0 5px var(--primary-color);
+}
+
+.TWOFA .site-title {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 2rem;
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+}
+
+.TWOFA #code-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.TWOFA .code-input {
+    width: 40px;
+    height: 50px;
+    text-align: center;
+    font-size: 1.5rem;
+    border: 1px solid var(--muted-color);
+    border-radius: 5px;
+    background: #222;
+    color: var(--text-color);
+    transition: background 0.3s;
+}
+
+.TWOFA #resend-button {
+    margin-top: 10px;
+    background: var(--secondary-color);
+}
+.TWOFA #resend-button:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
