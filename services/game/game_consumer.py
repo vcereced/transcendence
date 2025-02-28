@@ -92,6 +92,19 @@ async def play_game(game_id: int):
         await redis_client.set(f"game:{game_id}:is_finished", "1")
         await redis_client.set(f"game:{game_id}:winner_username", game.winner_username)
         await save_game_ending(game)
+        
+        if game.tournament_id > 0:
+            end_game_data = {
+                "winner": game.winner_username,
+                "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
+                "tournament_id": game.tournament_id,
+                "tree_index": game.tree_index,
+            }
+            await current_app.send_task(
+                "game_end",
+                args=[end_game_data],
+                queue="matchmaking_tasks",
+            )
     except Exception as e:
         logger.error(f"Error in play_game: {e}", exc_info=True)
 

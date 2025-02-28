@@ -64,6 +64,8 @@ export async function initGame() {
     let rightPaddleY;
     let startCountdown;
 
+    let tournamentId;
+
     let keys = {
         w: false,
         s: false,
@@ -178,6 +180,13 @@ export async function initGame() {
 
             if (data.game_state.is_finished && !popupShown) {
                 showPopup(`${data.game_state.winner_username} gana!`);
+                setTimeout(() => {
+                    if (tournamentId > 0) {
+                        window.location.hash = `#tournament/room/${tournamentId}/`;
+                    } else {
+                        window.location.hash = "#"
+                    }
+                }, 3000);
             } else if (!data.game_state.is_finished && popupShown && startCountdown === 0) {
                 hidePopup();
             }
@@ -204,6 +213,8 @@ export async function initGame() {
             paddleRadius = paddleRadiusProportion * fieldHeight;
             fps = data.fps;
             angleInRadians = data.paddle_edge_angle_radians;
+
+            tournamentId = data.tournament_id;
 
             canvas.setAttribute('height', fieldHeight);
             canvas.setAttribute('width', fieldWidth);

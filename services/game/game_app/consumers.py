@@ -104,6 +104,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                     "right_player_id": self.game.right_player_id,
                     "left_player_username": self.game.left_player_username,
                     "right_player_username": self.game.right_player_username,
+                    "tournament_id": self.game.tournament_id,
                     "field_height": s.FIELD_HEIGHT,
                     "field_width": s.FIELD_WIDTH,
                     "ball_radius": s.BALL_RADIUS,

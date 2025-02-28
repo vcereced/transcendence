@@ -104,6 +104,7 @@ export async function initRockPaperScissors() {
             if (data.game_state.is_finished && !popupShown) {
                 if (data.game_state.winner_username !== "") {
                     showPopup(`${data.game_state.winner_username} gana!`);
+                    setTimeout(() => { window.location.hash = "#game" }, 2000);
                 } else {
                     showPopup("Empate!");
                 }
@@ -131,7 +132,7 @@ export async function initRockPaperScissors() {
         console.log("Desconectado del WebSocket.");
     };
 
-    socket.onerror = function (event) {
+    socket.onerror = function (event) {window.location.hash = "#login"
         deleteCookie("accessToken");
         deleteCookie("refreshToken");
         // Refresh the page

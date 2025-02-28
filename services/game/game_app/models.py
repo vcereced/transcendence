@@ -92,9 +92,8 @@ class Game(models.Model):
     is_finished = models.BooleanField(default=False)
     finished_at = models.DateTimeField(null=True, blank=True)
     winner_username = models.CharField(max_length=100, null=True, blank=True)
-    return_url = models.URLField(max_length=200, default="")
-    tournament_id = models.CharField(max_length=100, default="")
-    tree_index = models.CharField(max_length=100, default="")
+    tournament_id = models.IntegerField(default=0)
+    tree_index = models.IntegerField(default=0)
     rock_paper_scissors_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
@@ -112,9 +111,8 @@ class RockPaperScissorsGame(models.Model):
     is_finished = models.BooleanField(default=False)
     finished_at = models.DateTimeField(null=True, blank=True)
     winner_username = models.CharField(max_length=100, null=True, blank=True)
-    return_url = models.URLField(max_length=200, default="")
-    tournament_id = models.CharField(max_length=100, default="")
-    tree_index = models.CharField(max_length=100, default="")
+    tournament_id = models.IntegerField(default=0)
+    tree_index = models.IntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
