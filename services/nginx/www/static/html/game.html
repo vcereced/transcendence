@@ -1,0 +1,29 @@
+<div class="game-view">
+    <h1 class="site-title">TheAnswerIsPong</h1>
+    <div class="icon-container">
+        <div class="fullscreen-icon" onclick="toggleFullscreen()">
+            <i class="fas fa-expand"></i>
+        </div>
+    </div>
+
+    <div class="score-container">
+        <div class="divider">
+            <div class="container">
+                <h2><span id="left-username"></span></h2>
+            </div>
+        </div>
+        <div class="divider">
+            <div class="container">
+                <h2><span id="left-score"></span> - <span id="right-score"></span></h2>
+
+            </div>
+        </div>
+        <div class="divider">
+            <div class="container">
+                <h2><span id="right-username"></span></h2>
+            </div>
+        </div>
+    </div>
+    <div id="result-popup"></div>
+    <canvas id="pong-canvas" width="600" height="400"></canvas>
+</div>

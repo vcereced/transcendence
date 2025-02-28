@@ -1,0 +1,262 @@
+<div class="home">
+    <h1 class="site-title">TheAnswerIsPong</h1>
+    <div class="icon-container">
+        <div class="search-icon" onclick="toggleSearch()">
+            <i class="fas fa-search"></i>
+        </div>
+        <input type="text" class="search-bar" id="searchBar" placeholder="Buscar..." onfocus="this.select()">
+        <ul id="playerList" class="player-list"></ul>
+        <div class="profile-icon" onclick="toggleMenu(event)">
+            <i class="fas fa-user-circle"></i>
+        </div>
+
+        <div class="dropdown-menu" id="dropdownMenu">
+            <a onclick="openProfilePopup()">Ver Perfil</a>
+            <a onclick="openSettingsPopup()">Ajustes</a>
+            <a>Salir</a>
+        </div>
+
+        <div class="fullscreen-icon" onclick="toggleFullscreen()">
+            <i class="fas fa-expand"></i>
+        </div>
+    </div>
+
+    <div class="carousel-container">
+        <div id="carousel" class="carousel">
+            <div class="card" style="transform: rotateY(0deg) translateZ(320px);">
+                <h2>Torneos</h2>
+                <i class="fas fa-trophy"></i>
+                <p>Demuestra tus habilidades.</p>
+                <button onmouseover="buttonHold(this, '¡Crea tu propio torneo!')"
+                    onmouseout="buttonRelease(this, 'Crear torneo')">Crear torneo</button>
+                <button onmouseover="buttonHold(this, '¡Únete a salas creadas!')"
+                    onmouseout="buttonRelease(this, 'Unirse')">Unirse</button>
+            </div>
+            <div class="card" style="transform: rotateY(90deg) translateZ(320px);">
+                <h2>Juego contra IA</h2>
+                <i class="fas fa-robot"></i>
+                <p>Enfréntate a una inteligencia artificial desafiante.</p>
+                <button onmouseover="buttonHold(this, 'Juega contra una IA...')"
+                    onmouseout="buttonRelease(this, 'Jugar')">Jugar</button>
+            </div>
+            <div class="card" style="transform: rotateY(180deg) translateZ(320px);">
+                <h2>Pantalla Dividida</h2>
+                <i class="fas fa-tv"></i>
+                <p>Juega en modo pantalla dividida con un amigo.</p>
+                <button onmouseover="buttonHold(this, '¡Un ordenador, un ganador!')"
+                    onmouseout="buttonRelease(this, 'Jugar')">Jugar</button>
+            </div>
+            <div class="card" style="transform: rotateY(270deg) translateZ(320px);">
+                <h2>Jugar en Línea</h2>
+                <i class="fas fa-globe"></i>
+                <p>Conéctate y juega con otros jugadores en línea.</p>
+                <button onmouseover="buttonHold(this, '¡Juega en línea!')"
+                    onmouseout="buttonRelease(this, 'Jugar')">Jugar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-popup" id="profilePopup">
+        <div class="profile-container">
+            <button class="close-btn" onclick="closeProfilePopup()">&times;</button>
+            <div class="profile-header">
+                <div class="profile-image">
+                    <img src="1.gif" alt="Foto de perfil">
+                </div>
+                <div class="profile-info">
+                    <h2>@username</h2>
+                    <p>Partidas jugadas: 150 (<small>60%</small>)</p>
+                    <p>Torneos ganados: 10 (<small>40%</small>)</p>
+                    <p>Piedra/Papel/Tijeras: 253 (<small>40%</small>)</p>
+                </div>
+            </div>
+            <div class="statistics">
+                <h3>Historial de Juegos</h3>
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="tournament">Torneos</button>
+                    <button class="tab-btn" data-tab="online">Online</button>
+                    <button class="tab-btn" data-tab="ai">Contra IA</button>
+                </div>
+                <div class="history-container">
+                    <div class="history" id="tournament" style="display: block; max-height: 200px; overflow-y: auto;">
+                        <div class="game">
+                            <p class="result">
+                                <span class="winner" style="font-size: 30px; width: 10%;">8</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>🪨</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>📃</span></span>
+                                <span class="loser" style="font-size: 30px; width: 10%;">5</span>
+                            </p>
+                            <p class="result">
+                                <span class="winner" style="font-size: 30px; width: 10%;">10</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>📃</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>🪨</span></span>
+                                <span class="loser" style="font-size: 30px; width: 10%;">9</span>
+                            </p>
+                            <p class="result">
+                                <span class="winner" style="font-size: 30px; width: 10%;">5</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>📃</span></span>
+                                <span class="loser" style="font-size: 30px; width: 10%;">2</span>
+                            </p>
+                            <p class="result">
+                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>🪨</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>✂️</span></span>
+                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
+                            </p>
+                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
+                            <p class="opponent"><b>Duración:</b> 32 min</p>
+
+                        </div>
+                        <div class="game">
+                            <p class="result">
+                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>blabla</span><span>🪨</span></span>
+                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
+                            </p>
+                            <p class="result">
+                                <span class="winner" style="font-size: 30px; width: 10%;">10</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>📃</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>🪨</span></span>
+                                <span class="loser" style="font-size: 30px; width: 10%;">9</span>
+                            </p>
+                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
+                            <p class="opponent"><b>Duración:</b> 7 min</p>
+
+                        </div>
+                        <div class="game">
+                            <p class="result">
+                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>blabla</span><span>🪨</span></span>
+                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
+                            </p>
+                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
+                            <p class="opponent"><b>Duración:</b> 7 min</p>
+
+                        </div>
+                    </div>
+                    <div class="history" id="ai" style="display: none; max-height: 200px; overflow-y: auto;">
+                        <div class="game">
+                            <p class="result">
+                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>blabla</span><span>🪨</span></span>
+                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
+                            </p>
+                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
+                            <p class="opponent"><b>Duración:</b> 7 min</p>
+
+                        </div>
+                    </div>
+                    <div class="history" id="online" style="display: none; max-height: 200px; overflow-y: auto;">
+                        <div class="game">
+                            <p class="result">
+                                <span class="winner" style="font-size: 30px; width: 10%;">10</span>
+                                <span class="winner"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>📃</span></span>
+                                <span style="width:10%">VS</span>
+                                <span class="loser"
+                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>🪨</span></span>
+                                <span class="loser" style="font-size: 30px; width: 10%;">9</span>
+                            </p>
+                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
+                            <p class="opponent"><b>Duración:</b> 7 min</p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-popup" id="settingsPopup">
+        <div class="settings-container">
+            <button class="close-btn" onclick="closeSettingsPopup()">&times;</button>
+            <h2>Ajustes</h2>
+            <br>
+            <div class="settings-selector">
+                <!-- <label for="settings-option">Selecciona lo que deseas cambiar:</label> -->
+                <select id="settings-option" onchange="toggleSettingsFields()">
+                    <option value="none">Seleccionar...</option>
+                    <option value="profile-pic">Foto de perfil</option>
+                    <option value="username">Nombre de usuario</option>
+                    <option value="email">Correo</option>
+                    <option value="password">Contraseña</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+
+            <div>
+                <div class="settings-field" id="profile-pic-field" style="display: none;">
+                    <label for="profile-pic">Foto de perfil actual:</label>
+                    <img id="current-profile-pic" src="1.gif" alt="Foto actual" class="profile-preview">
+                    <br>
+                    <label for="profile-pic">Nueva foto de perfil:</label>
+                    <input type="file" id="profile-pic" accept="image/*">
+                </div>
+
+                <div class="settings-field" id="username-field" style="display: none;">
+                    <label for="username">Nombre de usuario actual:</label>
+                    <p class="current-settings" id="current-username">Usuario123</p>
+                    <br>
+                    <label for="username">Nuevo nombre de usuario:</label>
+                    <input type="text" id="username" placeholder="Tu nuevo nombre de usuario">
+                </div>
+
+                <div class="settings-field" id="email-field" style="display: none;">
+                    <label for="email">Correo actual:</label>
+                    <p class="current-settings" id="current-email">usuario@email.com</p>
+                    <br>
+                    <label for="email">Nuevo correo:</label>
+                    <input type="email" id="email" placeholder="Tu nuevo correo electrónico">
+                </div>
+
+                <div class="settings-field" id="password-field" style="display: none;">
+                    <label for="old-password">Contraseña actual:</label>
+                    <input type="password" id="old-password" placeholder="Ingresa tu contraseña actual">
+                    <br>
+                    <br>
+                    <label for="new-password">Nueva contraseña:</label>
+                    <input type="password" id="new-password" placeholder="Ingresa una nueva contraseña">
+                    <br>
+                    <br>
+                    <label for="new-password">Repite la nueva contraseña:</label>
+                    <input type="password" id="new-password" placeholder="Ingresa una nueva contraseña">
+                </div>
+
+                <div class="settings-field" id="otros-field" style="display: none;">
+                    <label for="otros">Otras opciones:</label>
+                    <button class="eliminar-btn">Eliminar cuenta</button>
+                </div>
+            </div>
+
+            <button class="save-btn">Guardar cambios</button>
+        </div>
+    </div>
+</div>

@@ -8,7 +8,12 @@ import { renderLogin, initLogin } from './views/login.js';
 import { renderGame, initGame } from './views/game.js';
 import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
-import { renderTournamentRoom, initTournamentRoom } from './views/tournament_room.js';
+import { renderTournamentRoom, initTournamentRoom } from './views/tournamentRoom.js';
+import { renderVersusWait, initVersusWait } from './views/versusWait.js';
+import { renderNewTournamentRoom, initNewTournamentRoom } from './views/newTournamentRoom.js';
+import { renderTournamentsList, initTournamentsList } from './views/tournamentsList.js';
+import { renderNewLogin, initNewLogin } from './views/newLogin.js';
+import { renderRockPaperScissors, initRockPaperScissors } from './views/rockPaperScissors.js';
 
 
 
@@ -24,7 +29,12 @@ const routes = {
     "/game": { render: renderGame, init: initGame },
     "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
-    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom }
+    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom },
+    "/versus-wait": { render: renderVersusWait, init: initVersusWait },
+    "/tournaments-list": { render: renderTournamentsList, init: initTournamentsList },
+    "/new-tournament-room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
+    "/new-login": { render: renderNewLogin, init: initNewLogin },
+    "/rock-paper-scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
 };
 
 function parseRoute(path) {
@@ -54,15 +64,22 @@ function parseRoute(path) {
     return { route: routes[path], params: {} };
 }
 
-function router() {
+async function router() {
     const path = location.hash.slice(1) || "/index";
     const { route, params } = parseRoute(path);
     console.log("Ruta:", route, "Parámetros:", params.id);
 
+    let currentCleanup;
+
     if (route) {
+        // Limpiar la ruta anterior si existe
+        if (currentCleanup) {
+            currentCleanup();
+        }
+
         // Renderiza e inicializa la ruta, pasando los parámetros si existen
-        document.getElementById("main-content").innerHTML = route.render(params);
-        route.init(params);
+        document.getElementById("main-content").innerHTML = await route.render(params);
+        currentCleanup = route.init(params);
     } else {
         document.getElementById("main-content").innerHTML = "<h2>404</h2><p>NOT FOUND</p>";
     }

@@ -160,10 +160,13 @@ CELERY_TASK_ROUTES = {
     'game_app.tasks.create_game': {
         'queue': 'game_tasks',
     },
+    'game_app.tasks.launch_game': {
+        'queue': 'game_tasks',
+    },
 }
 
 
-# Game proportions settings
+# PONG GAME SETTINGS
 
 FPS = 60
 FIELD_HEIGHT = 1
@@ -178,6 +181,8 @@ PADDLE_MOVE_AMOUNT = FIELD_HEIGHT / 50
 INITIAL_BALL_SPEED = FIELD_HEIGHT / 2 / FPS
 BALL_SPEED_INCREMENT = 1.1
 MINIMUM_X_SPEED = FIELD_HEIGHT / 6 / FPS
+WINNER_SCORE = 5
+START_COUNTDOWN = 3
 
 INITIAL_GAME_STATE = {
     "ball": {
@@ -190,4 +195,11 @@ INITIAL_GAME_STATE = {
     "left_paddle_y": FIELD_HEIGHT / 2,
     "right_paddle_y": FIELD_HEIGHT / 2,
 }
+
+
+# RPS GAME SETTINGS
+
+RPS_GAME_TIMER_LENGTH = 10
+RPS_CHOICES = ["rock", "paper", "scissors"]
+
 
