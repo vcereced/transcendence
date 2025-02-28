@@ -1,19 +1,20 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from .models import CustomUser  # Importa tu modelo personalizado
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password']
+        model = CustomUser
+        fields = ['username', 'email', 'password', "auth_method"]
 
     def create(self, validated_data):
-        user = User.objects.create_user(
+        user = CustomUser.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            password=validated_data['password']
+            password=validated_data['password'],
+            auth_method=validated_data['auth_method']
         )
-        user.is_active = False  # ❗ El usuario empieza inactivo hasta que valide OTP
+        #user.is_active = False  # ❗ CREO QUE ESTA DUB¿PLICADO
         user.save()
         return user

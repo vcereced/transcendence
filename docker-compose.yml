@@ -40,6 +40,7 @@ services:
     container_name: auth
     ports:
       - "8011:8001"  # Expose port 8001 to access the Auth service from outside
+      - "1025:1025"
     volumes:
       - ./services/auth:/app  # Bind mount for code synchronization
     env_file:

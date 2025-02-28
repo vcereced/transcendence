@@ -46,6 +46,18 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
 ]
 
+#DESARROLLOO DESCOMENTAR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
+EMAIL_PORT = 587  # Puerto para conexión TLS (más seguro)
+EMAIL_USE_TLS = True  # Usar TLS para seguridad
+EMAIL_HOST_USER = 'victorcerecedagonzalez@gmail.com'  # Tu dirección de correo de Gmail
+EMAIL_HOST_PASSWORD = 'mxux jarb njcj volt'  # La contraseña de aplicación generada 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Dirección que se usará para enviar los correos
+
+
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
 
 MIDDLEWARE = [
@@ -147,3 +159,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+AUTH_USER_MODEL = 'auth_app.CustomUser'

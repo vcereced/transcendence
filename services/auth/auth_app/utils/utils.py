@@ -1,55 +1,30 @@
-from django_otp.plugins.otp_totp.models import TOTPDevice
-from rest_framework.response import Response
-from rest_framework import status
-import qrcode
-import base64
-from io import BytesIO
+from django.utils.timezone import now
+from .utilsToptDevice import CustomError  # Importa tu modelo personalizado
+from auth_app.models import EmailOTPDevice, CustomUser
 
-class CustomError(Exception):
-    def __init__(self, message):
-        super().__init__(message)
+def verifyEmailTOPTDevice(user, otp_token):
 
-
-#argument must be the user serialized(username and password)
-def genTOPTDevice(user):
-
-    # Crear un dispositivo TOTP para el usuario
-    totp_device = TOTPDevice.objects.create(user=user, confirmed=False)
-
-    # Generar URL para Google Authenticator
-    otp_url = totp_device.config_url
-
-    # Generar QR code
-    qr = qrcode.make(otp_url)
-    buffer = BytesIO()
-    qr.save(buffer, format="PNG")
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
-
-    return qr_base64
-
-def activateTOPTDevice(user, otp_token):
-	# Buscar el dispositivo TOTP del usuario
-	try:
-		totp_device = TOTPDevice.objects.get(user=user, confirmed=False)
-	except TOTPDevice.DoesNotExist:
-		raise CustomError("2FA activated already")
-
-	# Verificar OTP
-	if totp_device.verify_token(otp_token):
-		totp_device.confirmed = True  # Confirmamos que el dispositivo es válido
-		totp_device.save()
-		return True
-	else:
-		return False
-
-def verifyTOPTDevice(user, otp_token):
-
-	try:
-		totp_device = TOTPDevice.objects.get(user=user, confirmed=True)
-	except TOTPDevice.DoesNotExist:
-		raise CustomError("this account dont have 2FA activated")
-
-	if not totp_device.verify_token(otp_token):
-		raise CustomError("OTP code wrong!!")
+	device = EmailOTPDevice.objects.get(user=user, otp_token=otp_token)# if not error throw exception .DoesNotExist
+	
+	if device.valid_until < now():
+		raise CustomError("otp email expired")
 	else:
 		return True
+
+def verifyUser(username, password):
+
+	user = CustomUser.objects.filter(username=username).first()  # Buscar el usuario directamente
+
+	print("verify user , name = ", user.username)
+	print("verify user , password = ", user.password)
+
+	if user is None:
+		return "wrong user"
+	elif user.password != password:
+		
+		return "password wrong"
+	elif user.is_active == False:
+		return "user pending to validate"
+	else:
+		return "ok"
+
