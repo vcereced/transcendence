@@ -16,8 +16,6 @@ from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser
 
 SECRET_KEY = os.getenv("JWT_SECRET")
 
-
-
 @api_view(['POST'])
 def register_view(request):
 	qr_base64 = None
@@ -96,7 +94,7 @@ def verify_otp_view(request):
 			return Response({"error": "user not in bbdd (verify_otp_view)."}, status=status.HTTP_400_BAD_REQUEST)
 
 		if activateTOPTDevice(user, otp_token):
-			user.password = password  
+			user.set_password = password 
 			user.is_active = True  # Activate the account
 			user.save()
 			return Response({"message": "OTP OK. User active, go to login."}, status=status.HTTP_200_OK)
@@ -126,7 +124,7 @@ def verify_email_otp_view(request):
 		
 		if verifyEmailTOPTDevice(user, otp_token):
 			print("debugeooooo== ", request.data.get('password'))
-			user.password = password  
+			user.set_password = password 
 			user.is_active = True
 			user.save()
 
