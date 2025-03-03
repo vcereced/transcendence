@@ -15,13 +15,9 @@ def verifyUser(username, password):
 
 	user = CustomUser.objects.filter(username=username).first()  # Buscar el usuario directamente
 
-	print("verify user , name = ", user.username)
-	print("verify user , password = ", user.password)
-
 	if user is None:
 		return "wrong user"
-	elif user.password != password:
-		
+	elif not user.check_password(password):
 		return "password wrong"
 	elif user.is_active == False:
 		return "user pending to validate"

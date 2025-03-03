@@ -156,8 +156,8 @@ export function initRegister() {
             qrRegister(data)
 		else if(data.auth_method === "Email")
 			emailRegister(data, response)
-        else if (data.error)
-            registerResponseMessage.innerText = data.error;
+		else if (data.error)
+			registerResponseMessage.innerText = data.error;
 		else
 			registerResponseMessage.innerText = data.username;
     });
