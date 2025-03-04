@@ -29,9 +29,10 @@ function emailRegister(data){
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                auth_method : "Email",
-                username: document.getElementById("reg-name").value,
-                password: document.getElementById("reg-password").value,
+                //auth_method : "Email",
+                //username: document.getElementById("reg-name").value,
+                //password: document.getElementById("reg-password").value,
+                email: document.getElementById("reg-email").value,
                 otp_token: otpToken
             }),
         });
@@ -53,7 +54,9 @@ function loginOtp(data) {
 	const loginForm = document.getElementById("login-form");
     const verifyOtpButton = document.getElementById("verify-otp");
 	const otpInput = document.getElementById("login-otp-token");
-
+    const loginDataSection = document.getElementById("login-data-container");
+    
+    loginDataSection.style.display = 'none';
     qrSection2.style.display = 'block';
     loginResponseMessage.innerText = data.message;
     
@@ -66,7 +69,7 @@ function loginOtp(data) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                username: document.getElementById("login-name").value,
+                email: document.getElementById("login-email").value,
                 password: document.getElementById("login-password").value,
                 otp_token: otpToken
             }),
@@ -114,17 +117,6 @@ export function initNewLogin() {
 
         let loginContainer = document.getElementById('login-container');
         let registerContainer = document.getElementById('register-container');
-
-        // if (loginContainer.style.display === 'none') {
-        //     qrSection.style.display = 'none';
-        //     loginContainer.style.display = 'block';
-        //     registerContainer.style.display = 'none';
-        // } else {
-        //     qrSection.style.display = 'none';
-        //     registerDataSection.style.display = 'block';
-        //     loginContainer.style.display = 'none';
-        //     registerContainer.style.display = 'block';
-        // }
 
         if (loginContainer.style.display === 'none') {
             loginContainer.style.display = 'block';
@@ -175,25 +167,31 @@ export function initNewLogin() {
             });
             const data = await response.json();
 
-            if(data.auth_method === "Email")
+        if(response.ok)
                 emailRegister(data)
+        else
+            if (data.email)
+                registerResponseMessage.innerText = data.email; // Mostrar el primer mensaje de error
+            else if (data.username)
+                registerResponseMessage.innerText = data.username; // Mostrar el primer mensaje de error
             else if (data.error)
-                registerResponseMessage.innerText = data.error;
+                registerResponseMessage.innerText = data.error; // Mostrar el primer mensaje de error
             else
-                registerResponseMessage.innerText = data.username;
+                registerResponseMessage.innerText = "Hay un mensaje de error no definido en el front para inyectarlo.";
         } catch (error) {
             console.error("Error en la solicitud:", error);
             alert("Hubo un problema con el registro.");
         }
+        
     }
 
     async function loginUser() {
-        const username = document.getElementById("login-name").value;
+        const email = document.getElementById("login-email").value;
         const password = document.getElementById("login-password").value;
         const loginResponseMessage = document.getElementById("login-response-message");
         
 
-        if (!username || !password) {
+        if (!email || !password) {
             alert("Todos los campos son obligatorios.");
             return;
         }
@@ -206,7 +204,7 @@ export function initNewLogin() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                username: username,
+                email: email,
                 password: password,
                 })
             });
@@ -220,7 +218,7 @@ export function initNewLogin() {
             } else if (data.error)
                 loginResponseMessage.innerText = data.error;
             else
-            loginResponseMessage.innerText = data.username;
+                loginResponseMessage.innerText = data.username;
         } catch (error) {
             console.error("Error en la solicitud:", error);
             alert("Hubo un problema con el registro.");

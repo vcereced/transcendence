@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUser  # Importa tu modelo personalizado
+from rest_framework.exceptions import ValidationError
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -9,6 +10,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', "auth_method"]
 
     def create(self, validated_data):
+
         user = CustomUser.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
