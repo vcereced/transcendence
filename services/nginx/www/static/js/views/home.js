@@ -1,6 +1,9 @@
 // static/js/views/home.js
 
 import EventListenerManager from '../utils/eventListenerManager.js';
+import { checkActiveGame } from '../utils/autoReconnect.js';
+import { handleJwtToken } from './jwtValidator.js';
+import { hasAccessToken } from '../utils/auth_management.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
@@ -8,7 +11,7 @@ export async function renderHome() {
     return htmlContent;
 }
 
-export function initHome() {
+export async function initHome() {
 
     // --- VARIABLES AND CONSTANTS ---
 
@@ -233,6 +236,19 @@ export function initHome() {
             document.getElementById(target).style.display = 'block';
         });
     });
+
+
+    // --- INITIALIZATION ---
+
+    if (!hasAccessToken()) {
+        window.sessionStorage.setItem("afterLoginRedirect", "#");
+        window.location.hash = "#login"
+        return;
+    }
+    
+    await handleJwtToken();
+
+    checkActiveGame();
 
     return () => eventManager.removeAllEventListeners();
 }

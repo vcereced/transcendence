@@ -16,7 +16,7 @@ export async function initRockPaperScissors() {
 
     if (!hasAccessToken()) {
         alert("Debes iniciar sesión para jugar");
-        window.sessionStorage.setItem("afterLoginRedirect", "#rock_paper_scissors");
+        window.sessionStorage.setItem("afterLoginRedirect", "#rock-paper-scissors");
         window.location.hash = "#login"
         return;
     }
