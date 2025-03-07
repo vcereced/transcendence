@@ -122,9 +122,11 @@ export function initHome() {
             document.getElementById(selectedOption + "-field").style.display = "block";
         }
     }
-    
-    window.viewGame = function viewGame() {
-        console.log("Ver la partida nuevamente");
+
+    window.createLocalGame = function createLocalGame(type) {
+        // Check active games, if active, show popup explaining and redirect
+        // Make POST call to /api/game/ with type of game to be created (player, computer)
+        // If success, show popup of redirecting to created game
     }
 
 

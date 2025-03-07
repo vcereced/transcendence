@@ -35,3 +35,7 @@ def trigger_launch_game_task(request):
         queue="game_tasks",
     )
     return Response(status=status.HTTP_200_OK)
+
+
+
+
