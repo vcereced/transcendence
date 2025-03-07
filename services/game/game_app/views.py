@@ -1,26 +1,20 @@
-import jwt
 from django.db.models import Q
-
-from game_app.models import Game, RockPaperScissorsGame
-from game_app.serializers import GameSerializer
 from rest_framework import generics
 from celery import current_app
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.request import Request
+
+
+from game_app.models import Game, RockPaperScissorsGame
+from game_app.serializers import GameSerializer
 from game_app import tasks
+from game_app import utils
 
 
-class GameList(generics.ListCreateAPIView):
-    queryset = Game.objects.all()
-    serializer_class = GameSerializer
 
-
-class GameDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Game.objects.all()
-    serializer_class = GameSerializer
-
-
+# ONLY FOR TESTING PURPOSES
 @api_view(["POST"])
 def trigger_create_game_task(request):
     current_app.send_task(
@@ -30,6 +24,7 @@ def trigger_create_game_task(request):
     )
     return Response(status=status.HTTP_200_OK)
 
+# ONLY FOR TESTING PURPOSES
 @api_view(["POST"])
 def trigger_launch_game_task(request):
     current_app.send_task(
@@ -39,65 +34,101 @@ def trigger_launch_game_task(request):
     )
     return Response(status=status.HTTP_200_OK)
 
+
 @api_view(["GET"])
-def has_active_game(request):
-    headers = dict(request.headers)
-    user_data = {}
-    cookie_header = headers.get("cookie")
-    if cookie_header:
-        for c in cookie_header.decode().split(";"):
-            if "accessToken" in c:
-                jwt_token = c.split("=")[1]
-                try:
-                    payload = jwt.decode(
-                        jwt_token, options={"verify_signature": False}
-                    )
-                    user_data["username"] = payload.get("username")
-                    user_data["user_id"] = payload.get("user_id")
-                except jwt.DecodeError as e:
-                    print(f"Error decoding token: {e}")
-                break
-    
-    if user_data.get("user_id"):
-        response = {"has_active_pong_game": False, "has_active_rps_game": False}
-        try:
-            game = Game.objects.get(
-            (
-                Q(left_player_id=user_data["user_id"])
-                | Q(right_player_id=user_data["user_id"])
-            )
-            & Q(is_finished=False)
+def has_active_game(request : Request):
+    user_data = utils.extract_user_data_from_jwt(request.headers)
+
+    user_id = user_data.get("user_id")
+    if not user_id:
+        return Response(
+            {"error": "User not found with JWT"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-        except Game.MultipleObjectsReturned:
-            return Response(
-                {"error": "Multiple active games found"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        except Game.DoesNotExist:
-            game = None
-
-        try:
-            rps_game = RockPaperScissorsGame.objects.get(
-                Q(player_1_id=user_data["user_id"]) | Q(player_2_id=user_data["user_id"])
-                & Q(is_finished=False)
-            )
-        except RockPaperScissorsGame.MultipleObjectsReturned:
-            return Response(
-                {"error": "Multiple active rps games found"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        except RockPaperScissorsGame.DoesNotExist:
-            rps_game = None
-
-        if rps_game:
-            response["has_active_rps_game"] = True
-        elif game:
-            response["has_active_pong_game"] = True
-        
-        return Response(response, status=status.HTTP_200_OK)
+    
+    active_game_data = utils.query_for_active_game(user_id)
+    if active_game_data.get("error"):
+        return Response(
+            active_game_data,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    return Response(active_game_data, status=status.HTTP_200_OK)
 
 
 
+
+@api_view(["POST"])
+def create_game(request : Request):
+    user_data = utils.extract_user_data_from_jwt(request._request.headers)
+    game_type = request.data.get("type")
+    user_id = user_data.get("user_id")
+    username = user_data.get("username")
+    if not game_type:
+        return Response(
+            {"error": "No game type provided"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if game_type not in ["computer", "player"]:
+        return Response(
+            {"error": "Invalid game type"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not user_id or not username:
+        return Response(
+            {"error": "User information not found with JWT"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    active_game_data = utils.query_for_active_game(user_id)
+    if active_game_data.get("error"):
+        return Response(
+            active_game_data,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if active_game_data["has_active_pong_game"]:
+        return Response(
+            {"error": "User already has an active game"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if active_game_data["has_active_rps_game"]:
+        return Response(
+            {"error": "User already has an active Rock Paper Scissors game"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    if game_type == "computer":
+        game_creation_data = {
+            "left_player_id": user_id,
+            "left_player_username": username,
+            "right_player_id": 0,
+            "right_player_username": "La Máquina",
+            "tournament_id": 0,
+            "tree_index": 0
+        }
+        current_app.send_task(
+            "create_game",
+            args=[request.data],
+            queue="game_tasks",
+        )
+    elif game_type == "player":
+        game_creation_data = {
+            "left_player_id": user_id,
+            "left_player_username": username,
+            "right_player_id": user_id,
+            "right_player_username": "Invitado",
+            "tournament_id": 0,
+            "tree_index": 0
+        }
+        current_app.send_task(
+            "create_game",
+            args=[request.data],
+            queue="game_tasks",
+        )
+
+    return Response(
+        status=status.HTTP_201_CREATED,
+    )
 
 
 

@@ -2,14 +2,14 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 import redis.asyncio as redis
 import asyncio
-import jwt
-from game_app import serializers
-from game_app import models
-import random
 from django.db.models import Q
 from asgiref.sync import sync_to_async
-from game import settings as s
 import time
+
+from game import settings as s
+from game_app import serializers
+from game_app import models
+from game_app import utils
 
 
 class PlayerConsumer(AsyncWebsocketConsumer):
@@ -31,7 +31,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         self.update_game_state_task = asyncio.create_task(self.update_game_state())
 
     async def find_out_game(self):
-        self.user_data = self.extract_user_data_from_jwt()
+        self.user_data = utils.extract_user_data_from_jwt(self.scope["headers"])
         if not self.user_data or not self.user_data.get("user_id"):
             await self.send_error_and_close("Invalid user data")
             return False
@@ -56,25 +56,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             )
             & Q(is_finished=False)
         )
-
-    def extract_user_data_from_jwt(self):
-        user_data = {}
-        headers = dict(self.scope["headers"])
-        cookie_header = headers[b"cookie"]
-        if cookie_header:
-            for c in cookie_header.decode().split(";"):
-                if "accessToken" in c:
-                    jwt_token = c.split("=")[1]
-                    try:
-                        payload = jwt.decode(
-                            jwt_token, options={"verify_signature": False}
-                        )
-                        user_data["username"] = payload.get("username")
-                        user_data["user_id"] = payload.get("user_id")
-                    except jwt.DecodeError as e:
-                        print(f"Error decoding token: {e}")
-                    break
-        return user_data
 
     def determine_controllers(self):
         if (
@@ -281,7 +262,7 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
         self.update_game_state_task = asyncio.create_task(self.update_game_state())
 
     async def find_out_game(self):
-        self.user_data = self.extract_user_data_from_jwt()
+        self.user_data = utils.extract_user_data_from_jwt(self.scope["headers"])
         if not self.user_data or not self.user_data.get("user_id"):
             await self.send_error_and_close("Invalid user data")
             return False
@@ -306,25 +287,6 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
             )
             & Q(is_finished=False)
         )
-
-    def extract_user_data_from_jwt(self):
-        user_data = {}
-        headers = dict(self.scope["headers"])
-        cookie_header = headers[b"cookie"]
-        if cookie_header:
-            for c in cookie_header.decode().split(";"):
-                if "accessToken" in c:
-                    jwt_token = c.split("=")[1]
-                    try:
-                        payload = jwt.decode(
-                            jwt_token, options={"verify_signature": False}
-                        )
-                        user_data["username"] = payload.get("username")
-                        user_data["user_id"] = payload.get("user_id")
-                    except jwt.DecodeError as e:
-                        print(f"Error decoding token: {e}")
-                    break
-        return user_data
 
     async def send_initial_information(self):
         await self.send(
