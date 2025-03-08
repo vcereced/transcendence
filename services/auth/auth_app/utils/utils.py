@@ -29,7 +29,6 @@ def verifyPendingUser(email, username, password):
 	user = CustomUser.objects.filter(email=email, username= username).first()  # Buscar el usuario directamente
 
 	if user is None:
-		print("sale como False en verify Pending USER ")
 		return "wrong user"
 	elif not user.check_password(password):
 		return "password wrong"

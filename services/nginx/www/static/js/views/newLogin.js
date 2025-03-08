@@ -141,84 +141,68 @@ export function initNewLogin() {
     }
     
     async function registerUser() {
+        const url = "/api/usr/register"
         const username = document.getElementById("reg-name").value;
         const email = document.getElementById("reg-email").value;
         const password = document.getElementById("reg-password").value;
 
         if (!username || !email || !password) {
-            console.log(username, email, password)
-            alert("Todos los campos son obligatorios siuu.");
-            return;
-        }
-
-        try {
-
-            const response = await fetch("/api/usr/register", { // Ajusta la URL
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                auth_method : "Email",
-                username: username,
-                password: password,
-                email: email
-                })
-            });
-            const data = await response.json();
-
-        if(response.ok)
-                emailRegister(data)
-        else
-            if (data.email)
-                registerResponseMessage.innerText = data.email; // Mostrar el primer mensaje de error
-            else if (data.username)
-                registerResponseMessage.innerText = data.username; // Mostrar el primer mensaje de error
-            else if (data.error)
-                registerResponseMessage.innerText = data.error; // Mostrar el primer mensaje de error
-            else
-                registerResponseMessage.innerText = "Hay un mensaje de error no definido en el front para inyectarlo.";
-        } catch (error) {
-            console.error("Error en la solicitud:", error);
-            alert("Hubo un problema con el registro.");
-        }
-        
-    }
-
-    async function loginUser() {
-        const email = document.getElementById("login-email").value;
-        const password = document.getElementById("login-password").value;
-        const loginResponseMessage = document.getElementById("login-response-message");
-        
-
-        if (!email || !password) {
             alert("Todos los campos son obligatorios.");
             return;
         }
 
         try {
 
-            const response = await fetch("/api/usr/login", { // Ajusta la URL
+            const response = await fetch(url, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                email: email,
-                password: password,
-                })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: username, password: password, email: email })
+            });
+
+            const data = await response.json();
+
+            if(response.ok) {
+                sessionStorage.setItem("action", "register");
+                sessionStorage.setItem("username", username);
+                sessionStorage.setItem("email", email);
+                sessionStorage.setItem("password", password);
+                window.location.hash = "#2FA";
+            } else{
+                registerResponseMessage.innerText = data.email || data.username || data.error || "Error desconocido. Inténtalo de nuevo.";}
+        } catch (error) {
+            console.error("Error en la solicitud:", error);
+            alert("Hubo un problema con el registro.");
+        }
+    }
+
+    async function loginUser() {
+        const url = "/api/usr/login"
+        const email = document.getElementById("login-email").value;
+        const password = document.getElementById("login-password").value;
+        const loginResponseMessage = document.getElementById("login-response-message");
+        
+        if (!email || !password) {
+            alert("Todos los campos son obligatorios.");
+            return;
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json"},
+                body: JSON.stringify({ email: email, password: password })
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                console.log("da ok la respuesta")
-                loginResponseMessage.innerHTML = data.message;
-                loginOtp(data, response)
-            } else if (data.error)
-                loginResponseMessage.innerText = data.error;
-            else
-                loginResponseMessage.innerText = data.username;
+                sessionStorage.setItem("action", "login");
+                sessionStorage.setItem("email", email);
+                sessionStorage.setItem("password", password);
+                window.location.hash = "#2FA";
+            } else {
+                loginResponseMessage.innerText = data.error || data.username || "Error desconocido. Inténtalo de nuevo.";
+            }
         } catch (error) {
             console.error("Error en la solicitud:", error);
             alert("Hubo un problema con el registro.");
@@ -240,10 +224,6 @@ export function initNewLogin() {
     if (registerButton) {
         eventManager.addEventListener(registerButton, "click", registerUser);
     }
-
-    // if(verifyOtpRegisterButton) {
-    //     eventManager.addEventListener(verifyOtpRegisterButton, "click", emailRegister);
-    // }
 
     if(loginButton) {
         eventManager.addEventListener(loginButton, "click", loginUser);

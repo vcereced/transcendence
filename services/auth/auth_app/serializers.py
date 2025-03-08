@@ -7,7 +7,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password', "auth_method"]
+        fields = ['username', 'email', 'password']
 
     def create(self, validated_data):
 
@@ -15,7 +15,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            auth_method=validated_data['auth_method']
         )
         #user.is_active = False  # ❗ CREO QUE ESTA DUB¿PLICADO
         user.save()
