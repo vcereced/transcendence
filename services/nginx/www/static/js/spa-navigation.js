@@ -30,7 +30,7 @@ const routes = {
     "/game": { render: renderGame, init: initGame },
     "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },
-    "/tournament/room/:id": { render: renderTournamentRoom, init: initTournamentRoom },
+    "/tournament/room/:id": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
     "/versus-wait": { render: renderVersusWait, init: initVersusWait },
     "/tournaments-list": { render: renderTournamentsList, init: initTournamentsList },
     "/new-tournament-room": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
@@ -40,7 +40,7 @@ const routes = {
 };
 
 function parseRoute(path) {
-    // Asegurarnos de que el path tiene la barra inicial
+    
     path = path.startsWith("/") ? path : "/" + path;
     
     const routeKeys = Object.keys(routes);
@@ -49,13 +49,10 @@ function parseRoute(path) {
         const paramMatch = key.match(/:([^\/]+)/);
         if (paramMatch) {
             const paramKey = paramMatch[1];
-            const basePath = key.split("/:")[0]; // Base path sin el parámetro dinámico
+            const basePath = key.split("/:")[0]; 
 
-            if (path.startsWith(basePath)) {
-                // Extraer el valor del parámetro de la URL
-                const paramValue = path.slice(basePath.length + 1); // El valor después de "/tournament/room/"
-
-                // Aquí tratamos de devolver el objeto de ruta con el parámetro dinámico
+            if (path.startsWith(basePath)) {            
+                const paramValue = path.slice(basePath.length + 1);
                 return { route: routes[key], params: { [paramKey]: paramValue } };
             } else {
                 console.log("No match for path:", path);

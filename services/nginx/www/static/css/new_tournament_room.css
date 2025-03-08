@@ -12,7 +12,7 @@
     position: relative;
 }
 
-.new-tournament-room .connected-players {
+.new-tournament-room .connected-users{
     display: flex;
     flex-direction: column;
     gap: 10px;

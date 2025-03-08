@@ -7,9 +7,12 @@ export async function renderNewTournamentRoom() {
     const htmlContent = await response.text();
     return htmlContent;
 }
-
+let socket = null;
 export function initNewTournamentRoom() {
 
+    if (socket === null) {
+        socket = startTournamentWebSocket(tournamentId);
+    }
     // --- VARIABLES AND CONSTANTS ---
 
     const eventManager = new EventListenerManager();
@@ -215,4 +218,63 @@ export function initNewTournamentRoom() {
     moveBall();
 
     return () => eventManager.removeAllEventListeners();
+}
+
+//SOCKET MANAGEMENT
+
+function startTournamentWebSocket(tournamentId) {
+    console.log('tournamentId>', tournamentId.id);
+    const socket = new WebSocket(`wss://${window.location.host}/ws/room/${tournamentId.id}/`);
+
+    socket.onopen = () => {
+        console.log(`Conexión WebSocket para el torneo ${tournamentId.id} abierta`);
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log("Mensaje WebSocket del torneo:", data);
+        
+        if (data.type === "user_list" ) {
+            updateUserList(data.user_list);
+        }
+        // if (data.type === "start_tournament") {
+        //     start_tournament(data);
+        // }
+        // if (data.type === "game_end") {
+        //     // update after a small delay to see the changesk
+        //     setTimeout(() => {
+        //         update_tournament_tree(data);
+        //     }, 0.1);
+        // }
+        //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
+        //OR TO START THE TOURNAMENT.
+    };
+
+    socket.onclose = function (event) {
+        console.log(`Conexión WebSocket para el torneo ${tournamentId.id} cerrada`, event);
+    };
+
+    socket.onerror = function (error) {
+        console.error(`Error en WebSocket para el torneo ${tournamentId.id}:`, error);
+    };
+
+    return socket;
+}
+
+function updateUserList(userList) {
+    const userListContainer = document.getElementById("user-list");
+
+    if (!userListContainer) {
+        console.error("Elemento de lista de usuarios no encontrado");
+        return;
+    }
+
+    userListContainer.innerHTML = "";
+
+    userList.forEach((user) => {
+        const userElement = document.createElement("li");
+        const [name, id] = user.split(":"); 
+        userElement.textContent = name;
+        userListContainer.appendChild(userElement);
+    });
 }
