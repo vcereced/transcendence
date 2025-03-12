@@ -8,6 +8,78 @@ export async function render2FA() {
     return htmlContent;
 }
 
+export async function resendOtp() {
+    try {
+        const response = await fetch("/api/usr/resend_otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: sessionStorage.getItem("username"),
+                password: sessionStorage.getItem("password"),
+                email: sessionStorage.getItem("email"),
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            document.getElementById("registerResponseMessage").innerText = data.message;
+            return true;
+        } else {
+            document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";
+            return false;
+        }
+    } catch (error) {
+        console.error("Error en la solicitud:", error);
+        document.getElementById("registerResponseMessage").innerText = "Error de conexión.";
+    }
+}
+
+export async function verifyOtpRegister(code) {
+    
+    let url = null;
+    try {
+       if (sessionStorage.getItem("action") === "register"){
+            url = "verify_email_otp_register";
+        } else if (sessionStorage.getItem("action") === "login"){
+            url = "verify_email_otp_login";
+        } else {
+            throw new Error("session Storage action not setted register/login");
+        }
+    
+        const response = await fetch("/api/usr/" + url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: sessionStorage.getItem("username"),
+                password: sessionStorage.getItem("password"),
+                email: sessionStorage.getItem("email"),
+                otp_token: code
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && sessionStorage.getItem("action") === "login") {
+            document.getElementById("registerResponseMessage").innerText = data.message;
+            console.log("obtenemos coookies oleee")
+            document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
+            document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
+
+        } else if (response.ok && sessionStorage.getItem("action") === "register") {
+            document.getElementById("registerResponseMessage").innerText = data.message;
+        
+        } else {
+            document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";
+        }
+    } catch (error) {
+        console.error("Error en la solicitud:", error);
+        document.getElementById("registerResponseMessage").innerText = "Error de conexión.";
+    }
+}
+
+
+
 export function init2FA() {
 
     // --- VARIABLES AND CONSTANTS ---
@@ -19,6 +91,11 @@ export function init2FA() {
     const timerElement = document.getElementById("timer");
     const secondsElement = document.getElementById("seconds");
 
+    const username = sessionStorage.getItem("username");
+    if (username) {
+        document.getElementById("username").textContent = `@${username}`;
+    }
+
     // --- DOM ELEMENTS ---
 
     const title = document.querySelector('.site-title');
@@ -27,7 +104,7 @@ export function init2FA() {
 
     window.startResendTimer = function startResendTimer() {
         resendButton.disabled = true;
-        resendTimer = 30;
+        resendTimer = 60;
         timerElement.textContent = resendTimer;
         timerElement.style.display = "inline";
         secondsElement.style.display = "inline";
@@ -44,9 +121,13 @@ export function init2FA() {
     }
     
     window.resendCode = function resendCode() {
-        alert("Código reenviado");
-        clearInterval(resendInterval);
-        startResendTimer();
+        if (resendOtp()) {
+            alert("Código reenviado");
+            clearInterval(resendInterval);
+            startResendTimer();
+        }else{
+            alert("No se puede reenviar codigo");
+        }
     }
     
     window.handleInput = function handleInput(input, index) {
@@ -67,17 +148,17 @@ export function init2FA() {
         }
     }
 
-    window.verifyCode = function verifyCode() {
+    window.verifyCode = async function verifyCode() { // ← Agregar async aquí
         const code = Array.from(document.querySelectorAll(".code-input"))
                           .map(input => input.value)
                           .join("");
+    
         if (code.length === 6) {
-            alert("Código ingresado: " + code);
+            verifyOtpRegister(code);
         } else {
             alert("Por favor, ingresa los 6 dígitos del código.");
         }
-    }
-
+    };
         
     window.toggleFullscreen = function toggleFullscreen() {
         if (!document.fullscreenElement) {

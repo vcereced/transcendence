@@ -6,21 +6,23 @@ from django.utils.timezone import now, timedelta
 from django_otp.models import Device
 
 class CustomUser(AbstractUser):  # ⬅️ Ahora es un modelo personalizado
-    AUTH_CHOICES = [
-        ("None", "None"),
-        ("Qr", "Qr"),
-        ("Sms", "Sms"),
-        ("Email", "Email"),
-    ]
-    auth_method = models.CharField(max_length=10, choices=AUTH_CHOICES, default="None")
+    
+    email = models.EmailField(unique=True)
+
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+  
 
 class EmailOTPDevice(Device):
     otp_token = models.CharField(max_length=6, blank=True, null=True)
     valid_until = models.DateTimeField(blank=True, null=True)
+    email = models.EmailField(unique=True, blank=False, null=False)
 
     def generate_otp(self):
         self.otp_token = str(random.randint(100000, 999999))  # Código de 6 dígitos
-        self.valid_until = now() + timedelta(minutes=5)  # Expira en 5 minutos
+        self.valid_until = now() + timedelta(minutes=1)  # Expira en 5 minutos
+        self.email = self.user.email
         self.save()
 
     def send_otp(self):
