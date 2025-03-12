@@ -129,8 +129,27 @@ export async function initHome() {
     }
 
     window.createLocalGame = function createLocalGame(type) {
+        checkActiveGame(document, homeDiv);
         // Check active games, if active, show popup explaining and redirect
-        // Make POST call to /api/game/ with type of game to be created (player, computer)
+        // Make POST call to /api/game/create/ with type of game to be created (player, computer)
+        fetch('/api/game/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ "type": type })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    console.error(response);
+                    return;
+                }
+                window.location.hash = "#rock-paper-scissors";
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
         // If success, show popup of redirecting to created game
     }
 
