@@ -15,13 +15,11 @@ export async function initGame() {
     // --- INITIALIZATION ---
 
     if (!hasAccessToken()) {
-        alert("Debes iniciar sesión para jugar");
         window.sessionStorage.setItem("afterLoginRedirect", "#game");
-        window.location.hash = "#login"
+        window.location.hash = "#new-login"
         return;
     }
 
-    await handleJwtToken();
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/pong/`);
 
 
@@ -229,9 +227,9 @@ export async function initGame() {
     };
 
     socket.onerror = function (event) {
-        deleteCookie("accessToken");
-        deleteCookie("refreshToken");
-        window.location.reload();
+        // deleteCookie("accessToken");
+        // deleteCookie("refreshToken");
+        // window.location.reload();
     }
 
 

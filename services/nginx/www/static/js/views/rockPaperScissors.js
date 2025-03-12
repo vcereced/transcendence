@@ -15,12 +15,10 @@ export async function initRockPaperScissors() {
     // --- INITIALIZATION ---
 
     if (!hasAccessToken()) {
-        alert("Debes iniciar sesión para jugar");
         window.sessionStorage.setItem("afterLoginRedirect", "#rock-paper-scissors");
-        window.location.hash = "#login"
+        window.location.hash = "#new-login"
         return;
     }
-    await handleJwtToken();
 
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
 
@@ -132,11 +130,12 @@ export async function initRockPaperScissors() {
         console.log("Desconectado del WebSocket.");
     };
 
-    socket.onerror = function (event) {window.location.hash = "#login"
-        deleteCookie("accessToken");
-        deleteCookie("refreshToken");
-        // Refresh the page
-        window.location.reload();
+    socket.onerror = function (event) {
+        // window.location.hash = "#login"
+        // deleteCookie("accessToken");
+        // deleteCookie("refreshToken");
+        // // Refresh the page
+        // window.location.reload();
     }
 
 

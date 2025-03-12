@@ -242,13 +242,11 @@ export async function initHome() {
 
     if (!hasAccessToken()) {
         window.sessionStorage.setItem("afterLoginRedirect", "#");
-        window.location.hash = "#login"
-        return;
+        window.location.hash = "#new-login"
+        return eventManager.removeAllEventListeners();
     }
-    
-    await handleJwtToken();
 
-    checkActiveGame();
+    await checkActiveGame();
 
     return () => eventManager.removeAllEventListeners();
 }

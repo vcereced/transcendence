@@ -1,10 +1,10 @@
 from django.db.models import Q
+from requests import Request
 from rest_framework import generics
 from celery import current_app
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.request import Request
 
 
 from game_app.models import Game, RockPaperScissorsGame
@@ -36,8 +36,8 @@ def trigger_launch_game_task(request):
 
 
 @api_view(["GET"])
-def has_active_game(request : Request):
-    user_data = utils.extract_user_data_from_jwt(request.headers)
+def has_active_game(request):
+    user_data = utils.extract_user_data_from_request(request)
 
     user_id = user_data.get("user_id")
     if not user_id:
@@ -60,7 +60,7 @@ def has_active_game(request : Request):
 
 @api_view(["POST"])
 def create_game(request : Request):
-    user_data = utils.extract_user_data_from_jwt(request._request.headers)
+    user_data = utils.extract_user_data_from_request(request)
     game_type = request.data.get("type")
     user_id = user_data.get("user_id")
     username = user_data.get("username")
@@ -108,7 +108,7 @@ def create_game(request : Request):
         }
         current_app.send_task(
             "create_game",
-            args=[request.data],
+            args=[game_creation_data],
             queue="game_tasks",
         )
     elif game_type == "player":
@@ -122,7 +122,7 @@ def create_game(request : Request):
         }
         current_app.send_task(
             "create_game",
-            args=[request.data],
+            args=[game_creation_data],
             queue="game_tasks",
         )
 

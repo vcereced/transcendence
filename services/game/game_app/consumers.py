@@ -5,33 +5,57 @@ import asyncio
 from django.db.models import Q
 from asgiref.sync import sync_to_async
 import time
+import jwt
 
 from game import settings as s
 from game_app import serializers
 from game_app import models
 from game_app import utils
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 class PlayerConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        try:
 
-        await self.accept()
+            await self.accept()
 
-        if not await self.find_out_game():
-            return
+            if not await self.find_out_game():
+                return
 
-        self.redis = redis.Redis(host="redis", port=6379, decode_responses=True)
+            self.redis = redis.Redis(host="redis", port=6379, decode_responses=True)
 
-        self.determine_controllers()
-        self.last_paddle_update = 0
+            self.determine_controllers()
+            self.last_paddle_update = 0
 
-        await self.send_initial_information()
+            await self.send_initial_information()
 
-        self.update_game_state_task = asyncio.create_task(self.update_game_state())
+            self.update_game_state_task = asyncio.create_task(self.update_game_state())
+
+        except Exception as e:
+            logger.error(f"Error in connect: {e}", exc_info=True)
+
+    def extract_user_data(self):
+        headers = dict(self.scope["headers"])
+        cookie_header = headers.get(b"cookie", b"")
+
+        if cookie_header:
+            for c in cookie_header.decode().split(";"):
+                if "accessToken" in c:
+                    jwt_token = c.split("=")[1]
+                    try:
+                        self.user_data = jwt.decode(jwt_token, options={"verify_signature": False})
+                    except jwt.DecodeError as e:
+                        print(f"Error decoding token: {e}")
+                    break
 
     async def find_out_game(self):
-        self.user_data = utils.extract_user_data_from_jwt(self.scope["headers"])
+        self.extract_user_data()
         if not self.user_data or not self.user_data.get("user_id"):
             await self.send_error_and_close("Invalid user data")
             return False
@@ -249,20 +273,36 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        try:
+            await self.accept()
 
-        await self.accept()
+            if not await self.find_out_game():
+                return
 
-        if not await self.find_out_game():
-            return
+            self.redis = redis.Redis(host="redis", port=6379, decode_responses=True)
 
-        self.redis = redis.Redis(host="redis", port=6379, decode_responses=True)
+            await self.send_initial_information()
 
-        await self.send_initial_information()
+            self.update_game_state_task = asyncio.create_task(self.update_game_state())
+        except Exception as e:
+            logger.error(f"Error in connect: {e}", exc_info=True)
 
-        self.update_game_state_task = asyncio.create_task(self.update_game_state())
+    def extract_user_data(self):
+        headers = dict(self.scope["headers"])
+        cookie_header = headers.get(b"cookie", b"")
+
+        if cookie_header:
+            for c in cookie_header.decode().split(";"):
+                if "accessToken" in c:
+                    jwt_token = c.split("=")[1]
+                    try:
+                        self.user_data = jwt.decode(jwt_token, options={"verify_signature": False})
+                    except jwt.DecodeError as e:
+                        print(f"Error decoding token: {e}")
+                    break
 
     async def find_out_game(self):
-        self.user_data = utils.extract_user_data_from_jwt(self.scope["headers"])
+        self.extract_user_data()
         if not self.user_data or not self.user_data.get("user_id"):
             await self.send_error_and_close("Invalid user data")
             return False
