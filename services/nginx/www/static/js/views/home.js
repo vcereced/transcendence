@@ -40,7 +40,9 @@ export async function initHome() {
     const title = document.querySelector('.site-title');
     const tabButtons = document.querySelectorAll('.tab-btn');
     const histories = document.querySelectorAll('.history');
-
+    const profilePopup = document.getElementById('profilePopup');
+    const settingsPopup = document.getElementById('settingsPopup');
+    const homeDiv = document.getElementsByClassName('home')[0];
     // --- FUNCTIONS ---
 
     window.toggleFullscreen = function toggleFullscreen() {
@@ -98,19 +100,19 @@ export async function initHome() {
     }
 
     window.openProfilePopup = function openProfilePopup() {
-        document.getElementById('profilePopup').style.display = 'flex';
+        profilePopup.style.display = 'flex';
     }
 
     window.closeProfilePopup = function closeProfilePopup() {
-        document.getElementById('profilePopup').style.display = 'none';
+        profilePopup.style.display = 'none';
     }
 
     window.openSettingsPopup = function openSettingsPopup() {
-        document.getElementById('settingsPopup').style.display = 'flex';
+        settingsPopup.style.display = 'flex';
     }
 
     window.closeSettingsPopup = function closeSettingsPopup() {
-        document.getElementById('settingsPopup').style.display = 'none';
+        settingsPopup.style.display = 'none';
     }
 
     window.toggleSettingsFields = function toggleSettingsFields() {
@@ -246,7 +248,7 @@ export async function initHome() {
         return eventManager.removeAllEventListeners();
     }
 
-    await checkActiveGame();
+    await checkActiveGame(document, homeDiv);
 
     return () => eventManager.removeAllEventListeners();
 }
