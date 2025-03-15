@@ -129,10 +129,32 @@ export function init2FA() {
             alert("No se puede reenviar codigo");
         }
     }
-    
+
+    const codeContainer = document.getElementById("code-container");
+    codeContainer.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const inputs = document.querySelectorAll(".code-input");
+        // Elimina espacios y obtiene el texto pegado
+        const pastedData = e.clipboardData.getData("text").replace(/\s+/g, '');
+        // Comienza desde el input activo o, si no hay, desde el primero
+        let startIndex = Array.from(inputs).indexOf(document.activeElement);
+        if (startIndex === -1) startIndex = 0;
+        // Distribuye los caracteres desde startIndex hasta el final disponible
+        for (let i = 0; i < pastedData.length && startIndex < inputs.length; i++, startIndex++) {
+            inputs[startIndex].value = pastedData[i];
+            inputs[startIndex].style.background = "#16a085";
+        }
+        // Coloca el foco en el último input modificado
+        if (startIndex > 0 && startIndex <= inputs.length) {
+            inputs[startIndex - 1].focus();
+        }
+    });
+
     window.handleInput = function handleInput(input, index) {
         const inputs = document.querySelectorAll(".code-input");
         input.style.background = input.value ? "#16a085" : "#222";
+
+        // Si el campo está lleno, mover al siguiente campo
         if (input.value.length === 1 && index < 5) {
             inputs[index + 1].focus();
         }
@@ -140,14 +162,28 @@ export function init2FA() {
 
     window.moveToPrev = function moveToPrev(event, input, index) {
         const inputs = document.querySelectorAll(".code-input");
-        if (event.key === "Backspace") {
-            if (input.value === "" && index > 0) {
+        
+        if (event.key === "Backspace" || event.key === "Delete") {
+            // Borra el valor actual y, si existe un campo anterior, mueve el foco allí
+            input.value = "";
+            input.style.background = "#222";
+            event.preventDefault();
+            if (index > 0) {
                 inputs[index - 1].focus();
+                inputs[index - 1].select(); // Selecciona el contenido para sobrescribirlo
             }
-            input.style.background = input.value ? "#16a085" : "#222";
+        } else if (event.key === "ArrowLeft" && index > 0) {
+            inputs[index - 1].focus();
+            inputs[index - 1].select(); // Selecciona para que al escribir se sobrescriba
+            event.preventDefault();
+        } else if (event.key === "ArrowRight" && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+            inputs[index + 1].select();
+            event.preventDefault();
         }
-    }
-
+    };
+    
+    
     window.verifyCode = async function verifyCode() { // ← Agregar async aquí
         const code = Array.from(document.querySelectorAll(".code-input"))
                           .map(input => input.value)

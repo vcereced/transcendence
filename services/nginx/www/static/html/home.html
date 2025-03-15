@@ -1,5 +1,5 @@
 <div class="home">
-    <h1 class="site-title">TheAnswerIsPong</h1>
+    <h1 class="site-title" onclick="location.hash = ''">TheAnswerIsPong</h1>
     <div class="icon-container">
         <div class="search-icon" onclick="toggleSearch()">
             <i class="fas fa-search"></i>
@@ -67,13 +67,17 @@
             <button class="close-btn" onclick="closeProfilePopup()">&times;</button>
             <div class="profile-header">
                 <div class="profile-image">
-                    <img src="1.gif" alt="Foto de perfil">
+                    <img src="../media/1.gif" alt="Foto de perfil">
                 </div>
                 <div class="profile-info">
-                    <h2>@username</h2>
+                    <h2>
+                        @username
+                        <div class="status-circle" id="status-circle"></div>
+                    </h2>
                     <p>Partidas jugadas: 150 (<small>60%</small>)</p>
                     <p>Torneos ganados: 10 (<small>40%</small>)</p>
                     <p>Piedra/Papel/Tijeras: 253 (<small>40%</small>)</p>
+                    <button id="add-friend-btn" onclick="toggleFriendStatus()">Añadir Amigo</button>
                 </div>
             </div>
             <div class="statistics">

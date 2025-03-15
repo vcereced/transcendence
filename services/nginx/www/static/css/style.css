@@ -19,6 +19,10 @@
     font-family: Arial, sans-serif;
 }
 
+.site-title:hover {
+    cursor: pointer;
+}
+
 @keyframes glitch {
 
     0%,
