@@ -117,9 +117,14 @@ export function initTournamentsList() {
     function startGlobalWebSocket() {
         handleJwtToken().then(() => {
             const ws = new WebSocket(`wss://${window.location.host}/ws/global_tournament_counter/`);
-
+            if (!ws) {
+                console.error("WebSocket not available");
+                return;
+            }
+            console.log("WebSocket global connection opened");
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                console.log("WebSocket message:", data);
                 const tournament = document.querySelector(`#tournament-${data.tournament_id}`);
                 if (tournament) {
                     const userCountContainer = tournament.querySelector('.badge');

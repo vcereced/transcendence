@@ -175,7 +175,7 @@ function update_tournament_tree(data) {
         // Encontrar un espacio disponible en el siguiente partido
         const nextPlayers = nextMatch.querySelectorAll(".player");
         for (let i = 0; i < nextPlayers.length; i++) {
-            if (nextPlayers[i].textContent.includes("Ganador")) {
+            if (nextPlayers[i].textContent.includes(`${match_id}`)) {
                 nextPlayers[i].textContent = winner;
                 break;
             }

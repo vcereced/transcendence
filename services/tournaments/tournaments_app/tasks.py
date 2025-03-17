@@ -24,7 +24,7 @@ def send_create_game_task(players):
         "right_player_id": players["right_player_id"],
         "right_player_username": players["right_player_username"],
         "tournament_id": players["tournament_id"],
-        "tree_id": players["tree_id"],
+        "tree_index": players["tree_id"],
     }
 
     app.send_task(
@@ -298,7 +298,7 @@ def game_end(message):
     """
     print(f"El juego ha terminado. Ganador: {message['winner']}.")
     print("\033[31m" + "Fin del juego." + "\033[0m")
-    print(f"Mensaje recibido: {message}")
+    print(f"Mensaje recibido en game_end task: {message}")
     # Publicar en Redis el mensaje de finalización del juego
     channel = f"tournament_{message['tournament_id']}"
     redis_client.publish(channel, json.dumps({
@@ -306,10 +306,10 @@ def game_end(message):
         "winner": message["winner"],
         "loser": message["loser"],
         "tournament_id": message["tournament_id"],
-        "tree_id": message["tree_id"],
+        "tree_id": message["tree_index"],
     }))
 
     # Llamar a la función que actualiza el torneo
-    update_tournament_tree(message["tournament_id"], message["tree_id"], message["winner"])
+    update_tournament_tree(message["tournament_id"], message["tree_index"], message["winner"])
 
 
