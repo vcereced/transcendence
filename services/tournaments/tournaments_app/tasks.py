@@ -140,9 +140,8 @@ def update_tournament_tree(tournament_id, tree_id, winner):
     """
     #IMPRIMIR EN ROJO TREE ID
     print("\033[31m" + f"Actualizando árbol del torneo {tournament_id} para el partido {tree_id}" + "\033[0m")
-    
     tournament_tree_key = f"tournament_{tournament_id}_tree"
-    round_number = "1" if tree_id in ["1", "2", "3", "4"] else "2" if tree_id in ["5", "6"] else "3"
+    round_number = "1" if str(tree_id) in ["1", "2", "3", "4"] else "2" if str(tree_id) in ["5", "6"] else "3"
     print(f"Round number: {round_number}")
     round_key = f"round_{round_number}"
     print (f"Round key: {round_key}")
@@ -151,7 +150,8 @@ def update_tournament_tree(tournament_id, tree_id, winner):
 
     
     for match in current_round:
-        if match["tree_id"] == tree_id:
+        print(f"Match: {match}")
+        if match["tree_id"] == str(tree_id):
             match["winner"] = winner
             match["loser"] = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
             #obtener el usernane dek perdedor
