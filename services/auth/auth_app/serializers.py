@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from .models import CustomUser  # Importa tu modelo personalizado
 from rest_framework.exceptions import ValidationError
@@ -8,6 +9,16 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['username', 'email', 'password']
+
+    def validate_username(self, value):
+        forbidden_usernames = {"invitado", "maquina"}
+        if value.lower() in forbidden_usernames:
+            raise ValidationError("Este nombre de usuario no está permitido.")
+
+        if not re.match(r"^[a-zA-Z0-9_@.+-]+$", value):
+            raise ValidationError("")
+
+        return value
 
     def create(self, validated_data):
 

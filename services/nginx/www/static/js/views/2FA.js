@@ -65,9 +65,11 @@ export async function verifyOtpRegister(code) {
             console.log("obtenemos coookies oleee")
             document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
             document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
+            window.location.hash = "#";
 
         } else if (response.ok && sessionStorage.getItem("action") === "register") {
             document.getElementById("registerResponseMessage").innerText = data.message;
+            window.location.hash = "#new-login";
         
         } else {
             document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";

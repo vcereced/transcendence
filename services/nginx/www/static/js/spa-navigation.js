@@ -3,8 +3,8 @@
 // Maybe this is not necessary  because the code is already in the SPA? SOLVE LATER
 import { renderHome, initHome } from './views/home.js';
 // import { renderAbout, initAbout } from './views/about.js';
-import { renderRegister, initRegister } from './views/register.js';
-import { renderLogin, initLogin } from './views/login.js';
+// import { renderRegister, initRegister } from './views/register.js';
+// import { renderLogin, initLogin } from './views/login.js';
 import { renderGame, initGame } from './views/game.js';
 import { renderWebsocket, initWebsocket } from './views/websocket.js';
 import { renderTournament, initTournament } from './views/tournament.js';
@@ -25,8 +25,8 @@ import { render2FA, init2FA } from './views/2FA.js';
 
 const routes = {
     "/index": { render: renderHome, init: initHome },
-    "/register": { render: renderRegister, init: initRegister },
-    "/login": { render: renderLogin, init: initLogin },
+    // "/register": { render: renderRegister, init: initRegister },
+    // "/login": { render: renderLogin, init: initLogin },
     "/game": { render: renderGame, init: initGame },
     "/websocket": { render: renderWebsocket, init: initWebsocket },
     "/tournament": { render: renderTournament, init: initTournament },

@@ -1,3 +1,10 @@
+function getCookie(name) {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith(name + "="))
+        ?.split("=")[1];
+}
+
 async function getNewAccessToken(refreshToken) {
     try {
         const response = await fetch('/api/usr/refreshToken', {
@@ -22,7 +29,7 @@ async function getNewAccessToken(refreshToken) {
 }  
 
 async function renovateToken() {
-    const refreshToken = localStorage.getItem("refreshToken");
+    const refreshToken = getCookie("refreshToken");
 
     if (refreshToken) {
         const data = await getNewAccessToken(refreshToken);

@@ -106,11 +106,11 @@ export function initNewLogin() {
     const registerButton = document.getElementById('register-btn');
     const loginButton = document.getElementById('login-btn');
     const registerResponseMessage = document.getElementById("register-response-message");
-    const loginResponseMessage = document.getElementById("login-response-message");
+    //const loginResponseMessage = document.getElementById("login-response-message");
     const registerDataSection = document.getElementById("register-data-container");
-    const verifyOtpRegisterButton = document.getElementById("reg-verify-otp");
+    //const verifyOtpRegisterButton = document.getElementById("reg-verify-otp");
 
-    const qrSection = document.getElementById("qr-section");
+    //const qrSection = document.getElementById("qr-section");
     // --- FUNCTIONS ---
 
     window.toggleForm = function toggleForm() {
@@ -121,12 +121,12 @@ export function initNewLogin() {
         if (loginContainer.style.display === 'none') {
             loginContainer.style.display = 'block';
             registerContainer.style.display = 'none';
-            qrSection.style.display = 'none';
+           // qrSection.style.display = 'none';
         } else {
             loginContainer.style.display = 'none';
             registerContainer.style.display = 'block';
-            registerDataSection.style.display = 'block';//data contaniner register
-            qrSection.style.display = 'none';
+            //registerDataSection.style.display = 'block';//data contaniner register
+            //qrSection.style.display = 'none';
         }
     }
 
