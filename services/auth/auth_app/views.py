@@ -108,8 +108,8 @@ def login_api_view(request):
 	else:
 		user = CustomUser.objects.get(email=email)
 
-	refreshToken = RefreshToken.for_user(user)
-	refreshToken['email'] = user.email
+	#refreshToken = RefreshToken.for_user(user)
+	#refreshToken['email'] = user.email
 
 	device = EmailOTPDevice.objects.get(user=user)
 	device.generate_otp()
@@ -133,7 +133,7 @@ def verify_email_otp_login_view(request):
 		if verifyEmailTOPTDevice(email, otp_token):
 
 			refresh = RefreshToken.for_user(user)
-			refresh['email'] = user.email
+			refresh['username'] = user.username
 
 			return Response({
 				'message': 'OTP EMAIL LOGED',
@@ -168,18 +168,18 @@ def validate_token_view(request):
 @api_view(['POST'])
 def refresh_token_view(request):
 
-    refresh_token = request.data.get('refresh_token')
+	refresh_token = request.data.get('refresh_token')
 
-    if not refresh_token:
-        return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+	if not refresh_token:
+		return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-    try:
-        token = RefreshToken(refresh_token)
-        new_access_token = str(token.access_token)
+	try:
+		token = RefreshToken(refresh_token)
+		new_access_token = str(token.access_token)
 
-        return Response({
+		return Response({
             'access_token': new_access_token,
         }, status=status.HTTP_200_OK)
     
-    except TokenError as e:
-        return Response({'error': 'Invalid or expired refresh token', 'details': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+	except TokenError as e:
+		return Response({'error': 'Invalid or expired refresh token', 'details': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
