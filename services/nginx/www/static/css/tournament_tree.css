@@ -51,6 +51,11 @@
     border-color: #dc3545;
 }
 
+.player.championship {
+    background: #cce5ff;
+    border: 2px solid #f0db4f;
+    box-shadow: 0 0 10px #f0db4f;
+}
 /* Estilos para la sección de usuarios conectados */
 .connected-users {
     background-color: #f9f9f9;
@@ -111,3 +116,4 @@
 .start-btn:hover {
     background-color: #218838;
 }
+
