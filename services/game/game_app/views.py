@@ -64,6 +64,10 @@ def create_game(request : Request):
     game_type = request.data.get("type")
     user_id = user_data.get("user_id")
     username = user_data.get("username")
+    print(f"User data: {user_data}")
+    print(f"Game type: {game_type}")
+    print(f"User id: {user_id}")
+    print(f"Username: {username}")
     if not game_type:
         return Response(
             {"error": "No game type provided"},

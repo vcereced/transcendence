@@ -544,3 +544,38 @@
         text-align: center;
     }
 }
+
+.status-circle {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: red;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+#add-friend-btn {
+    margin-top: 15px;
+    padding: 12px 25px;
+    border: none;
+    cursor: pointer;
+    background-color: #f5f5f5;
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+    border-radius: 25px;
+    width: 40%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s ease-in-out;
+    outline: none;
+}
+
+#add-friend-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-3px);
+}
+
+#add-friend-btn:active {
+    transform: translateY(1px);
+}

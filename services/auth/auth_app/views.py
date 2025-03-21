@@ -133,7 +133,7 @@ def verify_email_otp_login_view(request):
 		if verifyEmailTOPTDevice(email, otp_token):
 
 			refresh = RefreshToken.for_user(user)
-			refresh['email'] = user.email
+			refresh['username'] = user.username
 
 			return Response({
 				'message': 'OTP EMAIL LOGED',

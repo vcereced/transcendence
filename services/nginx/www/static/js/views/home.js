@@ -24,14 +24,14 @@ export async function initHome() {
     let startX = 0;
 
     const players = [
-        { username: "javiersa", avatar: "2.gif" },
-        { username: "f-gomez", avatar: "3.gif" },
-        { username: "vcered", avatar: "4.gif" },
-        { username: "dgarizard", avatar: "5.gif" },
-        { username: "messi", avatar: "1.gif" },
-        { username: "cristiano", avatar: "3.gif" },
-        { username: "neymar123", avatar: "2.gif" },
-        { username: "lewandosk", avatar: "5.gif" },
+        { username: "javiersa", avatar: "../../media/2.gif" },
+        { username: "f-gomez", avatar: "../../media/3.gif" },
+        { username: "vcered", avatar: "../../media/4.gif" },
+        { username: "dgarizard", avatar: "../../media/5.gif" },
+        { username: "messi", avatar: "../../media/1.gif" },
+        { username: "cristiano", avatar: "../../media/3.gif" },
+        { username: "neymar123", avatar: "../../media/2.gif" },
+        { username: "lewandosk", avatar: "../../media/5.gif" },
     ];
 
     // --- DOM ELEMENTS ---
@@ -153,6 +153,29 @@ export async function initHome() {
         // If success, show popup of redirecting to created game
     }
 
+
+window.toggleFriendStatus = function toggleFriendStatus() {
+    var btn = document.getElementById("add-friend-btn");
+    if (btn.innerHTML === "Añadir Amigo") {
+        btn.innerHTML = "Amigo";
+        btn.style.backgroundColor = "var(--primary-color)";
+        btn.style.color = "white";
+    } else {
+        btn.innerHTML = "Añadir Amigo";
+        btn.style.backgroundColor = "#f5f5f5";
+        btn.style.color = "#333";
+    }
+};
+
+    
+    window.updateStatus = function updateStatus(isOnline) {
+        var statusCircle = document.getElementById("status-circle");
+        if (isOnline) {
+            statusCircle.style.backgroundColor = "var(--primary-color)";
+        } else {
+            statusCircle.style.backgroundColor =  "var(--btn-bg-color)";
+        }
+    }
 
     // --- EVENT LISTENERS ---
 

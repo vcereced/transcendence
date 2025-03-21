@@ -19,6 +19,7 @@ export async function initRockPaperScissors() {
         window.location.hash = "#new-login"
         return;
     }
+    handleJwtToken();
 
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
 
