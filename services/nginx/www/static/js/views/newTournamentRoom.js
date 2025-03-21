@@ -12,7 +12,7 @@ export function initNewTournamentRoom() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
     const BALL_SIZE = 20;
     let obstacles = [];
     let ballX, ballY;
@@ -183,22 +183,22 @@ export function initNewTournamentRoom() {
 
     // --- EVENT LISTENERS ---
 
-    eventManager.addEventListener(document, 'mousemove', (event) => {
+    window.eventManager.addEventListener(document, 'mousemove', (event) => {
         mouseX = event.clientX;
         mouseY = event.clientY;
     });
 
-    eventManager.addEventListener(window, 'resize', recreateElements);
+    window.eventManager.addEventListener(window, 'resize', recreateElements);
 
-    eventManager.addEventListener(document.getElementById("copy-icon"), "click", copyText);
+    window.eventManager.addEventListener(document.getElementById("copy-icon"), "click", copyText);
 
     const title = document.querySelector('.site-title');
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
@@ -214,5 +214,5 @@ export function initNewTournamentRoom() {
     placeBall();
     moveBall();
 
-    return () => eventManager.removeAllEventListeners();
+    return () => window.eventManager.removeAllEventListeners();
 }

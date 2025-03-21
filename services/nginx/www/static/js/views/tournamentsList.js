@@ -14,7 +14,7 @@ export function initTournamentsList() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
 
    
        
@@ -156,24 +156,24 @@ export function initTournamentsList() {
         let startX;
         let scrollLeft;
 
-        eventManager.addEventListener(gameList, 'mousedown', (e) => {
+        window.eventManager.addEventListener(gameList, 'mousedown', (e) => {
             isMouseDown = true;
             startX = e.pageX - gameList.offsetLeft;
             scrollLeft = gameList.scrollLeft;
             gameList.style.cursor = 'grabbing';
         });
 
-        eventManager.addEventListener(gameList, 'mouseleave', () => {
+        window.eventManager.addEventListener(gameList, 'mouseleave', () => {
             isMouseDown = false;
             gameList.style.cursor = 'grab';
         });
 
-        eventManager.addEventListener(gameList, 'mouseup', () => {
+        window.eventManager.addEventListener(gameList, 'mouseup', () => {
             isMouseDown = false;
             gameList.style.cursor = 'grab';
         });
 
-        eventManager.addEventListener(gameList, 'mousemove', (e) => {
+        window.eventManager.addEventListener(gameList, 'mousemove', (e) => {
             if (!isMouseDown) return;
             e.preventDefault();
             const x = e.pageX - gameList.offsetLeft;
@@ -182,12 +182,12 @@ export function initTournamentsList() {
         });
     });
 
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
@@ -197,7 +197,7 @@ export function initTournamentsList() {
     // displayGames();
 
 
-    return () => eventManager.removeAllEventListeners();
+    return () => window.eventManager.removeAllEventListeners();
 }
 
 

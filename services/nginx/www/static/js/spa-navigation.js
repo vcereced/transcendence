@@ -15,6 +15,7 @@ import { renderTournamentsList, initTournamentsList } from './views/tournamentsL
 import { renderNewLogin, initNewLogin } from './views/newLogin.js';
 import { renderRockPaperScissors, initRockPaperScissors } from './views/rockPaperScissors.js';
 import { render2FA, init2FA } from './views/2FA.js';
+import EventListenerManager from './utils/eventListenerManager.js';
 
 
 
@@ -38,6 +39,8 @@ const routes = {
     "/rock-paper-scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
     "/2FA": { render: render2FA, init: init2FA },
 };
+
+window.eventManager = new EventListenerManager();
 
 function parseRoute(path) {
     // Asegurarnos de que el path tiene la barra inicial
@@ -71,17 +74,12 @@ async function router() {
     const { route, params } = parseRoute(path);
     console.log("Ruta:", route, "Parámetros:", params.id);
 
-    let currentCleanup;
 
     if (route) {
-        // Limpiar la ruta anterior si existe
-        if (currentCleanup) {
-            currentCleanup();
-        }
-
         // Renderiza e inicializa la ruta, pasando los parámetros si existen
         document.getElementById("main-content").innerHTML = await route.render(params);
-        currentCleanup = route.init(params);
+        window.eventManager.removeAllEventListeners();
+        route.init(params);
     } else {
         document.getElementById("main-content").innerHTML = "<h2>404</h2><p>NOT FOUND</p>";
     }

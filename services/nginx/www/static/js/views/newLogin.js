@@ -97,7 +97,7 @@ export function initNewLogin() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
 
 
     // --- DOM ELEMENTS ---
@@ -211,26 +211,26 @@ export function initNewLogin() {
 
     // --- EVENT LISTENERS ---
 
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
     
     if (registerButton) {
-        eventManager.addEventListener(registerButton, "click", registerUser);
+        window.eventManager.addEventListener(registerButton, "click", registerUser);
     }
 
     if(loginButton) {
-        eventManager.addEventListener(loginButton, "click", loginUser);
+        window.eventManager.addEventListener(loginButton, "click", loginUser);
     }
 
 
     // --- INITIALIZATION ---
 
-    return () => eventManager.removeAllEventListeners();
+    return () => window.eventManager.removeAllEventListeners();
 }

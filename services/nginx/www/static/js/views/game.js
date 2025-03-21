@@ -38,7 +38,7 @@ export async function initGame() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
 
     const maxCanvasHeightToWindow = 0.5;
     const maxCanvasWidthToWindow = 0.5;
@@ -234,7 +234,7 @@ export async function initGame() {
     }
 
 
-    eventManager.addEventListener(document, 'keydown', (event) => {
+    window.eventManager.addEventListener(document, 'keydown', (event) => {
         if (event.key === 'w') {
             keys.w = true;
         } else if (event.key === 's') {
@@ -247,7 +247,7 @@ export async function initGame() {
         }
     });
 
-    eventManager.addEventListener(document, 'keyup', (event) => {
+    window.eventManager.addEventListener(document, 'keyup', (event) => {
         if (event.key === 'w') {
             keys.w = false;
         } else if (event.key === 's') {
@@ -260,14 +260,14 @@ export async function initGame() {
         }
     });
 
-    eventManager.addEventListener(window, 'blur', () => {
+    window.eventManager.addEventListener(window, 'blur', () => {
         keys.w = false;
         keys.s = false;
         keys.arrowUp = false;
         keys.arrowDown = false;
     });
 
-    eventManager.addEventListener(window, 'resize', () => {
+    window.eventManager.addEventListener(window, 'resize', () => {
         fieldHeight = fieldHeightProportion * maxCanvasHeightToWindow * window.innerHeight;
         fieldWidth = fieldWidthProportion * fieldHeight;
         if (fieldWidth > maxCanvasWidthToWindow * window.innerWidth) {
@@ -284,16 +284,16 @@ export async function initGame() {
         drawEverything();
     })
 
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
 
 
-    return () => eventManager.removeAllEventListeners();
+    return 3;
 }
