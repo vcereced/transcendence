@@ -217,7 +217,6 @@
                     <option value="profile-pic">Foto de perfil</option>
                     <option value="username">Nombre de usuario</option>
                     <option value="password">Contraseña</option>
-                    <option value="otros">Otros</option>
                 </select>
             </div>
 
@@ -228,6 +227,7 @@
                     <br>
                     <label for="profile-pic">Nueva foto de perfil:</label>
                     <input type="file" id="profile-pic" accept="image/*">
+                    <button class="save-btn">Guardar cambios</button>
                 </div>
 
                 <div class="settings-field" id="username-field" style="display: none;">
@@ -236,6 +236,7 @@
                     <br>
                     <label for="username">Nuevo nombre de usuario:</label>
                     <input type="text" id="username" placeholder="Tu nuevo nombre de usuario">
+                    <button class="save-btn">Guardar cambios</button>
                 </div>
 
                 <div class="settings-field" id="password-field" style="display: none;">
@@ -249,15 +250,9 @@
                     <br>
                     <label for="new-password">Repite la nueva contraseña:</label>
                     <input type="password" id="new-password" placeholder="Ingresa una nueva contraseña">
-                </div>
-
-                <div class="settings-field" id="otros-field" style="display: none;">
-                    <label for="otros">Otras opciones:</label>
-                    <button class="eliminar-btn">Eliminar cuenta</button>
+                    <button class="save-btn">Guardar cambios</button>
                 </div>
             </div>
-
-            <button class="save-btn">Guardar cambios</button>
         </div>
     </div>
 </div>

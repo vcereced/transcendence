@@ -112,7 +112,7 @@ export function initHome() {
 
     window.toggleSettingsFields = function toggleSettingsFields() {
         let selectedOption = document.getElementById("settings-option").value;
-        let fields = ["profile-pic-field", "username-field", "password-field", "otros-field"];
+        let fields = ["profile-pic-field", "username-field", "password-field"];
 
         fields.forEach(field => {
             document.getElementById(field).style.display = "none";
