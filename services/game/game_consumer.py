@@ -80,31 +80,31 @@ async def play_game(game_id: int):
                 await save_game_state(redis_client, game_id, game_state)
                 await asyncio.sleep(1 / s.FPS)
 
-        game.is_finished = True
-        game.finished_at = now()
-        game.winner_username = (
-            game.left_player_username
-            if game_state.left.score == s.WINNER_SCORE
-            else game.right_player_username
-        )
-        game.left_player_score = game_state.left.score
-        game.right_player_score = game_state.right.score
-        await redis_client.set(f"game:{game_id}:is_finished", "1")
-        await redis_client.set(f"game:{game_id}:winner_username", game.winner_username)
-        await save_game_ending(game)
-        
-        if game.tournament_id > 0:
-            end_game_data = {
-                "winner": game.winner_username,
-                "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
-                "tournament_id": game.tournament_id,
-                "tree_index": game.tree_index,
-            }
-            await current_app.send_task(
-                "game_end",
-                args=[end_game_data],
-                queue="matchmaking_tasks",
+            game.is_finished = True
+            game.finished_at = now()
+            game.winner_username = (
+                game.left_player_username
+                if game_state.left.score == s.WINNER_SCORE
+                else game.right_player_username
             )
+            game.left_player_score = game_state.left.score
+            game.right_player_score = game_state.right.score
+            await redis_client.set(f"game:{game_id}:is_finished", "1")
+            await redis_client.set(f"game:{game_id}:winner_username", game.winner_username)
+            await save_game_ending(game)
+            
+            if game.tournament_id > 0:
+                end_game_data = {
+                    "winner": game.winner_username,
+                    "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
+                    "tournament_id": game.tournament_id,
+                    "tree_index": game.tree_index,
+                }
+                await current_app.send_task(
+                    "game_end",
+                    args=[end_game_data],
+                    queue="matchmaking_tasks",
+                )
     except Exception as e:
         logger.error(f"Error in play_game: {e}", exc_info=True)
 
@@ -119,13 +119,15 @@ async def control_paddle_by_computer(game_id, side):
         redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
         final_paddle_y = 0
         target_paddle_y = 0
-        last_seen_ball = Ball(
-            s.INITIAL_GAME_STATE["ball"]["x"], s.INITIAL_GAME_STATE["ball"]["y"], 0, 0
-        )
+        game_state = await load_game_state(redis_client, game_id)
+        last_seen_ball = game_state.ball
         last_seen_time = time.time()
         refresh_rate = s.AI_REFRESH_RATE
         while True:
             game_state = await load_game_state(redis_client, game_id)
+
+            if game_state.is_finished:
+                break
 
             if side == "left":
                 final_paddle_y = game_state.left.paddle_y
