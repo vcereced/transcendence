@@ -165,7 +165,7 @@ export function initNewLogin() {
                 sessionStorage.setItem("action", "register");
                 sessionStorage.setItem("username", username);
                 sessionStorage.setItem("email", email);
-                sessionStorage.setItem("password", password);
+                //sessionStorage.setItem("password", password);
                 window.location.hash = "#2FA";
             } else{
                 registerResponseMessage.innerText = data.email || data.username || data.error || "Error desconocido. Inténtalo de nuevo.";}
@@ -198,7 +198,7 @@ export function initNewLogin() {
             if (response.ok) {
                 sessionStorage.setItem("action", "login");
                 sessionStorage.setItem("email", email);
-                sessionStorage.setItem("password", password);
+                //sessionStorage.setItem("password", password);
                 window.location.hash = "#2FA";
             } else {
                 loginResponseMessage.innerText = data.error || data.username || "Error desconocido. Inténtalo de nuevo.";
