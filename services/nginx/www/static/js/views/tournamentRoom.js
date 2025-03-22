@@ -19,8 +19,8 @@ export function renderTournamentRoom(tournamentId) {
             <div class="tournament-tree">
                 <div class="round round-1">
                     <div class="match" data-match="1">
-                        <div class="player" data-player="1">jugador1dg</div>
-                        <div class="player" data-player="2">jugador2dg</div>
+                        <div class="player" data-player="1">jugador 1</div>
+                        <div class="player" data-player="2">jugador 2</div>
                     </div>
                     <div class="match" data-match="2">
                         <div class="player" data-player="3">Jugador 3</div>
@@ -87,21 +87,7 @@ function startTournamentWebSocket(tournamentId) {
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
         console.log("Mensaje WebSocket del torneo:", data);
-
-        // switch (data.type) {
-        //     case "user_list":
-        //         updateUserList(data.user_list);
-        //         break;
-        //     case "start_tournament":
-        //         start_tournament(data);
-        //         break;
-        //     case "game_end":
-        //         update_tournament_tree(data);
-        //         break;
-        //     default:
-        //         console.error("Tipo de mensaje desconocido:", data.type);
-        //         break;
-        // }
+        
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
         }
@@ -189,7 +175,7 @@ function update_tournament_tree(data) {
         // Encontrar un espacio disponible en el siguiente partido
         const nextPlayers = nextMatch.querySelectorAll(".player");
         for (let i = 0; i < nextPlayers.length; i++) {
-            if (nextPlayers[i].textContent.includes("Ganador")) {
+            if (nextPlayers[i].textContent.includes(`${match_id}`)) {
                 nextPlayers[i].textContent = winner;
                 break;
             }

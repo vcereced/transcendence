@@ -1,47 +1,75 @@
-<div class="new-tournament-room">
-    <h1 class="site-title" onclick="location.hash = ''">TheAnswerIsPong</h1>
-    <div class="icon-container">
-        <div class="fullscreen-icon" onclick="toggleFullscreen()">
-            <i class="fas fa-expand"></i>
-        </div>
-    </div>
-    <div class="screen" id="gameScreen">
-        <i class="fas fa-trophy icon"></i>
-        <div class="copy-container">
-            <span id="text-to-copy">TRN-PLAYER1 </span>
-            <i class="fas fa-copy copy-icon" id="copy-icon"></i>
-            <br>
-            <br>
-        </div>
-        <div id="copied-message" class="copied-message">ID de torneo copiado</div>
-        <div class="status">
-            <div class="bracket">
-                <div class="column" id="round1">
-                    <div class="match">Player1 </div>
-                    <div class="match">Player5 </div>
-                    <div class="match">Player3 </div>
-                    <div class="match">Player7</div>
-                </div>
-                <div class="column" id="round2">
-                    <div class="match"></div>
-                    <div class="match"></div>
-                </div>
-                <div class="column">
-                    <div class="match"></div>
-                </div>
-                <div class="column" id="round3">
-                    <div class="match"></div>
-                    <div class="match">Player4</div>
-                </div>
-                <div class="column" id="round4">
-                    <div class="match">Player2</div>
-                    <div class="match">Player6</div>
-                    <div class="match winner">Player4</div>
-                    <div class="match loser">Player8</div>
-                </div>
+    <div class="new-tournament-room">
+        <h1 class="site-title">TheAnswerIsPong</h1>
+        <div class="icon-container">
+            <div class="fullscreen-icon" onclick="toggleFullscreen()">
+                <i class="fas fa-expand"></i>
             </div>
         </div>
-        <button class="start-btn" onclick="exitGame()">Comenzar torneo</button>
-        <button class="exit-btn" onclick="exitGame()">Abandonar</button>
+        <div class="screen" id="gameScreen">
+            <i class="fas fa-trophy icon"></i>
+            <div class="copy-container">
+                <span id="text-to-copy">TRN-PLAYER1 </span>
+                <i class="fas fa-copy copy-icon" id="copy-icon"></i>
+                <br>
+                <br>
+            </div>
+            <div id="copied-message" class="copied-message">ID de torneo copiado</div>
+            <div class="status">
+                <div class="bracket">
+                    <div class="column round-1">
+                        <div class="match" data-match="1">
+                            <div class="player" data-player="1">Player1</div>
+                            <div class="player" data-player="2">Player2</div>
+                        </div>
+                        <div class="match" data-match="2">
+                            <div class="player" data-player="3">Player3</div>
+                            <div class="player" data-player="4">Player4</div>
+                        </div>
+                    </div>
+                    <div class="column round-2">
+                        <div class="match" data-match="5">
+                            <div class="player" data-player="winner-1">Winner 1</div>
+                            <div class="player" data-player="winner-2">Winner 2</div>
+                        </div>
+                    </div>
+                    <div class="column round-final">
+                        <div class="match" data-match="7">
+                            <div class="player" data-player="winner-5">Winner 5</div>
+
+                        </div>
+                    </div>
+                    <div class="column champion" >
+                        <div class="player" data-player="champion">champion</div>
+                    </div>
+                    <div class="column round-final">
+                        <div class="match" data-match="7">
+                            <div class="player" data-player="winner-6">Winner 6</div>
+
+                        </div>
+                    </div>
+                    <div class="column round-2">
+                        <div class="match" data-match="6">
+                            <div class="player" data-player="winner-3">Winner 3</div>
+                            <div class="player" data-player="winner-4">Winner 4</div>
+                        </div>
+                    </div>
+                    <div class="column round-1">
+                        <div class="match" data-match="3">
+                            <div class="player" data-player="5">Player5</div>
+                            <div class="player" data-player="6">Player6</div>
+                        </div>
+                        <div class="match" data-match="4">
+                            <div class="player" data-player="7">Player7</div>
+                            <div class="player" data-player="8">Player8</div>
+                    </div>
+                </div>
+            </div>
+            <button class="start-btn" id="start-tournament-btn" >Comenzar torneo</button>
+            <button class="exit-btn" onclick="exitGame()">Abandonar</button>
+        </div>
     </div>
-</div>
+    <div class = "connected-users">
+        <h2>Connected Players</h2>
+        <ul id="user-list">
+        </ul>
+    </div>

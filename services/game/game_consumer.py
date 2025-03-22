@@ -100,7 +100,7 @@ async def play_game(game_id: int):
                 "tournament_id": game.tournament_id,
                 "tree_index": game.tree_index,
             }
-            await current_app.send_task(
+            current_app.send_task(
                 "game_end",
                 args=[end_game_data],
                 queue="matchmaking_tasks",

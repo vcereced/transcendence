@@ -12,6 +12,21 @@
     position: relative;
 }
 
+.new-tournament-room .connected-users{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+    max-height: 200px;
+    background-color: var(--border-color);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 0 20px var(--shadow-color);
+    position: absolute;
+    top: 50px;
+    right: 20px;
+}
+
 .new-tournament-room .screen {
     text-align: center;
     padding: 10px;
@@ -143,7 +158,7 @@
     width: 20%;
 }
 
-.new-tournament-room .match {
+/* .new-tournament-room .match {
     width: 100%;
     height: 30px;
     background-color: var(--btn-bg-color);
@@ -153,8 +168,19 @@
     justify-content: center;
     font-weight: bold;
     font-size: 12px;
-}
+} */
 
+.new-tournament-room .player {
+    width: 100%;
+    height: 30px;
+    background-color: var(--btn-bg-color);
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;/
+}
 .new-tournament-room .match.winner {
     /* background-color: var(--primary-color); */
     color: var(--primary-color);
