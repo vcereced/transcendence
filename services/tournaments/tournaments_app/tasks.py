@@ -16,6 +16,41 @@ redis_client = redis.Redis(
 # Conexión a Celery
 app = Celery('tournaments_project', broker='amqp://guest:guest@message-broker:5672//')
 
+
+import uuid
+import time
+
+def acquire_lock(lock_key, timeout=5):
+    """
+    Intenta obtener el lock.
+    Si no puede, espera hasta un máximo de 'timeout' segundos.
+    Si obtiene el lock, devuelve un ID único del lock.
+    """
+    lock_id = str(uuid.uuid4())  # Generar un ID único para el lock
+    end = time.time() + timeout  # Tiempo de expiración de la espera
+    print(f"Intentando obtener lock {lock_key} con ID {lock_id}")
+    while time.time() < end:
+        # Intentamos obtener el lock (NX significa "solo si no existe")
+        if redis_client.set(lock_key, lock_id, nx=True, ex=timeout):
+            print(f"Lock {lock_key} obtenido con ID {lock_id}")
+            return lock_id  # Si lo conseguimos, devolvemos el lock ID
+        time.sleep(0.1)  # Esperamos un poco antes de volver a intentarlo
+    return None  # Si no conseguimos el lock en el tiempo especificado, retornamos None
+
+def release_lock(lock_key, lock_id):
+    """
+    Libera el lock solo si el lock ID coincide con el actual.
+    """
+    script = """
+    if redis.call("get", KEYS[1]) == ARGV[1] then
+        return redis.call("del", KEYS[1])
+    else
+        return 0
+    end
+    """
+    redis_client.eval(script, 1, lock_key, lock_id)  # Ejecutamos el script Lua para liberar el lock
+    print(f"Lock {lock_key} liberado con ID {lock_id}")
+
 # This is not a Celery task, but a helper function to send a task to the 'game' service
 def send_create_game_task(players):
     message = {
@@ -138,37 +173,44 @@ def update_tournament_tree(tournament_id, tree_id, winner):
     """
     Guarda el resultado de un partido en Redis y avanza a la siguiente ronda si es necesario.
     """
-    #IMPRIMIR EN ROJO TREE ID
-    print("\033[31m" + f"Actualizando árbol del torneo {tournament_id} para el partido {tree_id}" + "\033[0m")
-    tournament_tree_key = f"tournament_{tournament_id}_tree"
-    round_number = "1" if str(tree_id) in ["1", "2", "3", "4"] else "2" if str(tree_id) in ["5", "6"] else "3"
-    print(f"Round number: {round_number}")
-    round_key = f"round_{round_number}"
-    print (f"Round key: {round_key}")
-    current_round = redis_client.hget(tournament_tree_key, round_key)
-    current_round = json.loads(current_round) if current_round else []
+    lock_key = f"lock:tournament:{tournament_id}"  # Clave para el lock
+    lock_id = acquire_lock(lock_key)  # Intentamos obtener el lock
 
-    
-    for match in current_round:
-        print(f"Match: {match}")
-        if match["tree_id"] == str(tree_id):
-            match["winner"] = winner
-            match["loser"] = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
-            #obtener el usernane dek perdedor
-            loser = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
-            print("\033[32m" + f"🏆 Ganador del partido {tree_id}: {winner}. Perdedor: {loser}" + "\033[0m")
-            match["status"] = "completed"
-            break  
+    if not lock_id:
+        print("No se pudo obtener el lock, omitiendo actualización.")
+        return  # Si no conseguimos el lock, terminamos la función sin hacer nada
 
-    redis_client.hset(tournament_tree_key, round_key, json.dumps(current_round))
-    
-    print(f"🔄 Árbol actualizado en {round_key}: {current_round}")
+    try:
+        # Ahora que tenemos el lock, podemos hacer las modificaciones en el árbol del torneo
+        print("\033[31m" + f"Actualizando árbol del torneo {tournament_id} para el partido {tree_id}" + "\033[0m")
+        tournament_tree_key = f"tournament_{tournament_id}_tree"
+        round_number = "1" if str(tree_id) in ["1", "2", "3", "4"] else "2" if str(tree_id) in ["5", "6"] else "3"
+        print(f"Round number: {round_number}")
+        round_key = f"round_{round_number}"
+        print(f"Round key: {round_key}")
+        current_round = redis_client.hget(tournament_tree_key, round_key)
+        current_round = json.loads(current_round) if current_round else []
 
-    # Si todos los partidos de la ronda han terminado, iniciar la siguiente ronda
-    completed_games = [match for match in current_round if match["status"] == "completed"]
-    print(f"Partidos completados: {len(completed_games)} de {len(current_round)}")
-    if len(completed_games) == len(current_round):
-        start_next_round(tournament_id, round_number, [match["winner"] for match in completed_games])
+        for match in current_round:
+            print(f"Match: {match}")
+            if match["tree_id"] == str(tree_id):
+                match["winner"] = winner
+                match["loser"] = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
+                loser = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
+                print("\033[32m" + f"🏆 Ganador del partido {tree_id}: {winner}. Perdedor: {loser}" + "\033[0m")
+                match["status"] = "completed"
+                break
+
+        redis_client.hset(tournament_tree_key, round_key, json.dumps(current_round))
+        print(f"🔄 Árbol actualizado en {round_key}: {current_round}")
+
+        # Si todos los partidos de la ronda han terminado, iniciar la siguiente ronda
+        completed_games = [match for match in current_round if match["status"] == "completed"]
+        print(f"Partidos completados: {len(completed_games)} de {len(current_round)}")
+        if len(completed_games) == len(current_round):
+            start_next_round(tournament_id, round_number, [match["winner"] for match in completed_games])
+    finally:
+        release_lock(lock_key, lock_id)  # Liberamos el lock después de terminar la operación
 
 
 #THIS IS JUST IN CASE WE NEED IT. IT RETURNS THE TOURNAMENT HISTORY
