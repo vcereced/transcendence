@@ -69,9 +69,9 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
 class RoomConsumer(AsyncWebsocketConsumer):
     """Maneja la conexión de WebSocket para un torneo específico."""
 
-    # ============================
+    # ==================================
     #           WebSocket Connect
-    # ============================
+    # ==================================
 
     async def connect(self):
         """Conecta el WebSocket de un torneo específico y maneja la conexión del usuario."""
@@ -112,22 +112,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Aceptar la conexión WebSocket
         await self.accept()
 
-        # Simulación de fin de juego (solo para pruebas)
-        # if current_user_count == 4:
-        #     message = {
-        #         "tournament_id": self.room_name,
-        #         "winner": "jugador1dg",
-        #         "loser": "jugador2dg",
-        #         "tree_id": "1",
-        #         "type": "game_end"
-        #     }
-        #     end_game_simulation(message)
-
         asyncio.create_task(self.listen_to_game_end())
 
-    # ============================
+    # ====================================
     #           WebSocket Disconnect
-    # ============================
+    # ====================================
 
     async def disconnect(self, close_code):
         """Maneja la desconexión de un usuario."""
@@ -140,9 +129,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
         current_user_count = await self.redis_manager.decr_value(self.user_count_key)
         await self.publish_global_update(current_user_count)
 
-    # ============================
+    # =====================================
     #           Data Publication
-    # ============================
+    # =====================================
 
     async def publish_global_update(self, user_count):
         """Publica la actualización de conteo en el canal de Redis global."""
@@ -166,9 +155,27 @@ class RoomConsumer(AsyncWebsocketConsumer):
             self.room_group_name, {"type": "user_list", "user_list": user_list}
         )
 
-    # ============================
+    async def game_end_notification(self, event):
+        """Envía una notificación cuando termina un juego."""
+        #obtain the tournament tree
+        tournament_tree_key = f"tournament_{self.room_name}_tree"
+        tournament_tree = await self.redis_manager.redis.hgetall(tournament_tree_key)
+        tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in tournament_tree.items()}
+        print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
+        # Enviar notificación de fin de juego
+        await self.send(json.dumps({
+            "type": "game_end",
+            "tournament_id": event["tournament_id"],
+            "winner": event["winner"],
+            "loser": event["loser"],
+            "match_id": event["tree_id"],
+            "username": self.username,
+            "tournament_tree": tournament_tree,
+        }))
+
+    # =================================
     #           Message Handlers
-    # ============================
+    # =================================
 
     async def user_list(self, event):
         """Maneja el mensaje de tipo 'user_list'."""
@@ -187,20 +194,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         """Maneja mensajes directos a usuarios."""
         await self.send(json.dumps({"message": event["message"]}))
 
-    async def game_end_notification(self, event):
-        """Envía una notificación cuando termina un juego."""
-        await self.send(json.dumps({
-            "type": "game_end",
-            "tournament_id": event["tournament_id"],
-            "winner": event["winner"],
-            "loser": event["loser"],
-            "match_id": event["tree_id"],
-            "username": self.username
-        }))
 
-    # ============================
+    # ===========================================
     #           Game End Listener
-    # ============================
+    # ===========================================
 
     async def listen_to_game_end(self):
         """Escucha eventos de fin de juego en Redis."""
@@ -217,9 +214,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
             await asyncio.sleep(0.042)
 
-    # ============================
+    # =========================================
     #           Helper Methods
-    # ============================
+    # =========================================
 
     async def extract_user_info(self):
         """Extrae información del usuario desde el JWT en las cookies."""

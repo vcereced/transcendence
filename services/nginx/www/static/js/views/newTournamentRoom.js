@@ -7,11 +7,12 @@ export async function renderNewTournamentRoom() {
     const htmlContent = await response.text();
     return htmlContent;
 }
-let socket = null;
+let room_socket = null;
+let isHistoryBack = false;
 export function initNewTournamentRoom(tournamentId) {
     
-    if (socket === null) {
-        socket = startTournamentWebSocket(tournamentId);
+    if (room_socket === null) {
+        room_socket = startTournamentWebSocket(tournamentId);
     }
     const startButton = document.getElementById("start-tournament-btn");
     if (startButton) {
@@ -19,6 +20,9 @@ export function initNewTournamentRoom(tournamentId) {
             sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
         });
     }
+
+    restoreTournamentTree();
+
     // --- VARIABLES AND CONSTANTS ---
 
     const eventManager = new EventListenerManager();
@@ -230,13 +234,13 @@ export function initNewTournamentRoom(tournamentId) {
 
 function startTournamentWebSocket(tournamentId) {
     console.log('tournamentId>', tournamentId.id);
-    const socket = new WebSocket(`wss://${window.location.host}/ws/room/${tournamentId.id}/`);
+    const room_socket = new WebSocket(`wss://${window.location.host}/ws/room/${tournamentId.id}/`);
 
-    socket.onopen = () => {
+    room_socket.onopen = () => {
         console.log(`Conexión WebSocket para el torneo ${tournamentId.id} abierta`);
     };
 
-    socket.onmessage = function (event) {
+    room_socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
         console.log("Mensaje WebSocket del torneo:", data);
         
@@ -245,9 +249,14 @@ function startTournamentWebSocket(tournamentId) {
         }
         if (data.type === "start_tournament") {
             start_tournament(data);
+            // setTimeout(() => {
+            //     window.location.hash = '#game'; 
+            // }, 1500);
+           
         }
         if (data.type === "game_end") {
             // update after a small delay to see the changesk
+            // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
             }, 0.1);
@@ -256,15 +265,15 @@ function startTournamentWebSocket(tournamentId) {
         //OR TO START THE TOURNAMENT.
     };
 
-    socket.onclose = function (event) {
+    room_socket.onclose = function (event) {
         console.log(`Conexión WebSocket para el torneo ${tournamentId.id} cerrada`, event);
     };
 
-    socket.onerror = function (error) {
+    room_socket.onerror = function (error) {
         console.error(`Error en WebSocket para el torneo ${tournamentId.id}:`, error);
     };
 
-    return socket;
+    return room_socket;
 }
 
 function updateUserList(userList) {
@@ -286,9 +295,9 @@ function updateUserList(userList) {
 }
 
 function sendWebSocketMessage(type, data) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+    if (room_socket && room_socket.readyState === WebSocket.OPEN) {
         console.log("Enviando mensaje WebSocket:", { type, ...data });
-        socket.send(JSON.stringify({ type, ...data }));
+        room_socket.send(JSON.stringify({ type, ...data }));
     } else {
         console.error("WebSocket no está conectado.");
     }
@@ -305,6 +314,10 @@ function start_tournament(data) {
 
     console.log("Árbol del torneo:", parsedTournamentTree);
 
+    // Guardar el árbol del torneo en localStorage
+    sessionStorage.setItem("tournament_tree", JSON.stringify(data.tournament_tree));
+
+
     parsedTournamentTree.round_1.forEach((match) => {
         const matchElement = document.querySelector(`.match[data-match="${match.tree_id}"]`);
         if (matchElement) {
@@ -316,6 +329,8 @@ function start_tournament(data) {
         }
     });
 }
+
+
 
 function update_tournament_tree(data) {
 
@@ -349,6 +364,7 @@ function update_tournament_tree(data) {
     if (isFinalMatch(match_id)) {
         updateChampion(winner);
     }
+    sessionStorage.setItem("tournament_tree", JSON.stringify(data.tournament_tree));
 }
 
 function getNextMatch(currentMatchId) {
@@ -377,5 +393,120 @@ function updateChampion(winner) {
     if (champion) {
         champion.classList.add("championship");
         champion.textContent = winner;
+    }
+}
+
+// window.addEventListener('popstate', function(event) {
+//     const currentHash = window.location.hash;
+    
+//     if (currentHash.startsWith('#tournament')) {
+//         console.log('El hash comienza con #tournament, restaurando el estado del torneo...');
+//         restoreTournamentTree();  // Función para restaurar el árbol del torneo desde localStorage
+//     }
+// });
+
+function restoreTournamentTree() {
+    
+    const savedTree = sessionStorage.getItem("tournament_tree");
+
+    if (savedTree) {
+        const parsedTournamentTree = {};
+        const rawTree = JSON.parse(savedTree);
+        
+        for (const key in rawTree) {
+            parsedTournamentTree[key] = JSON.parse(rawTree[key]);
+        }
+
+        console.log("Restaurando árbol desde localStorage:", parsedTournamentTree);
+
+        for (const roundKey in parsedTournamentTree) {
+            const roundMatches = parsedTournamentTree[roundKey];
+        
+            roundMatches.forEach((match) => {
+                const { tree_id, players, winner, loser } = match;
+                const treeIdStr = String(tree_id);
+                const participants = Object.values(players).filter(p => p && p.username);
+        
+                
+                if (treeIdStr === "7") {
+                    participants.forEach((participant) => {
+                        const username = participant.username;
+        
+                        
+                        const isWinner = username === winner;
+                        const isLoser = username === loser;
+        
+                        
+                        const originTreeId = Object.keys(players).find(
+                            key => players[key]?.username === username
+                        );
+        
+                        let originTree = null;
+        
+                       
+                        if (originTreeId === "left") {
+                            originTree = "5";
+                        } else if (originTreeId === "right") {
+                            originTree = "6";
+                        }
+        
+                        if (originTree) {
+                            const playerSlot = document.querySelector(`.player[data-player="winner-${originTree}"]`);
+                            if (playerSlot) {
+                                playerSlot.textContent = username;
+                                playerSlot.classList.remove("winner", "loser");
+                                if (isWinner) playerSlot.classList.add("winner");
+                                else if (isLoser) playerSlot.classList.add("loser");
+                            }
+                        }
+                        
+                        if (isWinner) {
+                            const championDiv = document.querySelector('.player[data-player="champion"]');
+                            if (championDiv) {
+                                championDiv.textContent = username;
+                                championDiv.classList.add("championship");
+                            }
+                        }
+                    });
+        
+                    return; 
+                }
+        
+                
+                const matchElements = document.querySelectorAll(`.match[data-match="${treeIdStr}"]`);
+        
+                matchElements.forEach((matchElement) => {
+                    const playerDivs = Array.from(matchElement.querySelectorAll(".player"));
+        
+                    
+                    playerDivs.forEach(div => div.classList.remove("winner", "loser"));
+        
+                    participants.forEach((participant) => {
+                        const username = participant.username;
+        
+                        const availableDiv = playerDivs.find(div => {
+                            const content = div.textContent.trim().toLowerCase();
+                            return (
+                                content === '' ||
+                                content.startsWith('player') ||
+                                content.startsWith('winner') ||
+                                content === 'champion'
+                            );
+                        });
+        
+                        if (availableDiv) {
+                            availableDiv.textContent = username;
+                            if (username === winner) availableDiv.classList.add("winner");
+                            else if (username === loser) availableDiv.classList.add("loser");
+        
+                            
+                            const idx = playerDivs.indexOf(availableDiv);
+                            if (idx > -1) playerDivs.splice(idx, 1);
+                        }
+                    });
+                });
+            });
+        }
+        
     }
 }

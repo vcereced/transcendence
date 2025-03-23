@@ -9,7 +9,7 @@ export async function renderTournamentsList() {
     return htmlContent;
 }
 
-let socket = null;
+let global_socket = null;
 export function initTournamentsList() {
 
     // --- VARIABLES AND CONSTANTS ---
@@ -59,8 +59,8 @@ export function initTournamentsList() {
                 availableContainer.appendChild(gameItem);
             });
 
-            if (socket === null) {
-                socket = startGlobalWebSocket();
+            if (global_socket === null) {
+                global_socket = startGlobalWebSocket();
             }
         } catch (error) {
             console.error("Error al cargar los torneos:", error);
