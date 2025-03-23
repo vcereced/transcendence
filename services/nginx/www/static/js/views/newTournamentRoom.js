@@ -7,10 +7,10 @@ export async function renderNewTournamentRoom() {
     const htmlContent = await response.text();
     return htmlContent;
 }
+
 let room_socket = null;
 let isHistoryBack = false;
 export function initNewTournamentRoom(tournamentId) {
-    
     if (room_socket === null) {
         room_socket = startTournamentWebSocket(tournamentId);
     }
@@ -249,10 +249,9 @@ function startTournamentWebSocket(tournamentId) {
         }
         if (data.type === "start_tournament") {
             start_tournament(data);
-            // setTimeout(() => {
-            //     window.location.hash = '#game'; 
-            // }, 1500);
-           
+            setTimeout(() => {
+                window.location.hash = '#game'; 
+            }, 1000);
         }
         if (data.type === "game_end") {
             // update after a small delay to see the changesk
@@ -292,6 +291,8 @@ function updateUserList(userList) {
         userElement.textContent = name;
         userListContainer.appendChild(userElement);
     });
+    //guardar en session storage
+    sessionStorage.setItem("user_list", JSON.stringify(userList));
 }
 
 function sendWebSocketMessage(type, data) {
@@ -314,9 +315,7 @@ function start_tournament(data) {
 
     console.log("Árbol del torneo:", parsedTournamentTree);
 
-    // Guardar el árbol del torneo en localStorage
     sessionStorage.setItem("tournament_tree", JSON.stringify(data.tournament_tree));
-
 
     parsedTournamentTree.round_1.forEach((match) => {
         const matchElement = document.querySelector(`.match[data-match="${match.tree_id}"]`);
@@ -396,14 +395,27 @@ function updateChampion(winner) {
     }
 }
 
-// window.addEventListener('popstate', function(event) {
-//     const currentHash = window.location.hash;
-    
-//     if (currentHash.startsWith('#tournament')) {
-//         console.log('El hash comienza con #tournament, restaurando el estado del torneo...');
-//         restoreTournamentTree();  // Función para restaurar el árbol del torneo desde localStorage
-//     }
-// });
+window.addEventListener('hashchange', function(event) {
+    // Verificar si la URL contiene '#tournament' o '#game'
+    console.log('URL:', window.location.hash);
+    if (!window.location.hash.includes('tournament/room') && !window.location.hash.includes('game')) {
+        closeWebSocket();
+        clearTournamentTree(); 
+    }
+});
+
+function closeWebSocket() {
+    if (room_socket) {
+        console.log('Cerrando WebSocket...');
+        room_socket.close();  
+        room_socket = null;  
+    }
+}
+
+function clearTournamentTree() {
+    sessionStorage.removeItem('tournament_tree');  // Borra el árbol del torneo guardado en sessionStorage
+    console.log('Datos del torneo eliminados de sessionStorage');
+}
 
 function restoreTournamentTree() {
     
