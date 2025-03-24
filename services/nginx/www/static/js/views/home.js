@@ -1,7 +1,8 @@
 // static/js/views/home.js
-import { handleJwtToken } from './jwtValidator.js';
 import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from './settings.js';
 import EventListenerManager from '../utils/eventListenerManager.js';
+import { checkActiveGame } from '../utils/autoReconnect.js';
+import { hasAccessToken } from '../utils/auth_management.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
@@ -9,11 +10,11 @@ export async function renderHome() {
     return htmlContent;
 }
 
-export function initHome() {
+export async function initHome() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
 
     const totalCards = 4;
     const angleStep = 360 / totalCards;
@@ -30,6 +31,14 @@ export function initHome() {
         { username: "cristiano", avatar: "../../media/3.gif" },
         { username: "neymar123", avatar: "../../media/2.gif" },
         { username: "lewandosk", avatar: "../../media/5.gif" },
+        { username: "javiersa", avatar: "../../media/2.gif" },
+        { username: "f-gomez", avatar: "../../media/3.gif" },
+        { username: "vcered", avatar: "../../media/4.gif" },
+        { username: "dgarizard", avatar: "../../media/5.gif" },
+        { username: "messi", avatar: "../../media/1.gif" },
+        { username: "cristiano", avatar: "../../media/3.gif" },
+        { username: "neymar123", avatar: "../../media/2.gif" },
+        { username: "lewandosk", avatar: "../../media/5.gif" },
     ];
 
     // --- DOM ELEMENTS ---
@@ -38,7 +47,9 @@ export function initHome() {
     const title = document.querySelector('.site-title');
     const tabButtons = document.querySelectorAll('.tab-btn');
     const histories = document.querySelectorAll('.history');
-
+    const profilePopup = document.getElementById('profilePopup');
+    const settingsPopup = document.getElementById('settingsPopup');
+    const homeDiv = document.getElementsByClassName('home')[0];
     // --- FUNCTIONS ---
 
     window.toggleFullscreen = function toggleFullscreen() {
@@ -96,11 +107,11 @@ export function initHome() {
     }
 
     window.openProfilePopup = function openProfilePopup() {
-        document.getElementById('profilePopup').style.display = 'flex';
+        profilePopup.style.display = 'flex';
     }
 
     window.closeProfilePopup = function closeProfilePopup() {
-        document.getElementById('profilePopup').style.display = 'none';
+        profilePopup.style.display = 'none';
     }
 
     window.openSettingsPopup =  function openSettingsPopup() {
@@ -141,7 +152,7 @@ export function initHome() {
     }
 
     window.closeSettingsPopup = function closeSettingsPopup() {
-        document.getElementById('settingsPopup').style.display = 'none';
+        settingsPopup.style.display = 'none';
     }
 
     window.toggleSettingsFields = function toggleSettingsFields() {
@@ -156,9 +167,30 @@ export function initHome() {
             document.getElementById(selectedOption + "-field").style.display = "block";
         }
     }
-    
-    window.viewGame = function viewGame() {
-        console.log("Ver la partida nuevamente");
+
+    window.createLocalGame = function createLocalGame(type) {
+        checkActiveGame(document, homeDiv);
+        // Check active games, if active, show popup explaining and redirect
+        // Make POST call to /api/game/create/ with type of game to be created (player, computer)
+        fetch('/api/game/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ "type": type })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    console.error(response);
+                    return;
+                }
+                window.location.hash = "#rock-paper-scissors";
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+        // If success, show popup of redirecting to created game
     }
 
 
@@ -187,12 +219,12 @@ window.toggleFriendStatus = function toggleFriendStatus() {
 
     // --- EVENT LISTENERS ---
 
-    eventManager.addEventListener(carousel, 'mousedown', (e) => {
+    window.eventManager.addEventListener(carousel, 'mousedown', (e) => {
         isDragging = true;
         startX = e.clientX;
     });
 
-    eventManager.addEventListener(window, 'mouseup', () => {
+    window.eventManager.addEventListener(window, 'mouseup', () => {
         if (isDragging) {
             const rotation = Math.round(currentAngle / angleStep) * angleStep;
             currentAngle = rotation;
@@ -201,7 +233,7 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         isDragging = false;
     });
 
-    eventManager.addEventListener(window, 'mousemove', (e) => {
+    window.eventManager.addEventListener(window, 'mousemove', (e) => {
         if (isDragging) {
             const dx = startX - e.clientX;
             currentAngle -= dx * 0.5;
@@ -210,7 +242,7 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         }
     });
 
-    eventManager.addEventListener(window, 'keydown', (e) => {
+    window.eventManager.addEventListener(window, 'keydown', (e) => {
         if (e.key === "ArrowLeft") {
             currentAngle += angleStep;
             carousel.style.transform = `rotateY(${currentAngle}deg)`;
@@ -220,16 +252,16 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         }
     });
 
-    eventManager.addEventListener(document, "click", function () {
+    window.eventManager.addEventListener(document, "click", function () {
         const dropdownMenu = document.getElementById("dropdownMenu");
         dropdownMenu.style.display = "none";
     });
 
-    eventManager.addEventListener(document.getElementById('searchBar'), 'input', function () {
+    window.eventManager.addEventListener(document.getElementById('searchBar'), 'input', function () {
         updatePlayerList(this.value);
     });
 
-    eventManager.addEventListener(document, 'click', function (e) {
+    window.eventManager.addEventListener(document, 'click', function (e) {
         const searchBar = document.getElementById('searchBar');
         const searchIcon = document.querySelector('.search-icon');
         const playerList = document.getElementById('playerList');
@@ -241,7 +273,7 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         }
     });
 
-    eventManager.addEventListener(document, 'keydown', function (e) {
+    window.eventManager.addEventListener(document, 'keydown', function (e) {
         if (e.key === 'Escape') {
             const searchBar = document.getElementById('searchBar');
             const searchIcon = document.querySelector('.search-icon');
@@ -253,13 +285,13 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         }
     });
 
-    eventManager.addEventListener(document.getElementById('profilePopup'), 'click', function (event) {
+    window.eventManager.addEventListener(document.getElementById('profilePopup'), 'click', function (event) {
         if (!event.target.closest('.profile-container')) {
             closeProfilePopup();
         }
     });
 
-    eventManager.addEventListener(document.getElementById('settingsPopup'), 'click', function (event) {
+    window.eventManager.addEventListener(document.getElementById('settingsPopup'), 'click', function (event) {
         if (!event.target.closest('.settings-container')) {
             closeSettingsPopup();
         }
@@ -267,12 +299,12 @@ window.toggleFriendStatus = function toggleFriendStatus() {
 
     
 
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
@@ -280,7 +312,7 @@ window.toggleFriendStatus = function toggleFriendStatus() {
     
 
     tabButtons.forEach(button => {
-        eventManager.addEventListener(button, 'click', () => {
+        window.eventManager.addEventListener(button, 'click', () => {
             tabButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             histories.forEach(history => history.style.display = 'none');
@@ -289,5 +321,16 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         });
     });
 
-    return () => eventManager.removeAllEventListeners();
+
+    // --- INITIALIZATION ---
+
+    if (!hasAccessToken()) {
+        window.sessionStorage.setItem("afterLoginRedirect", "#");
+        window.location.hash = "#new-login"
+        return window.eventManager.removeAllEventListeners();
+    }
+
+    await checkActiveGame(document, homeDiv);
+
+    return () => window.eventManager.removeAllEventListeners();
 }

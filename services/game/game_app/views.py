@@ -1,23 +1,20 @@
-from game_app.models import Game
-from game_app.serializers import GameSerializer
+from django.db.models import Q
+from requests import Request
 from rest_framework import generics
 from celery import current_app
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+
+
+from game_app.models import Game, RockPaperScissorsGame
+from game_app.serializers import GameSerializer
 from game_app import tasks
+from game_app import utils
 
 
-class GameList(generics.ListCreateAPIView):
-    queryset = Game.objects.all()
-    serializer_class = GameSerializer
 
-
-class GameDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Game.objects.all()
-    serializer_class = GameSerializer
-
-
+# ONLY FOR TESTING PURPOSES
 @api_view(["POST"])
 def trigger_create_game_task(request):
     current_app.send_task(
@@ -27,6 +24,7 @@ def trigger_create_game_task(request):
     )
     return Response(status=status.HTTP_200_OK)
 
+# ONLY FOR TESTING PURPOSES
 @api_view(["POST"])
 def trigger_launch_game_task(request):
     current_app.send_task(
@@ -35,3 +33,106 @@ def trigger_launch_game_task(request):
         queue="game_tasks",
     )
     return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def has_active_game(request):
+    user_data = utils.extract_user_data_from_request(request)
+
+    user_id = user_data.get("user_id")
+    if not user_id:
+        return Response(
+            {"error": "User not found with JWT"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    active_game_data = utils.query_for_active_game(user_id)
+    if active_game_data.get("error"):
+        return Response(
+            active_game_data,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    return Response(active_game_data, status=status.HTTP_200_OK)
+
+
+
+
+@api_view(["POST"])
+def create_game(request : Request):
+    user_data = utils.extract_user_data_from_request(request)
+    game_type = request.data.get("type")
+    user_id = user_data.get("user_id")
+    username = user_data.get("username")
+    print(f"User data: {user_data}")
+    print(f"Game type: {game_type}")
+    print(f"User id: {user_id}")
+    print(f"Username: {username}")
+    if not game_type:
+        return Response(
+            {"error": "No game type provided"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if game_type not in ["computer", "player"]:
+        return Response(
+            {"error": "Invalid game type"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not user_id or not username:
+        return Response(
+            {"error": "User information not found with JWT"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    active_game_data = utils.query_for_active_game(user_id)
+    if active_game_data.get("error"):
+        return Response(
+            active_game_data,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if active_game_data["has_active_pong_game"]:
+        return Response(
+            {"error": "User already has an active game"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if active_game_data["has_active_rps_game"]:
+        return Response(
+            {"error": "User already has an active Rock Paper Scissors game"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    if game_type == "computer":
+        game_creation_data = {
+            "left_player_id": user_id,
+            "left_player_username": username,
+            "right_player_id": 0,
+            "right_player_username": "La Máquina",
+            "tournament_id": 0,
+            "tree_index": 0
+        }
+        current_app.send_task(
+            "create_game",
+            args=[game_creation_data],
+            queue="game_tasks",
+        )
+    elif game_type == "player":
+        game_creation_data = {
+            "left_player_id": user_id,
+            "left_player_username": username,
+            "right_player_id": user_id,
+            "right_player_username": "Invitado",
+            "tournament_id": 0,
+            "tree_index": 0
+        }
+        current_app.send_task(
+            "create_game",
+            args=[game_creation_data],
+            queue="game_tasks",
+        )
+
+    return Response(
+        status=status.HTTP_201_CREATED,
+    )
+
+
+

@@ -1,5 +1,6 @@
 <div class="home">
     <h1 class="site-title" onclick="location.hash = ''">TheAnswerIsPong</h1>
+    <h1 class="site-title" onclick="location.hash = ''">TheAnswerIsPong</h1>
     <div class="icon-container">
         <div class="search-icon" onclick="toggleSearch()">
             <i class="fas fa-search"></i>
@@ -43,14 +44,16 @@
                 <i class="fas fa-robot"></i>
                 <p>Enfréntate a una inteligencia artificial desafiante.</p>
                 <button onmouseover="buttonHold(this, 'Juega contra una IA...')"
-                    onmouseout="buttonRelease(this, 'Jugar')">Jugar</button>
+                    onmouseout="buttonRelease(this, 'Jugar')"
+                    onclick="createLocalGame('computer')">Jugar</button>
             </div>
             <div class="card" style="transform: rotateY(180deg) translateZ(320px);">
                 <h2>Pantalla Dividida</h2>
                 <i class="fas fa-tv"></i>
                 <p>Juega en modo pantalla dividida con un amigo.</p>
                 <button onmouseover="buttonHold(this, '¡Un ordenador, un ganador!')"
-                    onmouseout="buttonRelease(this, 'Jugar')">Jugar</button>
+                    onmouseout="buttonRelease(this, 'Jugar')"
+                    onclick="createLocalGame('player')">Jugar</button>
             </div>
             <div class="card" style="transform: rotateY(270deg) translateZ(320px);">
                 <h2>Jugar en Línea</h2>
@@ -77,6 +80,7 @@
                     <p>Partidas jugadas: 150 (<small>60%</small>)</p>
                     <p>Torneos ganados: 10 (<small>40%</small>)</p>
                     <p>Piedra/Papel/Tijeras: 253 (<small>40%</small>)</p>
+                    <button id="add-friend-btn" onclick="toggleFriendStatus()">Añadir Amigo</button>
                     <button id="add-friend-btn" onclick="toggleFriendStatus()">Añadir Amigo</button>
                 </div>
             </div>

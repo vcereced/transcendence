@@ -15,19 +15,18 @@ export async function initRockPaperScissors() {
     // --- INITIALIZATION ---
 
     if (!hasAccessToken()) {
-        alert("Debes iniciar sesión para jugar");
-        window.sessionStorage.setItem("afterLoginRedirect", "#rock_paper_scissors");
-        window.location.hash = "#login"
+        window.sessionStorage.setItem("afterLoginRedirect", "#rock-paper-scissors");
+        window.location.hash = "#new-login"
         return;
     }
-    await handleJwtToken();
+    handleJwtToken();
 
     let socket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
 
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
     let leftPlayer = { id: null, username: null };
     let rightPlayer = { id: null, username: null };
     let requestedChoices = { leftPlayer: null, rightPlayer: null };
@@ -132,25 +131,26 @@ export async function initRockPaperScissors() {
         console.log("Desconectado del WebSocket.");
     };
 
-    socket.onerror = function (event) {window.location.hash = "#login"
-        deleteCookie("accessToken");
-        deleteCookie("refreshToken");
-        // Refresh the page
-        window.location.reload();
+    socket.onerror = function (event) {
+        // window.location.hash = "#login"
+        // deleteCookie("accessToken");
+        // deleteCookie("refreshToken");
+        // // Refresh the page
+        // window.location.reload();
     }
 
 
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
 
-    eventManager.addEventListener(document, 'keydown', (event) => {
+    window.eventManager.addEventListener(document, 'keydown', (event) => {
         if (gameFinished) return;
         if (event.key === 'a') {
             choose('rock', 'left');
@@ -173,7 +173,7 @@ export async function initRockPaperScissors() {
     });
 
 
-    return () => eventManager.removeAllEventListeners();
+    return () => window.eventManager.removeAllEventListeners();
 }
 
 

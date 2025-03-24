@@ -86,7 +86,7 @@ export function init2FA() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    const eventManager = new EventListenerManager();
+    
     let resendTimer;
     let resendInterval;
     const resendButton = document.getElementById("resend-button");
@@ -210,12 +210,12 @@ export function init2FA() {
 
     // --- EVENT LISTENERS ---
 
-    eventManager.addEventListener(title, 'mouseenter', () => {
+    window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
     });
 
-    eventManager.addEventListener(title, 'mouseleave', () => {
+    window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
@@ -225,6 +225,6 @@ export function init2FA() {
     
     window.startResendTimer();
 
-    return () => eventManager.removeAllEventListeners();
+    return () => window.eventManager.removeAllEventListeners();
         
 }
