@@ -1,5 +1,6 @@
 // static/js/views/home.js
-
+import { handleJwtToken } from './jwtValidator.js';
+import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from './settings.js';
 import EventListenerManager from '../utils/eventListenerManager.js';
 
 export async function renderHome() {
@@ -102,7 +103,40 @@ export function initHome() {
         document.getElementById('profilePopup').style.display = 'none';
     }
 
-    window.openSettingsPopup = function openSettingsPopup() {
+    window.openSettingsPopup =  function openSettingsPopup() {
+        let email = sessionStorage.getItem("email");
+        showPicture(email);
+        showUsername(email);
+        
+        document.querySelectorAll(".preset-img").forEach(img => {
+            img.addEventListener("click", async () => {
+                const src = img.src
+                document.getElementById("current-profile-pic").src = src;
+            });
+        })
+        document.getElementById("save-btn-images").addEventListener("click", async () => {
+            const src =  document.getElementById("current-profile-pic").src;
+            updatePicture(email, src);
+            window.closeSettingsPopup();
+        });
+
+
+        document.getElementById("save-btn-name").addEventListener("click", () => {
+            const newUsername = document.getElementById("username").value;
+            const email = sessionStorage.getItem("email");
+
+            updateUsername(email, newUsername);
+        });
+
+        document.getElementById("save-btn-password").addEventListener("click", () => {
+            const oldPass = document.getElementById("old-password").value;
+            const newPass1 = document.getElementById("new-password1").value;
+            const newPass2 = document.getElementById("new-password2").value;
+            const email = sessionStorage.getItem("email");
+
+            updatePassword(email, oldPass, newPass1, newPass2);
+        });
+
         document.getElementById('settingsPopup').style.display = 'flex';
     }
 

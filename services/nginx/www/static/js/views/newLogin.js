@@ -198,6 +198,7 @@ export function initNewLogin() {
             if (response.ok) {
                 sessionStorage.setItem("action", "login");
                 sessionStorage.setItem("email", email);
+                sessionStorage.setItem("username", data.username);
                 //sessionStorage.setItem("password", password);
                 window.location.hash = "#2FA";
             } else {

@@ -8,7 +8,7 @@ from django_otp.models import Device
 class CustomUser(AbstractUser):  
     
     email = models.EmailField(unique=True)
-    profile_picture = models.CharField(max_length=255, null=True, blank=True, default="/media/default.png")
+    profile_picture = models.CharField(max_length=255, null=True, blank=True, default="/media/default.gif")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

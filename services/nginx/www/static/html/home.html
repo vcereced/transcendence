@@ -225,9 +225,18 @@
                     <label for="profile-pic">Foto de perfil actual:</label>
                     <img id="current-profile-pic" src="1.gif" alt="Foto actual" class="profile-preview">
                     <br>
-                    <label for="profile-pic">Nueva foto de perfil:</label>
-                    <input type="file" id="profile-pic" accept="image/*">
-                    <button class="save-btn">Guardar cambios</button>
+                    <label for="preset-images">Escoge tu avatar:</label>
+
+                    <!-- Opciones de imágenes predeterminadas -->
+                    <div id="preset-images">
+                        <img class="preset-img" src="/media/1.gif" alt="Opción 1">
+                        <img class="preset-img" src="/media/2.gif" alt="Opción 2">
+                        <img class="preset-img" src="/media/3.gif" alt="Opción 3">
+                        <img class="preset-img" src="/media/4.gif" alt="Opción 4">
+                        <img class="preset-img" src="/media/default.gif" alt="Opción 4">
+                    </div>
+
+                    <button id="save-btn-images" class="save-btn">Guardar cambios</button>
                 </div>
 
                 <div class="settings-field" id="username-field" style="display: none;">
@@ -236,7 +245,7 @@
                     <br>
                     <label for="username">Nuevo nombre de usuario:</label>
                     <input type="text" id="username" placeholder="Tu nuevo nombre de usuario">
-                    <button class="save-btn">Guardar cambios</button>
+                    <button id="save-btn-name" class="save-btn">Guardar cambios</button>
                 </div>
 
                 <div class="settings-field" id="password-field" style="display: none;">
@@ -245,12 +254,12 @@
                     <br>
                     <br>
                     <label for="new-password">Nueva contraseña:</label>
-                    <input type="password" id="new-password" placeholder="Ingresa una nueva contraseña">
+                    <input type="password" id="new-password1" placeholder="Ingresa una nueva contraseña">
                     <br>
                     <br>
                     <label for="new-password">Repite la nueva contraseña:</label>
-                    <input type="password" id="new-password" placeholder="Ingresa una nueva contraseña">
-                    <button class="save-btn">Guardar cambios</button>
+                    <input type="password" id="new-password2" placeholder="Ingresa una nueva contraseña">
+                    <button id="save-btn-password" class="save-btn">Guardar cambios</button>
                 </div>
             </div>
         </div>

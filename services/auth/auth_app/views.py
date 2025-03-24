@@ -115,7 +115,10 @@ def login_api_view(request):
 	device.generate_otp()
 	device.send_otp()
 
-	return Response({ 'message': 'introduce el otp enviado al e-mail.' }, status=status.HTTP_200_OK)
+	return Response({
+		'username': user.username, 
+		'message': 'introduce el otp enviado al e-mail.'
+	}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def verify_email_otp_login_view(request):
@@ -148,7 +151,7 @@ def verify_email_otp_login_view(request):
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def validate_token_view(request):
 
     token = request.COOKIES.get('accessToken')
@@ -183,3 +186,94 @@ def refresh_token_view(request):
     
 	except TokenError as e:
 		return Response({'error': 'Invalid or expired refresh token', 'details': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+	
+@api_view(['POST'])
+def name_view(request):
+	
+	email = request.data.get("email")
+	newUsername = request.data.get("newUsername")
+
+	if not email or not newUsername:
+		return Response({"error": "Faltan datos en el request"}, status=status.HTTP_400_BAD_REQUEST)
+	
+	if CustomUser.objects.filter(username=newUsername).exists():
+		return Response({"error": "El nombre de usuario ya está en uso"}, status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		user = CustomUser.objects.get(email=email)
+
+		user.username = newUsername
+		user.save()
+		return Response({'message': 'username changed succesfully'}, status=status.HTTP_200_OK)
+
+	except (CustomUser.DoesNotExist):
+		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
+	except CustomError as e:
+		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+	
+@api_view(['POST'])
+def updateUsername_view(request):
+	
+	email = request.data.get("email")
+	
+	if not email:
+		return Response({"error": "Faltan datos en el request"}, status=status.HTTP_400_BAD_REQUEST)
+	
+	if not CustomUser.objects.filter(email=email).exists():
+		return Response({"error": "no existe el usuario"}, status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		user = CustomUser.objects.get(email=email)
+		return Response({'username': user.username, 'message': 'username obteined succesfully'}, status=status.HTTP_200_OK)
+
+	except (CustomUser.DoesNotExist):
+		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
+	except CustomError as e:
+		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+	
+@api_view(["POST"])
+def updatePassword_view(request):
+    email = request.data.get("email")
+    old_password = request.data.get("oldPassword")
+    new_password = request.data.get("newPassword")
+
+    try:
+        user = CustomUser.objects.get(email=email)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Autenticar al usuario con la contraseña antigua
+    if not user.check_password(old_password):
+        return Response({"error": "La contraseña actual es incorrecta."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Actualizar la contraseña
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Contraseña actualizada correctamente."}, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def pictureUrl_view(request):
+    email = request.data.get("email")
+
+    try:
+        user = CustomUser.objects.get(email=email)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({"message": "Contraseña actualizada correctamente.", "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def changePictureUrl_view(request):
+
+	email = request.data.get("email")
+	src = request.data.get("src")
+
+	try:
+		user = CustomUser.objects.get(email=email)
+		user.profile_picture = src
+		user.save()
+	except CustomUser.DoesNotExist:
+		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+	return Response({"message": "picture_url cambiada correctamente."}, status=status.HTTP_200_OK)
