@@ -76,6 +76,7 @@ async function router() {
         // Renderiza e inicializa la ruta, pasando los parámetros si existen
         document.getElementById("main-content").innerHTML = await route.render(params);
         window.eventManager.removeAllEventListeners();
+        console.log("Event listeners removed");
         route.init(params);
     } else {
         document.getElementById("main-content").innerHTML = "<h2>404</h2><p>NOT FOUND</p>";

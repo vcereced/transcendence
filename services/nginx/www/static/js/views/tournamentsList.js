@@ -200,9 +200,6 @@ export function initTournamentsList() {
     // --- INITIALIZATION ---
     loadTournaments();
     // displayGames();
-
-
-    return () => window.eventManager.removeAllEventListeners();
 }
 
 

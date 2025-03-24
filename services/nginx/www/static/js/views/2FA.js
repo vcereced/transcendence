@@ -224,7 +224,5 @@ export function init2FA() {
     // --- INITIALIZATION ---
     
     window.startResendTimer();
-
-    return () => window.eventManager.removeAllEventListeners();
         
 }

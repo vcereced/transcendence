@@ -232,6 +232,4 @@ export function initNewLogin() {
 
 
     // --- INITIALIZATION ---
-
-    return () => window.eventManager.removeAllEventListeners();
 }

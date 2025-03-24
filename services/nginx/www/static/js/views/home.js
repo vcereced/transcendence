@@ -1,8 +1,8 @@
 // static/js/views/home.js
 import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from './settings.js';
-import EventListenerManager from '../utils/eventListenerManager.js';
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
+import { handleJwtToken } from './jwtValidator.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
@@ -327,10 +327,8 @@ window.toggleFriendStatus = function toggleFriendStatus() {
     if (!hasAccessToken()) {
         window.sessionStorage.setItem("afterLoginRedirect", "#");
         window.location.hash = "#new-login"
-        return window.eventManager.removeAllEventListeners();
     }
+    handleJwtToken();
 
     await checkActiveGame(document, homeDiv);
-
-    return () => window.eventManager.removeAllEventListeners();
 }

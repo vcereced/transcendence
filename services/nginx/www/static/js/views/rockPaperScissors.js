@@ -102,6 +102,7 @@ export async function initRockPaperScissors() {
 
             if (data.game_state.is_finished && !popupShown) {
                 if (data.game_state.winner_username !== "") {
+                    socket.close();
                     showPopup(`${data.game_state.winner_username} gana!`);
                     setTimeout(() => { window.location.hash = "#game" }, 2000);
                 } else {
@@ -171,9 +172,6 @@ export async function initRockPaperScissors() {
             choose('scissors', 'right');
         }
     });
-
-
-    return () => window.eventManager.removeAllEventListeners();
 }
 
 

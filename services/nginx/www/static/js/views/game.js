@@ -178,6 +178,7 @@ export async function initGame() {
             }
 
             if (data.game_state.is_finished && !popupShown) {
+                socket.close();
                 showPopup(`${data.game_state.winner_username} gana!`);
                 setTimeout(() => {
                     if (tournamentId > 0) {
@@ -294,6 +295,4 @@ export async function initGame() {
         title.style.transform = 'translateY(0)';
     });
 
-
-    return 3;
 }

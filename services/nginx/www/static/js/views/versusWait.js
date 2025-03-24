@@ -218,7 +218,4 @@ export function initVersusWait() {
     createObstacles(Math.floor(Math.random() * 30) + 1);
     placeBall();
     moveBall();
-
-
-    return () => window.eventManager.removeAllEventListeners();
 }
