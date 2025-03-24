@@ -16,8 +16,6 @@ import { renderNewLogin, initNewLogin } from './views/newLogin.js';
 import { renderRockPaperScissors, initRockPaperScissors } from './views/rockPaperScissors.js';
 import { render2FA, init2FA } from './views/2FA.js';
 
-
-
 /**
  * Container for possible routes of the SPA. Works as a pointer
  * of functions to render and initialize each section.
