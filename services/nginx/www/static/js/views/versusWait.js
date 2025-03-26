@@ -10,6 +10,11 @@ export async function renderVersusWait() {
 
 export function initVersusWait() {
 
+
+    let versus_socket = null;
+    if (versus_socket === null) {
+        versus_socket = startVersusWebSocket(versus_socket);
+    }
     // --- VARIABLES AND CONSTANTS ---
 
     
@@ -219,3 +224,29 @@ export function initVersusWait() {
     placeBall();
     moveBall();
 }
+
+
+function startVersusWebSocket(versus_socket) {
+
+    versus_socket = new WebSocket(`wss://${window.location.host}/ws/versus/`);
+    versus_socket.onopen = () => {
+        console.log("WebSocket connection established.");
+        versus_socket.send(JSON.stringify({ type: "join_queue" }));
+    };
+    versus_socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("Message received:", data);
+        console.log("Message type:", data.type);
+        if (data.type === "start_game") {
+            window.location.hash = "#game";
+        }
+
+    };
+    versus_socket.onerror = (error) => console.error("WebSocket Error:", error);
+    versus_socket.onclose = () => {
+        console.log("WebSocket closed. Reconnecting in 5 seconds...");
+        setTimeout(startVersusWebSocket, 5000);
+    };
+    return versus_socket;
+}
+    

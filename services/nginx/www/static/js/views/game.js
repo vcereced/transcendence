@@ -226,6 +226,7 @@ export async function initGame() {
 
     socket.onclose = function (event) {
         console.log("Desconectado del WebSocket.");
+        console.log(event);
     };
 
     socket.onerror = function (event) {

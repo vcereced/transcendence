@@ -6,7 +6,48 @@ import jwt
 from .tasks import send_start_matchmaking_task, end_game_simulation
 from .redis_manager import RedisManager 
 
+waiting_players = []
 
+class VersusConsumer(AsyncWebsocketConsumer):
+    
+    async def connect(self):
+        print("Connecting to Versus WebSocket")
+        
+        self.room_group_name = "versus_room"
+        self.redis_manager = RedisManager()
+
+        await extract_user_info(self)
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        if data["type"] == "join_queue":
+            await self.join_queue()
+    
+    async def join_queue(self):
+        if self.username not in waiting_players:
+            waiting_players.append(self)
+            print(f"User {self.username} joined the queue")
+            print(f"Waiting players qty: {len(waiting_players)}")
+            if len(waiting_players) >= 2:
+                player1 = waiting_players.pop(0)
+                player2 = waiting_players.pop(0)
+                await player1.send(json.dumps({"type": "start_game", "opponent": player2.username}))
+                await player2.send(json.dumps({"type": "start_game", "opponent": player1.username}))
+            else:
+                print("Waiting for more players to join the queue")
+                
+    async def disconnect(self, close_code):
+        print(f"User {self.username} disconnected")
+        # Remove the user from the queue
+        if self in waiting_players:
+            waiting_players.remove(self)
+            print(f"User {self.username} removed from the queue")
+            print(f"Waiting players qty: {len(waiting_players)}")
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
     """Maneja la conexión de WebSocket global para los torneos."""
@@ -69,9 +110,9 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
 class RoomConsumer(AsyncWebsocketConsumer):
     """Maneja la conexión de WebSocket para un torneo específico."""
 
-    # ============================
+    # ==================================
     #           WebSocket Connect
-    # ============================
+    # ==================================
 
     async def connect(self):
         """Conecta el WebSocket de un torneo específico y maneja la conexión del usuario."""
@@ -95,7 +136,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.publish_global_update(current_user_count)
 
         # Extraer información del usuario desde el JWT
-        await self.extract_user_info()
+        await self.extract_user_info(self)
 
         # Almacenar información del usuario en Redis
         await self.redis_manager.set_value(f"user_channel:{self.username}", self.channel_name)
@@ -112,22 +153,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Aceptar la conexión WebSocket
         await self.accept()
 
-        # Simulación de fin de juego (solo para pruebas)
-        # if current_user_count == 4:
-        #     message = {
-        #         "tournament_id": self.room_name,
-        #         "winner": "jugador1dg",
-        #         "loser": "jugador2dg",
-        #         "tree_id": "1",
-        #         "type": "game_end"
-        #     }
-        #     end_game_simulation(message)
-
         asyncio.create_task(self.listen_to_game_end())
 
-    # ============================
+    # ====================================
     #           WebSocket Disconnect
-    # ============================
+    # ====================================
 
     async def disconnect(self, close_code):
         """Maneja la desconexión de un usuario."""
@@ -140,9 +170,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
         current_user_count = await self.redis_manager.decr_value(self.user_count_key)
         await self.publish_global_update(current_user_count)
 
-    # ============================
+    # =====================================
     #           Data Publication
-    # ============================
+    # =====================================
 
     async def publish_global_update(self, user_count):
         """Publica la actualización de conteo en el canal de Redis global."""
@@ -166,9 +196,27 @@ class RoomConsumer(AsyncWebsocketConsumer):
             self.room_group_name, {"type": "user_list", "user_list": user_list}
         )
 
-    # ============================
+    async def game_end_notification(self, event):
+        """Envía una notificación cuando termina un juego."""
+        #obtain the tournament tree
+        tournament_tree_key = f"tournament_{self.room_name}_tree"
+        tournament_tree = await self.redis_manager.redis.hgetall(tournament_tree_key)
+        tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in tournament_tree.items()}
+        print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
+        # Enviar notificación de fin de juego
+        await self.send(json.dumps({
+            "type": "game_end",
+            "tournament_id": event["tournament_id"],
+            "winner": event["winner"],
+            "loser": event["loser"],
+            "match_id": event["tree_id"],
+            "username": self.username,
+            "tournament_tree": tournament_tree,
+        }))
+
+    # =================================
     #           Message Handlers
-    # ============================
+    # =================================
 
     async def user_list(self, event):
         """Maneja el mensaje de tipo 'user_list'."""
@@ -187,20 +235,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         """Maneja mensajes directos a usuarios."""
         await self.send(json.dumps({"message": event["message"]}))
 
-    async def game_end_notification(self, event):
-        """Envía una notificación cuando termina un juego."""
-        await self.send(json.dumps({
-            "type": "game_end",
-            "tournament_id": event["tournament_id"],
-            "winner": event["winner"],
-            "loser": event["loser"],
-            "match_id": event["tree_id"],
-            "username": self.username
-        }))
 
-    # ============================
+    # ===========================================
     #           Game End Listener
-    # ============================
+    # ===========================================
 
     async def listen_to_game_end(self):
         """Escucha eventos de fin de juego en Redis."""
@@ -217,27 +255,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
             await asyncio.sleep(0.042)
 
-    # ============================
+    # =========================================
     #           Helper Methods
-    # ============================
-
-    async def extract_user_info(self):
-        """Extrae información del usuario desde el JWT en las cookies."""
-        headers = dict(self.scope["headers"])
-        cookie_header = headers.get(b"cookie", b"")
-
-        if cookie_header:
-            for c in cookie_header.decode().split(";"):
-                if "accessToken" in c:
-                    jwt_token = c.split("=")[1]
-                    try:
-                        payload = jwt.decode(jwt_token, options={"verify_signature": False})
-                        self.username = payload.get("username")
-                        self.user_id = payload.get("user_id")
-                        print(f"User connected: {self.username} (ID: {self.user_id})")
-                    except jwt.DecodeError as e:
-                        print(f"Error decoding token: {e}")
-                    break
+    # =========================================
 
     async def receive(self, text_data):
         """Maneja los mensajes entrantes del frontend."""
@@ -279,3 +299,25 @@ class RoomConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         tournament_tree = event["tournament_tree"]
         await self.send(text_data=json.dumps({"type": "start_tournament", "message": message, "tournament_tree": tournament_tree}))
+
+# =========================================
+#           EXTERNAL METHODS
+# =========================================
+
+async def extract_user_info(self):
+    """Extrae información del usuario desde el JWT en las cookies."""
+    headers = dict(self.scope["headers"])
+    cookie_header = headers.get(b"cookie", b"")
+
+    if cookie_header:
+        for c in cookie_header.decode().split(";"):
+            if "accessToken" in c:
+                jwt_token = c.split("=")[1]
+                try:
+                    payload = jwt.decode(jwt_token, options={"verify_signature": False})
+                    self.username = payload.get("username")
+                    self.user_id = payload.get("user_id")
+                    print(f"User connected: {self.username} (ID: {self.user_id})")
+                except jwt.DecodeError as e:
+                    print(f"Error decoding token: {e}")
+                break

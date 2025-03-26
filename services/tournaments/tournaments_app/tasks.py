@@ -73,50 +73,6 @@ def send_create_game_task(players):
 #                   TOURNAMENT LOGIC
 ###########################################################
 
-# def start_next_round(tournament_id, round_id, winners):
-#     """
-#     Genera los emparejamientos de la siguiente ronda y los guarda en Redis.
-#     """
-#     next_round_id = str(int(round_id) + 1)  # Pasamos a la siguiente ronda
-#     tournament_tree_key = f"tournament_{tournament_id}_tree"
-#     #PRint en AZUL
-#     print("\033[34m" + f" Iniciando ronda {next_round_id} con ganadores: {winners}" + "\033[0m")
-#     # Si solo queda un ganador, significa que el torneo ha terminado
-#     if len(winners) == 1:
-#         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
-#         return  
-
-#     # Generar la nueva lista de partidos
-#     new_round_matches = []
-#     for i in range(0, len(winners) - 1, 2):
-#         match = {
-#             "tree_id": str(i + 5) if round_id == "1" else "7",
-#             "players": {
-#                 "left": {"id": winners[i], "username": f"{winners[i]}"},
-#                 "right": {"id": winners[i + 1], "username": f"{winners[i + 1]}"},
-#             },
-#             "winner": None,
-#             "loser": None,
-#             "status": "pending"
-#         }
-#         new_round_matches.append(match)
-
-#     # Guardar la nueva ronda en Redisz  
-#     redis_client.hset(tournament_tree_key, f"round_{next_round_id}", json.dumps(new_round_matches))
-
-#     print(f"Iniciando ronda {next_round_id} con emparejamientos: {new_round_matches}")
-
-#     # Enviar las nuevas partidas a `game`
-#     for match in new_round_matches:
-#         send_create_game_task({
-#             "left_player_id": match["players"]["left"]["id"],
-#             "left_player_username": match["players"]["left"]["username"],
-#             "right_player_id": match["players"]["right"]["id"],
-#             "right_player_username": match["players"]["right"]["username"],
-#             "tournament_id": tournament_id,
-#             "tree_id": match["tree_id"]
-#         })
-
 def start_next_round(tournament_id, round_id, winners):
     
     next_round_id = str(int(round_id) + 1)  # Pasamos a la siguiente ronda
@@ -203,7 +159,6 @@ def update_tournament_tree(tournament_id, tree_id, winner):
 
         redis_client.hset(tournament_tree_key, round_key, json.dumps(current_round))
         print(f"🔄 Árbol actualizado en {round_key}: {current_round}")
-
         # Si todos los partidos de la ronda han terminado, iniciar la siguiente ronda
         completed_games = [match for match in current_round if match["status"] == "completed"]
         print(f"Partidos completados: {len(completed_games)} de {len(current_round)}")
@@ -317,21 +272,6 @@ def start_matchmaking(message):
 
     print("Tareas de creación de juegos enviadas para todos los pares.")
 
-# @shared_task(name='game_end')
-# def game_end(message):
-#     message_redis = {
-#         "type": "game_end",
-#         "winner": message["winner"],
-#         "loser": message["loser"],
-#         "tournament_id": message["tournament_id"],
-#         "tree_id":   message["tree_id"],
-#     }
-#     channel = f"tournament_{message['tournament_id']}"
-#     print(f"El juego ha terminado. Ganador: {message['winner']}.")
-#     print("\033[31m" + "Fin del juego." + "\033[0m")
-#     redis_client.publish(channel, json.dumps(message_redis))
-#     # Aquí se puede agregar lógica adicional, como actualizar las puntuaciones de los jugadores.
-#     update_tournament_tree(message["tournament_id"], message["tree_id"], message["winner"])
 @shared_task(name='game_end')
 def game_end(message):
     """

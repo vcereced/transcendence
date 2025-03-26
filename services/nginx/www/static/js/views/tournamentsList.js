@@ -9,7 +9,7 @@ export async function renderTournamentsList() {
     return htmlContent;
 }
 
-let socket = null;
+let global_socket = null;
 export function initTournamentsList() {
 
     // --- VARIABLES AND CONSTANTS ---
@@ -59,8 +59,8 @@ export function initTournamentsList() {
                 availableContainer.appendChild(gameItem);
             });
 
-            if (socket === null) {
-                socket = startGlobalWebSocket();
+            if (global_socket === null) {
+                global_socket = startGlobalWebSocket();
             }
         } catch (error) {
             console.error("Error al cargar los torneos:", error);
@@ -72,9 +72,9 @@ export function initTournamentsList() {
         gameItem.classList.add('game-item');
 
         gameItem.innerHTML = `
-            <div class="game-info">
+            <div class="game-info" id="tournament-${game.id}">
                 <div class="game-name">${game.name}</div>
-                <div class="game-meta">Usuarios conectados: ${game.users}</div>
+                <div class="badge game-meta">Usuarios conectados: ${game.users}</div>
                 <div class="game-meta">Fecha de creación: ${game.date}</div>
             </div>
             <button class="btn">${type === 'available' ? 'Unirse' : 'Visualizar'}</button>
@@ -129,7 +129,7 @@ export function initTournamentsList() {
                 if (tournament) {
                     const userCountContainer = tournament.querySelector('.badge');
                     if (userCountContainer) {
-                        userCountContainer.textContent = `${data.user_count}`;
+                        userCountContainer.textContent = `Usuarios conectados: ${data.user_count}`;
                     }
                 }
             };

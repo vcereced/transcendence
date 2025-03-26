@@ -43,12 +43,14 @@
 
 .player.winner {
     background: #d4edda;
-    border-color: #28a745;
+    border-color: #38d423;
+    box-shadow: 0 0 10px #38d423;
 }
 
 .player.loser {
     background: #f8d7da;
-    border-color: #dc3545;
+    border-color: #e21e18;
+    box-shadow: 0 0 10px #dc3545;
 }
 
 .player.championship {
