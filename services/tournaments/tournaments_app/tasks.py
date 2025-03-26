@@ -272,21 +272,6 @@ def start_matchmaking(message):
 
     print("Tareas de creación de juegos enviadas para todos los pares.")
 
-# @shared_task(name='game_end')
-# def game_end(message):
-#     message_redis = {
-#         "type": "game_end",
-#         "winner": message["winner"],
-#         "loser": message["loser"],
-#         "tournament_id": message["tournament_id"],
-#         "tree_id":   message["tree_id"],
-#     }
-#     channel = f"tournament_{message['tournament_id']}"
-#     print(f"El juego ha terminado. Ganador: {message['winner']}.")
-#     print("\033[31m" + "Fin del juego." + "\033[0m")
-#     redis_client.publish(channel, json.dumps(message_redis))
-#     # Aquí se puede agregar lógica adicional, como actualizar las puntuaciones de los jugadores.
-#     update_tournament_tree(message["tournament_id"], message["tree_id"], message["winner"])
 @shared_task(name='game_end')
 def game_end(message):
     """

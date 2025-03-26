@@ -293,6 +293,11 @@ function updateUserList(userList) {
     });
     //guardar en session storage
     sessionStorage.setItem("user_list", JSON.stringify(userList));
+
+    //GARYDD1 TO DO: MANAGE THE START TOURNAMENT BUTTON/EVENT WHEN THE USER LIST IS FULL.
+    // if (userList.length >= 8) {
+        
+    // }
 }
 
 function sendWebSocketMessage(type, data) {
