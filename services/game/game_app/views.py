@@ -8,7 +8,7 @@ from rest_framework import status
 
 
 from game_app.models import Game, RockPaperScissorsGame
-from game_app.serializers import GameSerializer
+from game_app.serializers import GameSerializer, RockPaperScissorsGameSerializer
 from game_app import tasks
 from game_app import utils
 
@@ -130,4 +130,24 @@ def create_game(request : Request):
     )
 
 
+@api_view(["GET"])
+def get_match_statistics(request, user_id):
+    online_pong_matches= Game.objects.filter(
+        (Q(left_player_id=user_id) | Q(right_player_id=user_id)) & Q(is_local_game=False)
+    )
+    online_pong_matches_played = online_pong_matches.count()
+    online_pong_matches_won = online_pong_matches.filter(winner_id=user_id).count()
+
+    online_rps_matches_won = RockPaperScissorsGame.objects.filter(
+        Q(is_local_game=False) & Q(winner_id=user_id)
+    ).count()
+
+    return Response(
+        {
+            "online_matches_played": online_pong_matches_played,
+            "online_pong_matches_won": online_pong_matches_won,
+            "online_rps_matches_won": online_rps_matches_won,
+        },
+        status=status.HTTP_200_OK,
+    )
 
