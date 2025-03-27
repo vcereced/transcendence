@@ -6,7 +6,82 @@ import jwt
 from .tasks import send_start_matchmaking_task, end_game_simulation
 from .redis_manager import RedisManager 
 
+
+# =========================================
+#           EXTERNAL METHODS AND MACROS
+# =========================================
+
+LOGGED_USERS_SET = "logged_users"
+
+async def extract_user_info(self):
+    """Extrae información del usuario desde el JWT en las cookies."""
+    headers = dict(self.scope["headers"])
+    cookie_header = headers.get(b"cookie", b"")
+
+    if cookie_header:
+        for c in cookie_header.decode().split(";"):
+            if "accessToken" in c:
+                jwt_token = c.split("=")[1]
+                try:
+                    payload = jwt.decode(jwt_token, options={"verify_signature": False})
+                    self.username = payload.get("username")
+                    self.user_id = payload.get("user_id")
+                    print(f"User connected: {self.username} (ID: {self.user_id})")
+                except jwt.DecodeError as e:
+                    print(f"Error decoding token: {e}")
+                break
+
+
+#This is a temporary solution; it should be replaced by a Redis set... or not ?
 waiting_players = []
+class LoginConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+
+        print("Connecting to Login WebSocket")
+        self.room_group_name = "login_room"
+        await extract_user_info(self)
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+        self.redis_manager = RedisManager()
+        await self.redis_manager.add_to_set(LOGGED_USERS_SET, self.username)
+        print(f"User {self.username} connected")
+        logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET)
+        print(f"Logged users qty: {len(logged_users)}")
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "logged_users",
+                "logged_users": logged_users
+            }
+        )
+        await self.accept()
+
+    # =========================================
+    #             MESSAGE HANDLERS
+    # =========================================   
+
+    async def logged_users(self, event):
+        await self.send(json.dumps({"type": "logged_users", "logged_users": event["logged_users"]}))
+
+    # ============END MESSAGE HANDLERS=========
+    
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+
+    async def disconnect(self, close_code):
+        print(f"User {self.username} disconnected")
+        await self.redis_manager.remove_from_set(LOGGED_USERS_SET, self.username)
+        logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET)
+        print(f"Logged users qty: {len(logged_users)}")
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "logged_users",
+                "logged_users": logged_users
+            }
+        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
 class VersusConsumer(AsyncWebsocketConsumer):
     
@@ -14,7 +89,7 @@ class VersusConsumer(AsyncWebsocketConsumer):
         print("Connecting to Versus WebSocket")
         
         self.room_group_name = "versus_room"
-        self.redis_manager = RedisManager()
+        # self.redis_manager = RedisManager()
 
         await extract_user_info(self)
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
@@ -46,8 +121,6 @@ class VersusConsumer(AsyncWebsocketConsumer):
             print(f"User {self.username} removed from the queue")
             print(f"Waiting players qty: {len(waiting_players)}")
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
-    
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
     """Maneja la conexión de WebSocket global para los torneos."""
@@ -106,7 +179,6 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
             "user_count": event["user_count"]
         }))
 
-
 class RoomConsumer(AsyncWebsocketConsumer):
     """Maneja la conexión de WebSocket para un torneo específico."""
 
@@ -136,7 +208,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.publish_global_update(current_user_count)
 
         # Extraer información del usuario desde el JWT
-        await self.extract_user_info(self)
+        await extract_user_info(self)
 
         # Almacenar información del usuario en Redis
         await self.redis_manager.set_value(f"user_channel:{self.username}", self.channel_name)
@@ -300,24 +372,3 @@ class RoomConsumer(AsyncWebsocketConsumer):
         tournament_tree = event["tournament_tree"]
         await self.send(text_data=json.dumps({"type": "start_tournament", "message": message, "tournament_tree": tournament_tree}))
 
-# =========================================
-#           EXTERNAL METHODS
-# =========================================
-
-async def extract_user_info(self):
-    """Extrae información del usuario desde el JWT en las cookies."""
-    headers = dict(self.scope["headers"])
-    cookie_header = headers.get(b"cookie", b"")
-
-    if cookie_header:
-        for c in cookie_header.decode().split(";"):
-            if "accessToken" in c:
-                jwt_token = c.split("=")[1]
-                try:
-                    payload = jwt.decode(jwt_token, options={"verify_signature": False})
-                    self.username = payload.get("username")
-                    self.user_id = payload.get("user_id")
-                    print(f"User connected: {self.username} (ID: {self.user_id})")
-                except jwt.DecodeError as e:
-                    print(f"Error decoding token: {e}")
-                break

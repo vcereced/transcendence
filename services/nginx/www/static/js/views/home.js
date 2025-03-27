@@ -3,6 +3,7 @@ import { showUsername, showPicture, updateUsername, updatePassword, updatePictur
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
 import { handleJwtToken } from './jwtValidator.js';
+import { login_socket, initLoginSocket, logged_users } from './newLogin.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
@@ -13,8 +14,6 @@ export async function renderHome() {
 export async function initHome() {
 
     // --- VARIABLES AND CONSTANTS ---
-
-    
 
     const totalCards = 4;
     const angleStep = 360 / totalCards;
@@ -193,24 +192,33 @@ export async function initHome() {
         // If success, show popup of redirecting to created game
     }
 
-
-window.toggleFriendStatus = function toggleFriendStatus() {
-    var btn = document.getElementById("add-friend-btn");
-    if (btn.innerHTML === "Añadir Amigo") {
-        btn.innerHTML = "Amigo";
-        btn.style.backgroundColor = "var(--primary-color)";
-        btn.style.color = "white";
-    } else {
-        btn.innerHTML = "Añadir Amigo";
-        btn.style.backgroundColor = "#f5f5f5";
-        btn.style.color = "#333";
+    //--DONE BY GARYDD1---
+    window.checkOnlineStatus = function checkOnlineStatus(username) {
+        
+        if (logged_users.includes(username)) {
+            return true; 
+        } else {
+            return false; 
+        }
     }
-};
-
     
-    window.updateStatus = function updateStatus(isOnline) {
+    window.toggleFriendStatus = function toggleFriendStatus() {
+        var btn = document.getElementById("add-friend-btn");
+        if (btn.innerHTML === "Añadir Amigo") {
+            btn.innerHTML = "Amigo";
+            btn.style.backgroundColor = "var(--primary-color)";
+            btn.style.color = "white";
+        } else {
+            btn.innerHTML = "Añadir Amigo";
+            btn.style.backgroundColor = "#f5f5f5";
+            btn.style.color = "#333";
+        }
+    };
+
+    //--MODIFIED BY GARYDD1---
+    window.updateStatus = function updateStatus(username) {
         var statusCircle = document.getElementById("status-circle");
-        if (isOnline) {
+        if (checkOnlineStatus(username)) {
             statusCircle.style.backgroundColor = "var(--primary-color)";
         } else {
             statusCircle.style.backgroundColor =  "var(--btn-bg-color)";
@@ -328,7 +336,14 @@ window.toggleFriendStatus = function toggleFriendStatus() {
         window.sessionStorage.setItem("afterLoginRedirect", "#");
         window.location.hash = "#new-login"
     }
-    handleJwtToken();
-
+    try {
+        await handleJwtToken();
+        console.log("Token is valid, starting here");
+        initLoginSocket();
+    }
+    catch (error) {
+        console.log("Token is invalid, redirecting to login");
+        console.error(error);
+    }
     await checkActiveGame(document, homeDiv);
 }

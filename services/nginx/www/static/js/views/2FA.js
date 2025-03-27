@@ -1,7 +1,7 @@
 // static/js/views/2FA.js
 
 import EventListenerManager from '../utils/eventListenerManager.js';
-
+import { login_socket, initLoginSocket } from './newLogin.js';
 export async function render2FA() {
     const response = await fetch('static/html/2FA.html');
     const htmlContent = await response.text();
@@ -65,8 +65,8 @@ export async function verifyOtpRegister(code) {
             console.log("obtenemos coookies oleee")
             document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
             document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
+            initLoginSocket();
             window.location.hash = "#";
-
         } else if (response.ok && sessionStorage.getItem("action") === "register") {
             document.getElementById("registerResponseMessage").innerText = data.message;
             window.location.hash = "#new-login";

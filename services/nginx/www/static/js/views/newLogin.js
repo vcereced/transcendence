@@ -8,6 +8,37 @@ export async function renderNewLogin() {
     return htmlContent;
 }
 
+let login_socket = null;
+let logged_users = [];
+function initLoginSocket() {
+    
+    if (login_socket === null) {
+        login_socket = new WebSocket(`wss://${window.location.host}/ws/login/`);
+    }
+
+    login_socket.onopen = function(event) {
+        console.log("login_socket open");
+    }
+
+    login_socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log("login_socket message");
+        console.log(data);
+        if (data.type === "logged_users") {
+            logged_users = data.logged_users;
+        } 
+    }
+    login_socket.onclose = function(event) {
+        console.log("login_socket close");
+    }
+
+    login_socket.onerror = function(event) {
+        console.log("login_socket error");
+        console.log(event);
+    }
+}
+
+export { login_socket , initLoginSocket , logged_users } ;
 function emailRegister(data){
 
 	const registerResponseMessage = document.getElementById("register-response-message");

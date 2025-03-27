@@ -44,3 +44,19 @@ class RedisManager:
         """Obtiene la lista de usuarios en un torneo."""
         users = await self.redis.smembers(f"{tournament_key}_users")
         return [user.decode("utf-8") for user in users]
+
+#--------------------------------------------------------------
+#                FOR ONLINE USERS AND WAITING PLAYERS
+#--------------------------------------------------------------
+    async def add_to_set(self, set_key, value):
+        """Añade un valor a un set en Redis."""
+        await self.redis.sadd(set_key, value)
+
+    async def remove_from_set(self, set_key, value):
+        """Elimina un valor de un set en Redis."""
+        await self.redis.srem(set_key, value)
+
+    async def get_set_members(self, set_key):
+        """Obtiene todos los miembros de un set en Redis."""
+        members = await self.redis.smembers(set_key)
+        return [m.decode("utf-8") for m in members]

@@ -69,9 +69,9 @@ async function validateToken() {
         return false;
     }
 }
-
+//WE NEED TO DISCUSS WHERE SHOUlD THE TRY CATCH BE. ON THE CALLER OR HERE... FOR GARYDD1 it works IN THE CALLER. CHECK NEWLOGIN.JS LINE
 export async function handleJwtToken() {
-    try{
+    // try{
         const response = await validateToken();
         
         if (response === "Token has expired or invalid") {
@@ -81,8 +81,7 @@ export async function handleJwtToken() {
             throw new Error("handleJwtToken: token not available");
         }
 
-    } catch (error) {
-        console.error("handleJwtToken", error);
-    }
-
+    // } catch (error) {
+    //     console.error("handleJwtToken", error);
+    // // }
 }
