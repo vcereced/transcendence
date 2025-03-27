@@ -422,6 +422,7 @@ async def play_rock_paper_scissors(rps_id: int):
             "tournament_id": rps_record.tournament_id,
             "tree_index": rps_record.tree_index,
             "rock_paper_scissors_id": rps_record.id,
+            "is_local_game": rps_record.is_local_game,
         }
         current_app.send_task(
             "launch_game",

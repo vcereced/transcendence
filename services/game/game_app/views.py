@@ -56,18 +56,12 @@ def has_active_game(request):
     return Response(active_game_data, status=status.HTTP_200_OK)
 
 
-
-
 @api_view(["POST"])
 def create_game(request : Request):
     user_data = utils.extract_user_data_from_request(request)
     game_type = request.data.get("type")
     user_id = user_data.get("user_id")
     username = user_data.get("username")
-    print(f"User data: {user_data}")
-    print(f"Game type: {game_type}")
-    print(f"User id: {user_id}")
-    print(f"Username: {username}")
     if not game_type:
         return Response(
             {"error": "No game type provided"},
@@ -122,7 +116,8 @@ def create_game(request : Request):
             "right_player_id": user_id,
             "right_player_username": "Invitado",
             "tournament_id": 0,
-            "tree_index": 0
+            "tree_index": 0,
+            "is_local_game": True,
         }
         current_app.send_task(
             "create_game",

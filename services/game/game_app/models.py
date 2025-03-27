@@ -96,6 +96,7 @@ class Game(models.Model):
     tournament_id = models.IntegerField(default=0)
     tree_index = models.IntegerField(default=0)
     rock_paper_scissors_id = models.IntegerField(null=True, blank=True)
+    is_local_game = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -115,6 +116,7 @@ class RockPaperScissorsGame(models.Model):
     winner_username = models.CharField(max_length=100, null=True, blank=True)
     tournament_id = models.IntegerField(default=0)
     tree_index = models.IntegerField(default=0)
+    is_local_game = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created_at"]
