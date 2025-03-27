@@ -15,4 +15,5 @@ urlpatterns = [
     path('password', views.updatePassword_view, name='password'),
     path('pictureUrl', views.pictureUrl_view, name='pictureUrl'),
     path('changePictureUrl', views.changePictureUrl_view, name='changePictureUrl'),
+	path('user/<str:username>', views.UserDetail.as_view(), name='user_detail'),
 ]
