@@ -151,3 +151,41 @@ def get_match_statistics(request, user_id):
         status=status.HTTP_200_OK,
     )
 
+
+
+@api_view(["GET"])
+def get_match_history(request, user_id):
+    
+    
+    rps_games = RockPaperScissorsGame.objects.filter(
+        Q(left_player_id=user_id) | Q(right_player_id=user_id)
+    ).order_by("-created_at")
+
+    pong_games = Game.objects.filter(
+        Q(left_player_id=user_id) | Q(right_player_id=user_id)
+    ).order_by("-created_at")
+    
+    rps_games_data = RockPaperScissorsGameSerializer(rps_games, many=True).data
+    pong_games_data = GameSerializer(pong_games, many=True).data
+
+    matches = [{"pong": pong_data, "rps": rps_data} for pong_data, rps_data in zip(pong_games_data, rps_games_data)]
+
+    tournament_matches = {}
+    online_matches = []
+    local_matches = []
+    for match in matches:
+        tournament_id = match["pong"]["tournament_id"]
+        if tournament_id != 0:
+            try:
+                tournament_matches[tournament_id].append(match)
+            except KeyError:
+                tournament_matches[tournament_id] = [match]
+        elif match["pong"]["is_local_game"]:
+            local_matches.append(match)
+        else:
+            online_matches.append(match)
+    
+    return Response(data={"tournament_matches": tournament_matches, 
+                          "online_matches": online_matches, 
+                          "local_matches": local_matches,
+                          }, status=status.HTTP_200_OK)
