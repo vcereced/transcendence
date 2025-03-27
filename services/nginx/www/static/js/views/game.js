@@ -182,7 +182,7 @@ export async function initGame() {
                 showPopup(`${data.game_state.winner_username} gana!`);
                 setTimeout(() => {
                     if (tournamentId > 0) {
-                        window.location.hash = `#tournament/room/${tournamentId}/`;
+                        window.location.hash = `#tournament/room/${tournamentId}`;
                     } else {
                         window.location.hash = "#"
                     }

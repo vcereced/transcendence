@@ -44,7 +44,7 @@ class LoginConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         self.redis_manager = RedisManager()
-        await self.redis_manager.add_to_set(LOGGED_USERS_SET, self.id)
+        await self.redis_manager.add_to_set(LOGGED_USERS_SET, self.user_id)
         print(f"User {self.username} connected with ID {self.user_id}")
         logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET)
         print(f"Logged users qty: {len(logged_users)}")
@@ -71,7 +71,7 @@ class LoginConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         print(f"User {self.username} disconnected with ID {self.user_id}")
-        await self.redis_manager.remove_from_set(LOGGED_USERS_SET, self.id)
+        await self.redis_manager.remove_from_set(LOGGED_USERS_SET, self.user_id)
         logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET)
         print(f"Logged users qty: {len(logged_users)}")
         await self.channel_layer.group_send(

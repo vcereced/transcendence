@@ -250,7 +250,7 @@ function startTournamentWebSocket(tournamentId) {
         if (data.type === "start_tournament") {
             start_tournament(data);
             setTimeout(() => {
-                window.location.hash = '#game'; 
+                window.location.hash = '#rock-paper-scissors'; 
             }, 1000);
         }
         if (data.type === "game_end") {
