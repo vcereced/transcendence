@@ -193,9 +193,9 @@ export async function initHome() {
     }
 
     //--DONE BY GARYDD1---
-    window.checkOnlineStatus = function checkOnlineStatus(username) {
+    window.checkOnlineStatus = function checkOnlineStatus(userId) {
         
-        if (logged_users.includes(username)) {
+        if (logged_users.includes(userId)) {
             return true; 
         } else {
             return false; 
@@ -216,9 +216,9 @@ export async function initHome() {
     };
 
     //--MODIFIED BY GARYDD1---
-    window.updateStatus = function updateStatus(username) {
+    window.updateStatus = function updateStatus(userId) {
         var statusCircle = document.getElementById("status-circle");
-        if (checkOnlineStatus(username)) {
+        if (checkOnlineStatus(userId)) {
             statusCircle.style.backgroundColor = "var(--primary-color)";
         } else {
             statusCircle.style.backgroundColor =  "var(--btn-bg-color)";
