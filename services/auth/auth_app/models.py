@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
 from django_otp.models import Device
 
+
 class CustomUser(AbstractUser):  
     
     email = models.EmailField(unique=True)
