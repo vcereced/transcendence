@@ -157,7 +157,7 @@ export async function initGame() {
     // --- EVENT LISTENERS ---
 
     socket.onopen = function (event) {
-        console.log("Conectado al WebSocket.");
+        console.log("Conectado al WebSocket de Game.");
     };
 
     socket.onmessage = function (event) {
@@ -225,7 +225,7 @@ export async function initGame() {
     };
 
     socket.onclose = function (event) {
-        console.log("Desconectado del WebSocket.");
+        console.log("Desconectado del WebSocket de Game.");
         console.log(event);
     };
 

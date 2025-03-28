@@ -371,6 +371,11 @@ function update_tournament_tree(data) {
     sessionStorage.setItem("tournament_tree", JSON.stringify(data.tournament_tree));
 }
 
+/**
+ * 
+ * @param {*} currentMatchId 
+ * @returns Returns the next match element of the html tree.
+ */
 function getNextMatch(currentMatchId) {
     const nextMatchId = Math.floor((currentMatchId - 1) / 2) + 5;
     return document.querySelector(`.match[data-match="${nextMatchId}"]`);
@@ -378,7 +383,6 @@ function getNextMatch(currentMatchId) {
 
 
 function updateNextMatch(nextMatch, winner, currentMatchId) {
-    console.log("Updating netxtMatch, winner, currentMatchID:", nextMatch, winner, currentMatchId);
     const targetPlayer = document.querySelector(`.player[data-player="winner-${currentMatchId}"]`);
     if (targetPlayer) {
         targetPlayer.textContent = winner;  
@@ -403,7 +407,7 @@ function updateChampion(winner) {
 window.addEventListener('hashchange', function(event) {
     // Verificar si la URL contiene '#tournament' o '#game'
     console.log('URL:', window.location.hash);
-    if (!window.location.hash.includes('tournament/room') && !window.location.hash.includes('game')) {
+    if (!window.location.hash.includes('tournament/room') && !window.location.hash.includes('game') && !window.location.hash.includes('rock-paper-scissors')) {
         closeWebSocket();
         clearTournamentTree(); 
     }
@@ -411,7 +415,7 @@ window.addEventListener('hashchange', function(event) {
 
 function closeWebSocket() {
     if (room_socket) {
-        console.log('Cerrando WebSocket...');
+        console.log('Cerrando WebSocket de sala de torneo...');
         room_socket.close();  
         room_socket = null;  
     }
@@ -488,7 +492,6 @@ function restoreTournamentTree() {
         
                     return; 
                 }
-        
                 
                 const matchElements = document.querySelectorAll(`.match[data-match="${treeIdStr}"]`);
         
@@ -515,7 +518,10 @@ function restoreTournamentTree() {
                             availableDiv.textContent = username;
                             if (username === winner) availableDiv.classList.add("winner");
                             else if (username === loser) availableDiv.classList.add("loser");
-        
+
+                            if (winner) {
+                                updateNextMatch(matchElement, winner, treeIdStr);
+                            }
                             
                             const idx = playerDivs.indexOf(availableDiv);
                             if (idx > -1) playerDivs.splice(idx, 1);
