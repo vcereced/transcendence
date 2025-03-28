@@ -8,6 +8,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework.response import Response
 import jwt
 import os
 from .models import CustomUser, EmailOTPDevice  # Importa tu modelo personalizado
@@ -277,3 +278,8 @@ def changePictureUrl_view(request):
 		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
 	return Response({"message": "picture_url cambiada correctamente."}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def playersList_view(request):
+    players = CustomUser.objects.values('username', 'profile_picture')
+    return Response(players)

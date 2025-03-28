@@ -21,7 +21,7 @@ export function initHome() {
     let isDragging = false;
     let startX = 0;
 
-    const players = [
+    let players = [
         { username: "javiersa", avatar: "../../media/2.gif" },
         { username: "f-gomez", avatar: "../../media/3.gif" },
         { username: "vcered", avatar: "../../media/4.gif" },
@@ -75,8 +75,42 @@ export function initHome() {
         searchIcon.style.display = 'none';
         searchBar.classList.add('active');
         searchBar.focus();
-        playerList.style.display = 'block';
-        updatePlayerList('');
+        //playerList.style.display = 'block';
+        //updatePlayerList('');
+        players = downloadPlayerList();
+    }
+
+    async function downloadPlayerList() {
+        try {
+            const response = await fetch("/api/settings/playersList");
+            if (!response.ok) {
+                throw new Error("Error al obtener la lista de jugadores");
+            }
+            players = await response.json();
+            console.log("Lista de jugadores descargada:", players);
+            return players;
+        } catch (error) {
+            console.error("Error en downloadPlayerList:", error);
+            alert("Error en downloadPlayerList: " + error)
+        }
+    }
+
+    document.getElementById("searchBar").addEventListener("input", (event) => {
+
+        const query = event.target.value.trim(); // Elimina espacios en blanco
+        if (query.length > 0) {  // Solo llama si hay caracteres escritos
+            updatePlayerList(query);
+            document.getElementById('playerList').style.display = 'block';
+        } else {
+            document.getElementById('playerList').style.display = 'none';
+        }
+        
+    });
+
+    function handlePlayerClick(username) {
+        console.log("Usuario seleccionado:", username);
+        
+        // Aquí puedes hacer lo que necesites, como abrir un perfil, mandar un mensaje, etc.
     }
 
     window.updatePlayerList = function updatePlayerList(query) {
@@ -84,16 +118,22 @@ export function initHome() {
         playerList.innerHTML = '';
 
         const filteredPlayers = players.filter(player =>
-            player.username.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 5);
+            player.username.toLowerCase().startsWith(query.toLowerCase())
+        );
 
         filteredPlayers.forEach(player => {
             const li = document.createElement('li');
             li.classList.add('player-item');
-            li.innerHTML = `<img src="${player.avatar}" alt="Avatar"> ${player.username}`;
+            li.innerHTML = `<img src="${player.profile_picture}" alt="Avatar"> ${player.username}`;
+            
+            li.addEventListener("click", () => {
+                handlePlayerClick(player.username); // Llama a tu función pasando el nombre del usuario
+            });
             playerList.appendChild(li);
         });
     }
+
+
 
     window.openProfilePopup = function openProfilePopup() {
         document.getElementById('profilePopup').style.display = 'flex';
@@ -117,6 +157,7 @@ export function initHome() {
         document.getElementById("save-btn-images").addEventListener("click", async () => {
             const src =  document.getElementById("current-profile-pic").src;
             updatePicture(email, src);
+            players = downloadPlayerList(); //descarga la lista actualizada con el cambio para displayear en buscar
             window.closeSettingsPopup();
         });
 
