@@ -4,13 +4,40 @@ from game_app.serializers import GameSerializer, RockPaperScissorsGameSerializer
 import redis
 from game import settings as s
 import json
-from celery import Celery
+from celery import Celery, current_app
 from django.db import transaction
 import random
 
+def check_ia_vs_ia(game_data):
+    print (f"Checking if IA vs IA game: {game_data['left_player_id']} vs {game_data['right_player_id']}")
+    if game_data["left_player_id"] == 4242 and game_data["right_player_id"] == 4242:
+
+        print("IA vs IA game creation skipped.")
+        winner_id = game_data["left_player_id"] if random.choice([True, False]) else game_data["right_player_id"]
+        loser_id = game_data["right_player_id"] if winner_id == game_data["left_player_id"] else game_data["left_player_id"]
+        winner_username = game_data["left_player_username"] if winner_id == game_data["left_player_id"] else game_data["right_player_username"]
+        loser_username = game_data["right_player_username"] if winner_id == game_data["left_player_id"] else game_data["left_player_username"]
+        print(f"🏆 Game simulated finished. Winner: {winner_username}, Loser: {loser_username}")
+       
+        current_app.send_task( 
+            "game_end",
+            args=[{
+                "tournament_id": game_data["tournament_id"],
+                "winner": winner_username,
+                "loser": loser_username,
+                "tree_index": game_data["tree_index"],
+                "type": "game_end",
+            }],
+            queue="matchmaking_tasks",
+        )
+        return True
+    return False
 
 @shared_task(name="create_game")
 def create_game(game_data):
+    #print in GREEN 
+    print(f"\033[92mCreating game with data: {game_data}\033[0m")
+    if check_ia_vs_ia(game_data): return
     with transaction.atomic():
         serializer = RockPaperScissorsGameSerializer(data=game_data)
         if not serializer.is_valid():

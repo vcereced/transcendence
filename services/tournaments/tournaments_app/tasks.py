@@ -87,7 +87,8 @@ def start_next_round(tournament_id, round_id, winners):
     last_round_key = f"round_{round_id}"
     last_round_matches = redis_client.hget(tournament_tree_key, last_round_key)
     last_round_matches = json.loads(last_round_matches) if last_round_matches else []
-    
+    #print in yellow
+    print(f"\033[33m" + f"Últimos partidos de la ronda {round_id}: {last_round_matches}" + "\033[0m")
     if last_round_matches:
         last_tree_id = max(int(match["tree_id"]) for match in last_round_matches)
     else:
@@ -100,8 +101,8 @@ def start_next_round(tournament_id, round_id, winners):
         match = {
             "tree_id": str(next_tree_id),
             "players": {
-                "left": {"id": winners[i], "username": f"{winners[i]}"},
-                "right": {"id": winners[i + 1], "username": f"{winners[i + 1]}"},
+                "left": {"id": winners[i]["id"], "username": f"{winners[i]['username']}"},
+                "right": {"id": winners[i + 1]["id"], "username": f"{winners[i + 1]['username']}"},
             },
             "winner": None,
             "loser": None,
@@ -124,7 +125,7 @@ def start_next_round(tournament_id, round_id, winners):
         })
 
 
-
+#CHECKPOINT!!!!!
 def update_tournament_tree(tournament_id, tree_id, winner):
     """
     Guarda el resultado de un partido en Redis y avanza a la siguiente ronda si es necesario.
@@ -150,8 +151,10 @@ def update_tournament_tree(tournament_id, tree_id, winner):
         for match in current_round:
             print(f"Match: {match}")
             if match["tree_id"] == str(tree_id):
-                match["winner"] = winner
-                match["loser"] = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
+                winning_player = match["players"]["left"] if match["players"]["left"]["username"] == winner else match["players"]["right"]
+                losing_player = match["players"]["left"] if match["players"]["right"]["username"] == winner else match["players"]["right"]
+                match["winner"] = {"id": winning_player["id"], "username": winning_player["username"]}
+                match["loser"] = {"id": losing_player["id"], "username": losing_player["username"]}
                 loser = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
                 print("\033[32m" + f"🏆 Ganador del partido {tree_id}: {winner}. Perdedor: {loser}" + "\033[0m")
                 match["status"] = "completed"
@@ -216,13 +219,13 @@ def start_matchmaking(message):
     # Completar la lista si hay menos de 8 jugadores
     if len(players) < 8:
         print("Jugadores insuficientes. Agregando jugadores ficticios para completar.")
-        current_id = 691  # ID inicial para los usuarios ficticios
+        current_id = 4242  # ID inicial para los usuarios ficticios
         for i in range(len(players) + 1, 9):  # Rellenar hasta tener 8 jugadores
             players.append({
                 "username": f"IA{i}",
                 "user_id": current_id
             })
-            current_id += 1
+            # current_id += 1
         print(f"Lista completada con jugadores ficticios: {players}")
 
     # THIS IS THE MATCHMAKING ALGORITHM IT SHOULD BE REPLACED BY A BETTER ONE

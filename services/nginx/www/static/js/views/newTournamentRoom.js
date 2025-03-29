@@ -251,14 +251,14 @@ function startTournamentWebSocket(tournamentId) {
             start_tournament(data);
             setTimeout(() => {
                 window.location.hash = '#rock-paper-scissors'; 
-            }, 1000);
+            }, 1500);
         }
         if (data.type === "game_end") {
             // update after a small delay to see the changesk
             // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
-            }, 0.1);
+            }, 1500);
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
@@ -426,6 +426,7 @@ function clearTournamentTree() {
     console.log('Datos del torneo eliminados de sessionStorage');
 }
 
+
 function restoreTournamentTree() {
     
     const savedTree = sessionStorage.getItem("tournament_tree");
@@ -437,9 +438,8 @@ function restoreTournamentTree() {
         for (const key in rawTree) {
             parsedTournamentTree[key] = JSON.parse(rawTree[key]);
         }
-
+        
         console.log("Restaurando árbol desde localStorage:", parsedTournamentTree);
-
         for (const roundKey in parsedTournamentTree) {
             const roundMatches = parsedTournamentTree[roundKey];
         
@@ -454,8 +454,8 @@ function restoreTournamentTree() {
                         const username = participant.username;
         
                         
-                        const isWinner = username === winner;
-                        const isLoser = username === loser;
+                        const isWinner = username === winner.username;
+                        const isLoser = username === loser.username;
         
                         
                         const originTreeId = Object.keys(players).find(
@@ -510,17 +510,18 @@ function restoreTournamentTree() {
                                 content === '' ||
                                 content.startsWith('player') ||
                                 content.startsWith('winner') ||
-                                content === 'champion'
+                                content === 'champion' 
                             );
                         });
         
                         if (availableDiv) {
                             availableDiv.textContent = username;
-                            if (username === winner) availableDiv.classList.add("winner");
-                            else if (username === loser) availableDiv.classList.add("loser");
-
+                            
+                            
                             if (winner) {
-                                updateNextMatch(matchElement, winner, treeIdStr);
+                                if (username === winner.username) availableDiv.classList.add("winner");
+                                else if (username === loser.username) availableDiv.classList.add("loser");
+                                updateNextMatch(matchElement, winner.username, treeIdStr);
                             }
                             
                             const idx = playerDivs.indexOf(availableDiv);
