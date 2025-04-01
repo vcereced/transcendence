@@ -50,6 +50,21 @@ export async function initHome() {
     const profilePopup = document.getElementById('profilePopup');
     const settingsPopup = document.getElementById('settingsPopup');
     const homeDiv = document.getElementsByClassName('home')[0];
+
+    const profileUsernameElement = document.getElementById("profile-username");
+    const profileAvatarElement = document.getElementById("profile-avatar");
+
+    const profilePongGamesPlayedElement = document.getElementById("pong-played");
+    const profilePongGamesWonElement = document.getElementById("pong-won");
+    const profileRpsGamesPlayedElement = document.getElementById("rps-played");
+    const profileRpsGamesWonElement = document.getElementById("rps-won");
+    const profileTournamentsPlayedElement = document.getElementById("tournaments-played");
+    const profileTournamentsWonElement = document.getElementById("tournaments-won");
+
+    const profileTournamentHistoryElement = document.getElementById("tournament");
+    const profileOnlineHistoryElement = document.getElementById("online");
+    const profileLocalHistoryElement = document.getElementById("local");
+
     // --- FUNCTIONS ---
 
     window.toggleFullscreen = function toggleFullscreen() {
@@ -194,18 +209,133 @@ export async function initHome() {
     }
 
 
-window.toggleFriendStatus = function toggleFriendStatus() {
-    var btn = document.getElementById("add-friend-btn");
-    if (btn.innerHTML === "Añadir Amigo") {
-        btn.innerHTML = "Amigo";
-        btn.style.backgroundColor = "var(--primary-color)";
-        btn.style.color = "white";
-    } else {
-        btn.innerHTML = "Añadir Amigo";
-        btn.style.backgroundColor = "#f5f5f5";
-        btn.style.color = "#333";
+    window.toggleFriendStatus = function toggleFriendStatus() {
+        var btn = document.getElementById("add-friend-btn");
+        if (btn.innerHTML === "Añadir Amigo") {
+            btn.innerHTML = "Amigo";
+            btn.style.backgroundColor = "var(--primary-color)";
+            btn.style.color = "white";
+        } else {
+            btn.innerHTML = "Añadir Amigo";
+            btn.style.backgroundColor = "#f5f5f5";
+            btn.style.color = "#333";
+        }
+    };
+
+    window.populateProfilePopup = async function populateProfilePopup(username) {
+        let user_id;
+
+        // Fetch user data from the server
+        fetch(`/api/usr/user/${username}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    console.error("User data not found");
+                    return;
+                }
+                // Populate elements with user data
+                user_id = data.id;
+                // usernameElement.innerText = data.username;
+                // avatarElement.src = data.profile_picture;
+                console.log("User data:");
+                console.log(data);
+            })
+            .catch(error => console.error('Error fetching user data:', error));
+
+        // Fetch game statistics from the server
+        fetch(`/api/game/statistics/${user_id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    console.error("Game data not found");
+                    return;
+                }
+                // Populate elements with game data
+                // pongGamesPlayedElement.innerText = data.pong_games_played;
+                // pongGamesWonElement.innerText = data.pong_games_won;
+                // rpsGamesPlayedElement.innerText = data.rps_games_played;
+                // rpsGamesWonElement.innerText = data.rps_games_won;
+                console.log("Game statistics data");
+                console.log(data);
+            })
+            .catch(error => console.error('Error fetching game statistics:', error));
+
+        // Fetch game history from the server
+        fetch(`/api/game/history/${user_id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    console.error("Game history not found");
+                    return;
+                }
+                // Populate elements with game history
+                // tournamentHistoryElement.innerText = data.tournament_history;
+                // onlineHistoryElement.innerText = data.online_history;
+                // localHistoryElement.innerText = data.local_history;
+                console.log("Game history data:");
+                console.log(data);
+            })
+            .catch(error => console.error('Error fetching game history:', error));
+
     }
-};
+
+    window.populateProfilePopup = async function populateProfilePopup(username) {
+        try {
+            // Step 1: Get user data and extract user_id
+            const userResponse = await fetch(`/api/usr/user/${username}`);
+            const userData = await userResponse.json();
+            
+            if (!userData) {
+                console.error("User data not found");
+                return;
+            }
+            
+            const user_id = userData.id;
+            console.log("User data:", userData);
+            
+            // Step 2: Get game statistics using user_id
+            const statsResponse = await fetch(`/api/game/statistics/${user_id}/`);
+            const statsData = await statsResponse.json();
+            
+            if (!statsData) {
+                console.error("Game data not found");
+                return;
+            }
+            console.log("Game statistics data:", statsData);
+            
+            // Step 3: Get game history using the same user_id
+            const historyResponse = await fetch(`/api/game/history/${user_id}/`);
+            const historyData = await historyResponse.json();
+            
+            if (!historyData) {
+                console.error("Game history not found");
+                return;
+            }
+            console.log("Game history data:", historyData);
+            
+            // Now you can update your UI with all the data
+
+            // Populate elements with user data
+            // usernameElement.innerText = data.username;
+            // avatarElement.src = data.profile_picture;
+
+            // Populate elements with game data
+            // pongGamesPlayedElement.innerText = data.pong_games_played;
+            // pongGamesWonElement.innerText = data.pong_games_won;
+            // rpsGamesPlayedElement.innerText = data.rps_games_played;
+            // rpsGamesWonElement.innerText = data.rps_games_won;
+
+            // Populate elements with game history
+            // tournamentHistoryElement.innerText = data.tournament_history;
+            // onlineHistoryElement.innerText = data.online_history;
+            // localHistoryElement.innerText = data.local_history;
+            
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+
 
     
     window.updateStatus = function updateStatus(isOnline) {
@@ -296,8 +426,6 @@ window.toggleFriendStatus = function toggleFriendStatus() {
             closeSettingsPopup();
         }
     });
-
-    
 
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
