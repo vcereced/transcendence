@@ -223,63 +223,6 @@ export async function initHome() {
     };
 
     window.populateProfilePopup = async function populateProfilePopup(username) {
-        let user_id;
-
-        // Fetch user data from the server
-        fetch(`/api/usr/user/${username}`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data) {
-                    console.error("User data not found");
-                    return;
-                }
-                // Populate elements with user data
-                user_id = data.id;
-                // usernameElement.innerText = data.username;
-                // avatarElement.src = data.profile_picture;
-                console.log("User data:");
-                console.log(data);
-            })
-            .catch(error => console.error('Error fetching user data:', error));
-
-        // Fetch game statistics from the server
-        fetch(`/api/game/statistics/${user_id}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data) {
-                    console.error("Game data not found");
-                    return;
-                }
-                // Populate elements with game data
-                // pongGamesPlayedElement.innerText = data.pong_games_played;
-                // pongGamesWonElement.innerText = data.pong_games_won;
-                // rpsGamesPlayedElement.innerText = data.rps_games_played;
-                // rpsGamesWonElement.innerText = data.rps_games_won;
-                console.log("Game statistics data");
-                console.log(data);
-            })
-            .catch(error => console.error('Error fetching game statistics:', error));
-
-        // Fetch game history from the server
-        fetch(`/api/game/history/${user_id}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data) {
-                    console.error("Game history not found");
-                    return;
-                }
-                // Populate elements with game history
-                // tournamentHistoryElement.innerText = data.tournament_history;
-                // onlineHistoryElement.innerText = data.online_history;
-                // localHistoryElement.innerText = data.local_history;
-                console.log("Game history data:");
-                console.log(data);
-            })
-            .catch(error => console.error('Error fetching game history:', error));
-
-    }
-
-    window.populateProfilePopup = async function populateProfilePopup(username) {
         try {
             // Step 1: Get user data and extract user_id
             const userResponse = await fetch(`/api/usr/user/${username}`);
@@ -313,29 +256,74 @@ export async function initHome() {
             }
             console.log("Game history data:", historyData);
             
-            // Now you can update your UI with all the data
 
             // Populate elements with user data
-            // usernameElement.innerText = data.username;
-            // avatarElement.src = data.profile_picture;
+            profileUsernameElement.innerText = userData.username;
+            profileAvatarElement.src = userData.profile_picture || "../../media/default-avatar.png";
 
             // Populate elements with game data
-            // pongGamesPlayedElement.innerText = data.pong_games_played;
-            // pongGamesWonElement.innerText = data.pong_games_won;
-            // rpsGamesPlayedElement.innerText = data.rps_games_played;
-            // rpsGamesWonElement.innerText = data.rps_games_won;
-
+            profilePongGamesPlayedElement.innerText = statsData.online_matches_played || 0;
+            profilePongGamesWonElement.innerText = statsData.online_pong_matches_won || 0;
+            profileRpsGamesPlayedElement.innerText = statsData.online_matches_played || 0;
+            profileRpsGamesWonElement.innerText = statsData.online_rps_matches_won || 0;
+            
             // Populate elements with game history
-            // tournamentHistoryElement.innerText = data.tournament_history;
-            // onlineHistoryElement.innerText = data.online_history;
-            // localHistoryElement.innerText = data.local_history;
+
+            historyData.online_matches.forEach(match => {
+                const historyElement = document.createElement('div');
+                historyElement.innerHTML = buildSingleMatchHistory(match);
+                profileOnlineHistoryElement.appendChild(historyElement);
+            });
+
+            historyData.local_matches.forEach(match => {
+                const historyElement = document.createElement('div');
+                historyElement.innerHTML = buildSingleMatchHistory(match);
+                profileLocalHistoryElement.appendChild(historyElement);
+            }
+            );
             
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     }
 
+    window.buildSingleMatchHistory = function buildSingleMatchHistory(match) {
+        const rps_result_dictionary = {
+            "rock": "🪨",
+            "paper": "📄",
+            "scissors": "✂️"
+        }
+        const left_player_result = match.pong.left_player_score > match.pong.right_player_score ? "winner" : "loser";
+        const right_player_result = match.pong.left_player_score < match.pong.right_player_score ? "winner" : "loser";
+        const start_date = new Date(match.rps.created_at);
+        const start_date_string = start_date.toLocaleString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        const end_date = new Date(match.pong.finished_at);
+        const duration_minutes = Math.floor((end_date - start_date) / 1000 / 60);
+        const duration_seconds = Math.floor((end_date - start_date) / 1000);
+        const duration_string = duration_minutes > 0 ? `${duration_minutes} min ${duration_seconds} seg` : `${duration_seconds} seg`;
 
+        return `
+            <div class="game">
+                <p class="result">
+                    <span class="${left_player_result}" style="font-size: 30px; width: 10%;">${match.pong.left_player_score}</span>
+                    <span class="${left_player_result}"
+                        style="display:flex; flex-direction:column; align-items:center;"><span>${match.pong.left_player_username}</span><span>${rps_result_dictionary[match.rps.left_player_choice]}</span></span>
+                    <span style="width:10%">VS</span>
+                    <span class="${right_player_result}"
+                        style="display:flex; flex-direction:column; align-items:center;"><span>${match.pong.right_player_username}</span><span>${rps_result_dictionary[match.rps.right_player_choice]}</span></span>
+                    <span class="${right_player_result}" style="font-size: 30px; width: 10%;">${match.pong.right_player_score}</span>
+                </p>
+                <p class="opponent"><b>Fecha:</b> ${start_date_string}</p>
+                <p class="opponent"><b>Duración:</b> ${duration_string}</p>
+            </div>
+            `;
+    }
 
     
     window.updateStatus = function updateStatus(isOnline) {
