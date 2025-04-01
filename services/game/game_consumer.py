@@ -97,7 +97,9 @@ async def play_game(game_id: int):
             if game.tournament_id > 0:
                 end_game_data = {
                     "winner": game.winner_username,
+                    "winner_id": game.winner_id,
                     "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
+                    "loser_id": (game.left_player_id if game.winner_username == game.right_player_username else game.right_player_id),
                     "tournament_id": game.tournament_id,
                     "tree_index": game.tree_index,
                 }
