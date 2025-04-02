@@ -31,6 +31,7 @@ export async function updateUsername(email, newUsername) {
 
         const data = await response.json();
         if (response.ok) {
+            window.sessionStorage.setItem("username", newUsername);
             window.closeSettingsPopup();
         } else {
             alert(data.error || "Error al actualizar el nombre de usuario");

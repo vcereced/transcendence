@@ -132,10 +132,9 @@ export async function initHome() {
         
     });
 
-    function handlePlayerClick(username) {
-        console.log("Usuario seleccionado:", username);
-        
-        // Aquí puedes hacer lo que necesites, como abrir un perfil, mandar un mensaje, etc.
+    function handlePlayerClick(username) {     
+        populateProfilePopup(username);
+        profilePopup.style.display = 'flex';
     }
 
     window.updatePlayerList = function updatePlayerList(query) {
@@ -161,6 +160,7 @@ export async function initHome() {
 
 
     window.openProfilePopup = function openProfilePopup() {
+        populateProfilePopup(sessionStorage.getItem("username"));
         profilePopup.style.display = 'flex';
     }
 
