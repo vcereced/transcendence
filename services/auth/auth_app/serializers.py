@@ -30,3 +30,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         #user.is_active = False  # ❗ CREO QUE ESTA DUB¿PLICADO
         user.save()
         return user
+    
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'profile_picture']

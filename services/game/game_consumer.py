@@ -82,11 +82,12 @@ async def play_game(game_id: int):
 
             game.is_finished = True
             game.finished_at = now()
-            game.winner_username = (
-                game.left_player_username
-                if game_state.left.score == s.WINNER_SCORE
-                else game.right_player_username
-            )
+            if game_state.left.score == s.WINNER_SCORE:
+                game.winner_id = game.left_player_id
+                game.winner_username = game.left_player_username
+            else:
+                game.winner_id = game.right_player_id
+                game.winner_username = game.right_player_username
             game.left_player_score = game_state.left.score
             game.right_player_score = game_state.right.score
             await redis_client.set(f"game:{game_id}:is_finished", "1")
@@ -96,7 +97,9 @@ async def play_game(game_id: int):
             if game.tournament_id > 0:
                 end_game_data = {
                     "winner": game.winner_username,
+                    "winner_id": game.winner_id,
                     "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
+                    "loser_id": (game.left_player_id if game.winner_username == game.right_player_username else game.right_player_id),
                     "tournament_id": game.tournament_id,
                     "tree_index": game.tree_index,
                 }
@@ -401,6 +404,11 @@ async def play_rock_paper_scissors(rps_id: int):
             winner_username = await play_rps_round(rps_record, redis_client)
 
         rps_record.winner_username = winner_username
+        rps_record.winner_id = (
+            rps_record.left_player_id
+            if winner_username == rps_record.left_player_username
+            else rps_record.right_player_id
+        )
         left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
         right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
         rps_record.left_player_choice = str(left_choice_data)
@@ -416,6 +424,7 @@ async def play_rock_paper_scissors(rps_id: int):
             "tournament_id": rps_record.tournament_id,
             "tree_index": rps_record.tree_index,
             "rock_paper_scissors_id": rps_record.id,
+            "is_local_game": rps_record.is_local_game,
         }
         current_app.send_task(
             "launch_game",

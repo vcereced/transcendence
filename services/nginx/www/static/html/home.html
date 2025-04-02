@@ -71,16 +71,15 @@
             <button class="close-btn" onclick="closeProfilePopup()">&times;</button>
             <div class="profile-header">
                 <div class="profile-image">
-                    <img src="../../media/1.gif" alt="Foto de perfil">
+                    <img id="profile-avatar" src="../../media/1.gif" alt="Foto de perfil">
                 </div>
                 <div class="profile-info">
-                    <h2>
-                        @username
+                    <h2 id="profile-username">
                         <div class="status-circle" id="status-circle"></div>
                     </h2>
-                    <p>Partidas jugadas: 150 (<small>60%</small>)</p>
-                    <p>Torneos ganados: 10 (<small>40%</small>)</p>
-                    <p>Piedra/Papel/Tijeras: 253 (<small>40%</small>)</p>
+                    <p>Torneos ganados / jugados: <span id="tournaments-won"></span> / <span id="tournaments-played"></span></p>
+                    <p>Pong ganados / jugados: <span id="pong-won"></span> / <span id="pong-played"></span></p>
+                    <p>Piedra-papel-tijeras ganados / jugados: <span id="rps-won"></span> / <span id="rps-played"></span></p>
                     <button id="add-friend-btn" onclick="toggleFriendStatus()">Añadir Amigo</button>
                 </div>
             </div>
@@ -89,120 +88,14 @@
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="tournament">Torneos</button>
                     <button class="tab-btn" data-tab="online">Online</button>
-                    <button class="tab-btn" data-tab="ai">Contra IA</button>
+                    <button class="tab-btn" data-tab="local">Local</button>
                 </div>
                 <div class="history-container">
                     <div class="history" id="tournament" style="display: block; max-height: 200px; overflow-y: auto;">
-                        <div class="game">
-                            <p class="result">
-                                <span class="winner" style="font-size: 30px; width: 10%;">8</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>🪨</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>📃</span></span>
-                                <span class="loser" style="font-size: 30px; width: 10%;">5</span>
-                            </p>
-                            <p class="result">
-                                <span class="winner" style="font-size: 30px; width: 10%;">10</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>📃</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>🪨</span></span>
-                                <span class="loser" style="font-size: 30px; width: 10%;">9</span>
-                            </p>
-                            <p class="result">
-                                <span class="winner" style="font-size: 30px; width: 10%;">5</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>📃</span></span>
-                                <span class="loser" style="font-size: 30px; width: 10%;">2</span>
-                            </p>
-                            <p class="result">
-                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>🪨</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>✂️</span></span>
-                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
-                            </p>
-                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
-                            <p class="opponent"><b>Duración:</b> 32 min</p>
-
-                        </div>
-                        <div class="game">
-                            <p class="result">
-                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>blabla</span><span>🪨</span></span>
-                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
-                            </p>
-                            <p class="result">
-                                <span class="winner" style="font-size: 30px; width: 10%;">10</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>📃</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>🪨</span></span>
-                                <span class="loser" style="font-size: 30px; width: 10%;">9</span>
-                            </p>
-                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
-                            <p class="opponent"><b>Duración:</b> 7 min</p>
-
-                        </div>
-                        <div class="game">
-                            <p class="result">
-                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>blabla</span><span>🪨</span></span>
-                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
-                            </p>
-                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
-                            <p class="opponent"><b>Duración:</b> 7 min</p>
-
-                        </div>
-                    </div>
-                    <div class="history" id="ai" style="display: none; max-height: 200px; overflow-y: auto;">
-                        <div class="game">
-                            <p class="result">
-                                <span class="loser" style="font-size: 30px; width: 10%;">0</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>✂️</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>blabla</span><span>🪨</span></span>
-                                <span class="winner" style="font-size: 30px; width: 10%;">3</span>
-                            </p>
-                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
-                            <p class="opponent"><b>Duración:</b> 7 min</p>
-
-                        </div>
                     </div>
                     <div class="history" id="online" style="display: none; max-height: 200px; overflow-y: auto;">
-                        <div class="game">
-                            <p class="result">
-                                <span class="winner" style="font-size: 30px; width: 10%;">10</span>
-                                <span class="winner"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>username</span><span>📃</span></span>
-                                <span style="width:10%">VS</span>
-                                <span class="loser"
-                                    style="display:flex; flex-direction:column; align-items:center;"><span>player213</span><span>🪨</span></span>
-                                <span class="loser" style="font-size: 30px; width: 10%;">9</span>
-                            </p>
-                            <p class="opponent"><b>Fecha:</b> 27/01/2025 13:49</p>
-                            <p class="opponent"><b>Duración:</b> 7 min</p>
-
-                        </div>
+                    </div>
+                    <div class="history" id="local" style="display: none; max-height: 200px; overflow-y: auto;">
                     </div>
                 </div>
             </div>

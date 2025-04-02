@@ -8,7 +8,7 @@ from rest_framework import status
 
 
 from game_app.models import Game, RockPaperScissorsGame
-from game_app.serializers import GameSerializer
+from game_app.serializers import GameSerializer, RockPaperScissorsGameSerializer
 from game_app import tasks
 from game_app import utils
 
@@ -56,18 +56,12 @@ def has_active_game(request):
     return Response(active_game_data, status=status.HTTP_200_OK)
 
 
-
-
 @api_view(["POST"])
 def create_game(request : Request):
     user_data = utils.extract_user_data_from_request(request)
     game_type = request.data.get("type")
     user_id = user_data.get("user_id")
     username = user_data.get("username")
-    print(f"User data: {user_data}")
-    print(f"Game type: {game_type}")
-    print(f"User id: {user_id}")
-    print(f"Username: {username}")
     if not game_type:
         return Response(
             {"error": "No game type provided"},
@@ -122,7 +116,8 @@ def create_game(request : Request):
             "right_player_id": user_id,
             "right_player_username": "Invitado",
             "tournament_id": 0,
-            "tree_index": 0
+            "tree_index": 0,
+            "is_local_game": True,
         }
         current_app.send_task(
             "create_game",
@@ -135,4 +130,62 @@ def create_game(request : Request):
     )
 
 
+@api_view(["GET"])
+def get_match_statistics(request, user_id):
+    online_pong_matches= Game.objects.filter(
+        (Q(left_player_id=user_id) | Q(right_player_id=user_id)) & Q(is_local_game=False)
+    )
+    online_pong_matches_played = online_pong_matches.count()
+    online_pong_matches_won = online_pong_matches.filter(winner_id=user_id).count()
 
+    online_rps_matches_won = RockPaperScissorsGame.objects.filter(
+        Q(is_local_game=False) & Q(winner_id=user_id)
+    ).count()
+
+    return Response(
+        {
+            "online_matches_played": online_pong_matches_played,
+            "online_pong_matches_won": online_pong_matches_won,
+            "online_rps_matches_won": online_rps_matches_won,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+
+@api_view(["GET"])
+def get_match_history(request, user_id):
+    
+    
+    rps_games = RockPaperScissorsGame.objects.filter(
+        Q(left_player_id=user_id) | Q(right_player_id=user_id)
+    ).order_by("-created_at")
+
+    pong_games = Game.objects.filter(
+        Q(left_player_id=user_id) | Q(right_player_id=user_id)
+    ).order_by("-created_at")
+    
+    rps_games_data = RockPaperScissorsGameSerializer(rps_games, many=True).data
+    pong_games_data = GameSerializer(pong_games, many=True).data
+
+    matches = [{"pong": pong_data, "rps": rps_data} for pong_data, rps_data in zip(pong_games_data, rps_games_data)]
+
+    tournament_matches = {}
+    online_matches = []
+    local_matches = []
+    for match in matches:
+        tournament_id = match["pong"]["tournament_id"]
+        if tournament_id != 0:
+            try:
+                tournament_matches[tournament_id].append(match)
+            except KeyError:
+                tournament_matches[tournament_id] = [match]
+        elif match["pong"]["is_local_game"]:
+            local_matches.append(match)
+        else:
+            online_matches.append(match)
+    
+    return Response(data={"tournament_matches": tournament_matches, 
+                          "online_matches": online_matches, 
+                          "local_matches": local_matches,
+                          }, status=status.HTTP_200_OK)

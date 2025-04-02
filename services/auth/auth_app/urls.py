@@ -16,4 +16,5 @@ urlpatterns = [
     path('pictureUrl', views.pictureUrl_view, name='pictureUrl'),
     path('changePictureUrl', views.changePictureUrl_view, name='changePictureUrl'),
     path('playersList', views.playersList_view, name='playersList'),
+	path('user/<str:username>', views.UserDetail.as_view(), name='user_detail'),
 ]

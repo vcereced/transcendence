@@ -49,6 +49,21 @@ export async function initHome() {
     const profilePopup = document.getElementById('profilePopup');
     const settingsPopup = document.getElementById('settingsPopup');
     const homeDiv = document.getElementsByClassName('home')[0];
+
+    const profileUsernameElement = document.getElementById("profile-username");
+    const profileAvatarElement = document.getElementById("profile-avatar");
+
+    const profilePongGamesPlayedElement = document.getElementById("pong-played");
+    const profilePongGamesWonElement = document.getElementById("pong-won");
+    const profileRpsGamesPlayedElement = document.getElementById("rps-played");
+    const profileRpsGamesWonElement = document.getElementById("rps-won");
+    const profileTournamentsPlayedElement = document.getElementById("tournaments-played");
+    const profileTournamentsWonElement = document.getElementById("tournaments-won");
+
+    const profileTournamentHistoryElement = document.getElementById("tournament");
+    const profileOnlineHistoryElement = document.getElementById("online");
+    const profileLocalHistoryElement = document.getElementById("local");
+
     // --- FUNCTIONS ---
 
     window.toggleFullscreen = function toggleFullscreen() {
@@ -153,11 +168,11 @@ export async function initHome() {
         profilePopup.style.display = 'none';
     }
 
-    window.openSettingsPopup =  function openSettingsPopup() {
+    window.openSettingsPopup = function openSettingsPopup() {
         let email = sessionStorage.getItem("email");
         showPicture(email);
         showUsername(email);
-        
+
         document.querySelectorAll(".preset-img").forEach(img => {
             img.addEventListener("click", async () => {
                 const src = img.src
@@ -165,7 +180,7 @@ export async function initHome() {
             });
         })
         document.getElementById("save-btn-images").addEventListener("click", async () => {
-            const src =  document.getElementById("current-profile-pic").src;
+            const src = document.getElementById("current-profile-pic").src;
             updatePicture(email, src);
             players = downloadPlayerList(); //descarga la lista actualizada con el cambio para displayear en buscar
             window.closeSettingsPopup();
@@ -256,13 +271,148 @@ export async function initHome() {
         }
     };
 
+    window.populateProfilePopup = async function populateProfilePopup(username) {
+        try {
+            // Step 1: Get user data and extract user_id
+            const userResponse = await fetch(`/api/usr/user/${username}`);
+            const userData = await userResponse.json();
+
+            if (!userData) {
+                console.error("User data not found");
+                return;
+            }
+
+            const user_id = userData.id;
+            console.log("User data:", userData);
+
+            // Step 2: Get game statistics using user_id
+            const statsResponse = await fetch(`/api/game/statistics/${user_id}/`);
+            const statsData = await statsResponse.json();
+
+            if (!statsData) {
+                console.error("Game data not found");
+                return;
+            }
+            console.log("Game statistics data:", statsData);
+
+            // Step 3: Get game history using the same user_id
+            const historyResponse = await fetch(`/api/game/history/${user_id}/`);
+            const historyData = await historyResponse.json();
+
+            if (!historyData) {
+                console.error("Game history not found");
+                return;
+            }
+            console.log("Game history data:", historyData);
+
+
+            // Populate elements with user data
+            profileUsernameElement.innerText = userData.username;
+            profileAvatarElement.src = userData.profile_picture || "../../media/default-avatar.png";
+
+            // Populate elements with game data
+            profilePongGamesPlayedElement.innerText = statsData.online_matches_played || 0;
+            profilePongGamesWonElement.innerText = statsData.online_pong_matches_won || 0;
+            profileRpsGamesPlayedElement.innerText = statsData.online_matches_played || 0;
+            profileRpsGamesWonElement.innerText = statsData.online_rps_matches_won || 0;
+
+            // Populate elements with game history
+
+            profileTournamentHistoryElement.innerHTML = "";
+            profileOnlineHistoryElement.innerHTML = "";
+            profileLocalHistoryElement.innerHTML = "";
+
+            if (historyData.tournament_matches && Object.keys(historyData.tournament_matches).length > 0) {
+                Object.entries(historyData.tournament_matches).forEach(([tournamentId, tournamentMatches]) => {
+                    const tournamentElement = document.createElement('div');
+                    tournamentElement.innerHTML = `<h3 style="text-align: center;">Torneo ${tournamentId}</h3>`;
+                    tournamentMatches.forEach(match => {
+                        const matchElement = document.createElement('div');
+                        matchElement.innerHTML = buildSingleMatchHistory(match);
+                        tournamentElement.appendChild(matchElement);
+                    });
+                    profileTournamentHistoryElement.appendChild(tournamentElement);
+                });
+            } else {
+                const noTournamentElement = document.createElement('div');
+                noTournamentElement.innerHTML = `<h3 style="text-align: center;">No hay partidos de torneo</h3>`;
+                profileTournamentHistoryElement.appendChild(noTournamentElement);
+            }
+
+            if (historyData.local_matches && Object.keys(historyData.local_matches).length > 0) {
+                historyData.online_matches.forEach(match => {
+                    const historyElement = document.createElement('div');
+                    historyElement.innerHTML = buildSingleMatchHistory(match);
+                    profileOnlineHistoryElement.appendChild(historyElement);
+                });
+            } else {
+                const noOnlineElement = document.createElement('div');
+                noOnlineElement.innerHTML = `<h3 style="text-align: center;">No hay partidos online</h3>`;
+                profileOnlineHistoryElement.appendChild(noOnlineElement);
+            }
+
+            if (historyData.local_matches && Object.keys(historyData.local_matches).length > 0) {
+                historyData.local_matches.forEach(match => {
+                    const historyElement = document.createElement('div');
+                    historyElement.innerHTML = buildSingleMatchHistory(match);
+                    profileLocalHistoryElement.appendChild(historyElement);
+                });
+            } else {
+                const noLocalElement = document.createElement('div');
+                noLocalElement.innerHTML = `<h3 style="text-align: center;">No hay partidos locales</h3>`;
+                profileLocalHistoryElement.appendChild(noLocalElement);
+            }
+
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    window.buildSingleMatchHistory = function buildSingleMatchHistory(match) {
+        const rps_result_dictionary = {
+            "rock": "🪨",
+            "paper": "📄",
+            "scissors": "✂️"
+        }
+        const left_player_result = match.pong.left_player_score > match.pong.right_player_score ? "winner" : "loser";
+        const right_player_result = match.pong.left_player_score < match.pong.right_player_score ? "winner" : "loser";
+        const start_date = new Date(match.rps.created_at);
+        const start_date_string = start_date.toLocaleString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        const end_date = new Date(match.pong.finished_at);
+        const duration_minutes = Math.floor((end_date - start_date) / 1000 / 60);
+        const duration_seconds = Math.floor((end_date - start_date) / 1000);
+        const duration_string = duration_minutes > 0 ? `${duration_minutes} min ${duration_seconds} seg` : `${duration_seconds} seg`;
+
+        return `
+            <div class="game">
+                <p class="result">
+                    <span class="${left_player_result}" style="font-size: 30px; width: 10%;">${match.pong.left_player_score}</span>
+                    <span class="${left_player_result}"
+                        style="display:flex; flex-direction:column; align-items:center;"><span>${match.pong.left_player_username}</span><span>${rps_result_dictionary[match.rps.left_player_choice]}</span></span>
+                    <span style="width:10%">VS</span>
+                    <span class="${right_player_result}"
+                        style="display:flex; flex-direction:column; align-items:center;"><span>${match.pong.right_player_username}</span><span>${rps_result_dictionary[match.rps.right_player_choice]}</span></span>
+                    <span class="${right_player_result}" style="font-size: 30px; width: 10%;">${match.pong.right_player_score}</span>
+                </p>
+                <p class="opponent"><b>Fecha:</b> ${start_date_string}</p>
+                <p class="opponent"><b>Duración:</b> ${duration_string}</p>
+            </div>
+            `;
+    }
+
     //--MODIFIED BY GARYDD1---
     window.updateStatus = function updateStatus(userId) {
         var statusCircle = document.getElementById("status-circle");
         if (checkOnlineStatus(userId)) {
             statusCircle.style.backgroundColor = "var(--primary-color)";
         } else {
-            statusCircle.style.backgroundColor =  "var(--btn-bg-color)";
+            statusCircle.style.backgroundColor = "var(--btn-bg-color)";
         }
     }
 
@@ -346,8 +496,6 @@ export async function initHome() {
         }
     });
 
-    
-
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
@@ -358,7 +506,7 @@ export async function initHome() {
         title.style.transform = 'translateY(0)';
     });
 
-    
+
 
     tabButtons.forEach(button => {
         window.eventManager.addEventListener(button, 'click', () => {

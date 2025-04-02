@@ -3,7 +3,7 @@ from django.shortcuts import render
 import json
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from . serializers import RegisterSerializer
+from . serializers import RegisterSerializer, UserSerializer
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -14,6 +14,8 @@ import os
 from .models import CustomUser, EmailOTPDevice  # Importa tu modelo personalizado
 from auth_app.utils.utilsToptDevice import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice, CustomError
 from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser
+
+from rest_framework import generics
 
 SECRET_KEY = os.getenv("JWT_SECRET")
 
@@ -225,7 +227,7 @@ def updateUsername_view(request):
 
 	try:
 		user = CustomUser.objects.get(email=email)
-		return Response({'username': user.username, 'message': 'username obteined succesfully'}, status=status.HTTP_200_OK)
+		return Response({'username': user.username, 'message': 'username obtained succesfully'}, status=status.HTTP_200_OK)
 
 	except (CustomUser.DoesNotExist):
 		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
@@ -283,3 +285,9 @@ def changePictureUrl_view(request):
 def playersList_view(request):
     players = CustomUser.objects.values('username', 'profile_picture')
     return Response(players)
+
+
+class UserDetail(generics.RetrieveAPIView):
+	queryset = CustomUser.objects.all()
+	serializer_class = UserSerializer
+	lookup_field = 'username'
