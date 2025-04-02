@@ -11,7 +11,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.response import Response
 import jwt
 import os
-from .models import CustomUser, EmailOTPDevice  # Importa tu modelo personalizado
+from .models import CustomUser, EmailOTPDevice, Friendship  # Importa tu modelo personalizado
 from auth_app.utils.utilsToptDevice import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice, CustomError
 from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser
 
@@ -283,3 +283,63 @@ def changePictureUrl_view(request):
 def playersList_view(request):
     players = CustomUser.objects.values('username', 'profile_picture')
     return Response(players)
+
+@api_view(['POST'])
+def dataUser_view(request):
+	username = request.data.get("username")
+	email = request.data.get("email")
+
+	try:
+		if not email and username:
+			user = CustomUser.objects.get(username=username)
+		elif email and not username:
+			user = CustomUser.objects.get(email=email)
+		else:
+			return Response({"error": "missing username or email"}, status=status.HTTP_400_BAD_REQUEST)
+
+	except CustomUser.DoesNotExist:
+		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+	except CustomError as e:
+		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+	else:
+		return Response({"message": "data extrated succesfully", "username": user.username, "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def isFriendShip_view(request):
+	username1 = request.data.get("username1")
+	username2 = request.data.get("username2")
+							  
+	if not username1 or not username2:
+		return Response({"error": "missing a username"}, status=status.HTTP_400_BAD_REQUEST)
+	
+	if Friendship.are_friends(username1, username2):
+		return Response({"message": "Son amigos"}, status=status.HTTP_200_OK)
+	else:
+		return Response({"message": "No son amigos"}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def friendShip_view(request, action):
+	username1 = request.data.get('username1')
+	username2 = request.data.get('username2')
+	print("debugeo= ", username1, ", ", username2)
+	if not username1 or not username2:
+		return Response({"error": "Missing username1 or username2"}, status=400)
+
+	if action == 'add':
+		print("entra en add")
+		# Añadir amigos
+		if not Friendship.are_friends(username1, username2):
+			Friendship.add_friend(username1, username2)
+			return Response({"message": "Son amigos"}, status=200)
+		else:
+			return Response({"error": "They are already friends or the usernames are the same"}, status=200)
+    
+	elif action == 'remove':
+		print("entra en remove")
+		# Eliminar amigos
+		if Friendship.remove_friend(username1, username2):
+			return Response({"message": "Ya no son amigos"}, status=200)
+		else:
+			return Response({"error": "They are not friends or no valid relationship exists"}, status=200)
+	
+	return Response({"error": "Invalid action"}, status=400)

@@ -16,4 +16,9 @@ urlpatterns = [
     path('pictureUrl', views.pictureUrl_view, name='pictureUrl'),
     path('changePictureUrl', views.changePictureUrl_view, name='changePictureUrl'),
     path('playersList', views.playersList_view, name='playersList'),
+    path('dataUser', views.dataUser_view, name='dataUser'),
+    path('isFriendShip', views.isFriendShip_view, name='isFriendShip'),
+    path('friendShip/<str:action>', views.friendShip_view, name='friendShip')
+
+
 ]

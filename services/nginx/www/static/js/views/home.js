@@ -118,19 +118,23 @@ export async function initHome() {
     });
 
     function handlePlayerClick(username) {
+
         console.log("Usuario seleccionado:", username);
+        window.openProfilePopup(username);
         
         // Aquí puedes hacer lo que necesites, como abrir un perfil, mandar un mensaje, etc.
     }
 
+    
+    
     window.updatePlayerList = function updatePlayerList(query) {
         const playerList = document.getElementById('playerList');
         playerList.innerHTML = '';
-
+        
         const filteredPlayers = players.filter(player =>
             player.username.toLowerCase().startsWith(query.toLowerCase())
         );
-
+        
         filteredPlayers.forEach(player => {
             const li = document.createElement('li');
             li.classList.add('player-item');
@@ -142,83 +146,133 @@ export async function initHome() {
             playerList.appendChild(li);
         });
     }
-
-
-
-    window.openProfilePopup = function openProfilePopup() {
-        profilePopup.style.display = 'flex';
-    }
-
-    window.closeProfilePopup = function closeProfilePopup() {
-        profilePopup.style.display = 'none';
-    }
-
-    window.openSettingsPopup =  function openSettingsPopup() {
-        let email = sessionStorage.getItem("email");
-        showPicture(email);
-        showUsername(email);
+    
+    window.getDataUser = async function getDataUser(username) {
         
-        document.querySelectorAll(".preset-img").forEach(img => {
-            img.addEventListener("click", async () => {
-                const src = img.src
-                document.getElementById("current-profile-pic").src = src;
-            });
-        })
-        document.getElementById("save-btn-images").addEventListener("click", async () => {
-            const src =  document.getElementById("current-profile-pic").src;
-            updatePicture(email, src);
-            players = downloadPlayerList(); //descarga la lista actualizada con el cambio para displayear en buscar
-            window.closeSettingsPopup();
-        });
-
-
-        document.getElementById("save-btn-name").addEventListener("click", () => {
-            const newUsername = document.getElementById("username").value;
-            const email = sessionStorage.getItem("email");
-
-            updateUsername(email, newUsername);
-        });
-
-        document.getElementById("save-btn-password").addEventListener("click", () => {
-            const oldPass = document.getElementById("old-password").value;
-            const newPass1 = document.getElementById("new-password1").value;
-            const newPass2 = document.getElementById("new-password2").value;
-            const email = sessionStorage.getItem("email");
-
-            updatePassword(email, oldPass, newPass1, newPass2);
-        });
-
-        document.getElementById('settingsPopup').style.display = 'flex';
-    }
-
-    window.closeSettingsPopup = function closeSettingsPopup() {
-        settingsPopup.style.display = 'none';
-    }
-
-    window.toggleSettingsFields = function toggleSettingsFields() {
-        let selectedOption = document.getElementById("settings-option").value;
-        let fields = ["profile-pic-field", "username-field", "password-field"];
-
-        fields.forEach(field => {
-            document.getElementById(field).style.display = "none";
-        });
-
-        if (selectedOption !== "none") {
-            document.getElementById(selectedOption + "-field").style.display = "block";
+        const url = "/api/settings/dataUser";
+        
+        try {
+            //await handleJwtToken(); // Asegura que el token JWT esté actualizado
+            console.log("dataUSer", username);
+            const response = await fetch(url, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username })});
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                return data;
+            } else {
+                alert(data.error || "Error al obtener datos usuario.");}
+            } catch (error) {
+                alert("Error en la solicitud.");
+            console.error("Error:", error);
         }
     }
+    
+    
+    
+    // Aquí puedes hacer lo que necesites, como abrir un perfil, mandar un mensaje, etc.
+    // if (btn.innerHTML === "Añadir Amigo") {
+        //     btn.innerHTML = "Amigo";
+        //     btn.style.backgroundColor = "var(--primary-color)";
+        //     btn.style.color = "white";
+        // } else {
+        //     btn.innerHTML = "Añadir Amigo";
+        //     btn.style.backgroundColor = "#f5f5f5";
+        //     btn.style.color = "#333";
+        // }
+        
 
-    window.createLocalGame = function createLocalGame(type) {
-        checkActiveGame(document, homeDiv);
-        // Check active games, if active, show popup explaining and redirect
-        // Make POST call to /api/game/create/ with type of game to be created (player, computer)
-        fetch('/api/game/create/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ "type": type })
-        })
+        window.openProfilePopup = async function openProfilePopup(username) {
+            
+        console.log(username);
+        const currentUsername = sessionStorage.getItem('username');
+        const data = await getDataUser(username);
+        var btn = document.getElementById("add-friend-btn");
+        
+        document.getElementById("profile-image-img").src = data.picture_url;
+        document.getElementById("profile-info-username").innerHTML = data.username || "error en el fetch";
+        
+        
+        if (username == currentUsername) { //hide the button MAKE FRIEND
+            btn.style.display = "None";
+        }else {
+            await handleButtonFriend(username, currentUsername);
+            btn.style.display = "Block";}
+            
+            profilePopup.style.display = 'flex';
+        }
+        
+        window.closeProfilePopup = function closeProfilePopup() {
+            profilePopup.style.display = 'none';
+        }
+        
+        window.openSettingsPopup =  function openSettingsPopup() {
+            let email = sessionStorage.getItem("email");
+            showPicture(email);
+            showUsername(email);
+            
+            document.querySelectorAll(".preset-img").forEach(img => {
+                img.addEventListener("click", async () => {
+                    const src = img.src
+                    document.getElementById("current-profile-pic").src = src;
+                });
+            })
+            document.getElementById("save-btn-images").addEventListener("click", async () => {
+                const src =  document.getElementById("current-profile-pic").src;
+                updatePicture(email, src);
+                players = downloadPlayerList(); //descarga la lista actualizada con el cambio para displayear en buscar
+                window.closeSettingsPopup();
+            });
+
+            
+            document.getElementById("save-btn-name").addEventListener("click", () => {
+                const newUsername = document.getElementById("username").value;
+                const email = sessionStorage.getItem("email");
+                
+                updateUsername(email, newUsername);
+            });
+            
+            document.getElementById("save-btn-password").addEventListener("click", () => {
+                const oldPass = document.getElementById("old-password").value;
+                const newPass1 = document.getElementById("new-password1").value;
+                const newPass2 = document.getElementById("new-password2").value;
+                const email = sessionStorage.getItem("email");
+                
+                updatePassword(email, oldPass, newPass1, newPass2);
+            });
+
+            document.getElementById('settingsPopup').style.display = 'flex';
+        }
+
+        window.closeSettingsPopup = function closeSettingsPopup() {
+            settingsPopup.style.display = 'none';
+        }
+        
+        window.toggleSettingsFields = function toggleSettingsFields() {
+            let selectedOption = document.getElementById("settings-option").value;
+            let fields = ["profile-pic-field", "username-field", "password-field"];
+            
+            fields.forEach(field => {
+                document.getElementById(field).style.display = "none";
+            });
+            
+            if (selectedOption !== "none") {
+                document.getElementById(selectedOption + "-field").style.display = "block";
+            }
+        }
+        
+        window.createLocalGame = function createLocalGame(type) {
+            checkActiveGame(document, homeDiv);
+            // Check active games, if active, show popup explaining and redirect
+            // Make POST call to /api/game/create/ with type of game to be created (player, computer)
+            fetch('/api/game/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ "type": type })
+            })
             .then(response => {
                 if (!response.ok) {
                     console.error(response);
@@ -229,30 +283,144 @@ export async function initHome() {
             .catch(error => {
                 console.error(error);
             });
-
-        // If success, show popup of redirecting to created game
-    }
-
-    //--DONE BY GARYDD1---
-    window.checkOnlineStatus = function checkOnlineStatus(userId) {
+            
+            // If success, show popup of redirecting to created game
+        }
         
-        if (logged_users.includes(userId)) {
-            return true; 
-        } else {
-            return false; 
+        //--DONE BY GARYDD1---
+        window.checkOnlineStatus = function checkOnlineStatus(userId) {
+            
+            if (logged_users.includes(userId)) {
+                return true; 
+            } else {
+                return false; 
+            }
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+        // const url = "/api/settings/isFriendShip";
+        
+        // try {
+            //     const response = await fetch(url, {
+                //         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
+                
+                //         const data = await response.json();
+                
+                //         if (data.menssaje == "Son amigos") {
+                    //             btn.innerHTML = "Amigo";
+                    //             btn.style.backgroundColor = "var(--primary-color)";
+                    //             btn.style.color = "white";
+                    //         } else {
+    //             btn.innerHTML = "Añadir Amigo";
+    //             btn.style.backgroundColor = "#f5f5f5";
+    //             btn.style.color = "#333";
+    //         }
+    // } catch (error) {
+        //     alert("Error en la solicitud.");
+        //     console.error("Error:", error);
+        // }
+        //////////////////////////////////////////////////////////////////////////////////////
+        
+        async function isFriend(username1, username2) {
+            
+            const url = "/api/settings/isFriendShip";
+            
+            try {
+                const response = await fetch(url, {
+                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
+                    
+                    const data = await response.json();
+                    
+                    if (data.message == "Son amigos") {
+                        return true;
+                    } else {
+                        return false;
+                    }
+            } catch (error) {
+                alert("Error en la solicitud.");
+                console.error("Error:", error);
+            }
+        }
+    
+    
+        async function handleButtonFriend(username1, username2) {
+            var btn = document.getElementById("add-friend-btn");
+            
+            const friends = await isFriend(username1, username2);
+            
+            console.log("debugeo handleButtonFriend is friends= ", friends);
+
+            if (friends) {
+                btn.innerHTML = "Amigo";
+                btn.style.backgroundColor = "var(--primary-color)";
+                btn.style.color = "white";
+            } else {
+                btn.innerHTML = "Añadir Amigo";
+                btn.style.backgroundColor = "#f5f5f5";
+                btn.style.color = "#333";
+            }
+        }
+
+        async function addFriend(username1, username2) {
+            
+        var url = "/api/settings/friendShip/";
+        var action = "add";
+        console.log("debugeo ", username1, ", ", username2);
+        try {
+            const response = await fetch(url + action, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
+                
+                const data = await response.json();
+                
+                if (data.menssaje == "Son amigos") {
+                    return true;
+                } else {
+                    return false;
+                }
+        } catch (error) {
+            alert("Error en la solicitud.");
+            console.error("Error:", error);
         }
     }
-    
-    window.toggleFriendStatus = function toggleFriendStatus() {
+
+    async function removeFriend(username1, username2) {
+        
+        var url = "/api/settings/friendShip/";
+        var action = "remove";
+        try {
+            const response = await fetch(url + action, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
+                
+                const data = await response.json();
+                
+                if (data.menssaje == "Ya no son amigos") {
+                    return true;
+                } else {
+                   return false;
+                }
+        } catch (error) {
+            alert("Error en la solicitud.");
+            console.error("Error:", error);
+        }
+    }
+
+    window.toggleFriendStatus = async function toggleFriendStatus() {
+        const currentUsername = sessionStorage.getItem('username');
+        const username = document.getElementById("profile-info-username").textContent.trim();
+        
         var btn = document.getElementById("add-friend-btn");
-        if (btn.innerHTML === "Añadir Amigo") {
+
+        if (btn.innerHTML === "Añadir Amigo"/* & !friends*/ ) {
+            await addFriend(currentUsername, username);
             btn.innerHTML = "Amigo";
             btn.style.backgroundColor = "var(--primary-color)";
             btn.style.color = "white";
-        } else {
+            console.log("entra a añadir");
+        } else if (btn.innerHTML === "Amigo" /*& friends*/ ) {
+            await removeFriend(currentUsername, username)
             btn.innerHTML = "Añadir Amigo";
             btn.style.backgroundColor = "#f5f5f5";
             btn.style.color = "#333";
+            console.log("entra a borrar amigo");
         }
     };
 
@@ -344,6 +512,10 @@ export async function initHome() {
         if (!event.target.closest('.settings-container')) {
             closeSettingsPopup();
         }
+    });
+
+    document.getElementById('add-friend-btn').addEventListener('click', function(event) {
+        window.toggleFriendStatus(); // Llamar a la función con el username
     });
 
     

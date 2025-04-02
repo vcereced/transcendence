@@ -12,7 +12,7 @@
         </div>
 
         <div class="dropdown-menu" id="dropdownMenu">
-            <a onclick="openProfilePopup()">Ver Perfil</a>
+            <a onclick="openProfilePopup(sessionStorage.getItem('username'))">Ver Perfil</a>
             <a onclick="openSettingsPopup()">Ajustes</a>
             <a>Salir</a>
         </div>
@@ -71,17 +71,17 @@
             <button class="close-btn" onclick="closeProfilePopup()">&times;</button>
             <div class="profile-header">
                 <div class="profile-image">
-                    <img src="../../media/1.gif" alt="Foto de perfil">
+                    <img id="profile-image-img" src="../../media/1.gif" alt="Foto de perfil">
                 </div>
                 <div class="profile-info">
                     <h2>
-                        @username
+                        <div id="profile-info-username">@username</div>
                         <div class="status-circle" id="status-circle"></div>
                     </h2>
                     <p>Partidas jugadas: 150 (<small>60%</small>)</p>
                     <p>Torneos ganados: 10 (<small>40%</small>)</p>
                     <p>Piedra/Papel/Tijeras: 253 (<small>40%</small>)</p>
-                    <button id="add-friend-btn" onclick="toggleFriendStatus()">Añadir Amigo</button>
+                    <button id="add-friend-btn">Añadir Amigo</button>
                 </div>
             </div>
             <div class="statistics">
