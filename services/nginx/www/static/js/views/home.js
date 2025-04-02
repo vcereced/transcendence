@@ -268,6 +268,16 @@ export async function initHome() {
             profileRpsGamesWonElement.innerText = statsData.online_rps_matches_won || 0;
             
             // Populate elements with game history
+            Object.entries(historyData.tournament_matches).forEach(([tournamentId, tournamentMatches]) => {
+                const tournamentElement = document.createElement('div');
+                tournamentElement.innerHTML = `<h3>Torneo ${tournamentId}</h3>`;
+                tournamentMatches.forEach(match => {
+                    const matchElement = document.createElement('div');
+                    matchElement.innerHTML = buildSingleMatchHistory(match);
+                    tournamentElement.appendChild(matchElement);
+                });
+                profileTournamentHistoryElement.appendChild(tournamentElement);
+            });
 
             historyData.online_matches.forEach(match => {
                 const historyElement = document.createElement('div');
