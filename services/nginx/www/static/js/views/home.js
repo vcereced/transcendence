@@ -1,5 +1,6 @@
 // static/js/views/home.js
-import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from './settings.js';
+import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from '../utils/settings.js';
+import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getDataUser } from '../utils/profile.js';
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
 import { handleJwtToken } from './jwtValidator.js';
@@ -80,13 +81,10 @@ export async function initHome() {
     window.toggleSearch = function toggleSearch() {
         const searchIcon = document.querySelector('.search-icon');
         const searchBar = document.getElementById('searchBar');
-        const playerList = document.getElementById('playerList');
 
         searchIcon.style.display = 'none';
         searchBar.classList.add('active');
         searchBar.focus();
-        //playerList.style.display = 'block';
-        //updatePlayerList('');
         players = downloadPlayerList();
     }
 
@@ -115,17 +113,7 @@ export async function initHome() {
             document.getElementById('playerList').style.display = 'none';
         }
         
-    });
-
-    function handlePlayerClick(username) {
-
-        console.log("Usuario seleccionado:", username);
-        window.openProfilePopup(username);
-        
-        // Aquí puedes hacer lo que necesites, como abrir un perfil, mandar un mensaje, etc.
-    }
-
-    
+    });    
     
     window.updatePlayerList = function updatePlayerList(query) {
         const playerList = document.getElementById('playerList');
@@ -141,109 +129,70 @@ export async function initHome() {
             li.innerHTML = `<img src="${player.profile_picture}" alt="Avatar"> ${player.username}`;
             
             li.addEventListener("click", () => {
-                handlePlayerClick(player.username); // Llama a tu función pasando el nombre del usuario
+                goToPlayerProfile(player.username); // Llama a tu función pasando el nombre del usuario
             });
             playerList.appendChild(li);
         });
     }
     
-    window.getDataUser = async function getDataUser(username) {
+    window.openProfilePopup = async function openProfilePopup(username) {
         
-        const url = "/api/settings/dataUser";
-        
-        try {
-            //await handleJwtToken(); // Asegura que el token JWT esté actualizado
-            console.log("dataUSer", username);
-            const response = await fetch(url, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username })});
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                return data;
-            } else {
-                alert(data.error || "Error al obtener datos usuario.");}
-            } catch (error) {
-                alert("Error en la solicitud.");
-            console.error("Error:", error);
-        }
-    }
-    
-    
-    
-    // Aquí puedes hacer lo que necesites, como abrir un perfil, mandar un mensaje, etc.
-    // if (btn.innerHTML === "Añadir Amigo") {
-        //     btn.innerHTML = "Amigo";
-        //     btn.style.backgroundColor = "var(--primary-color)";
-        //     btn.style.color = "white";
-        // } else {
-        //     btn.innerHTML = "Añadir Amigo";
-        //     btn.style.backgroundColor = "#f5f5f5";
-        //     btn.style.color = "#333";
-        // }
-        
-
-        window.openProfilePopup = async function openProfilePopup(username) {
-            
-        console.log(username);
         const currentUsername = sessionStorage.getItem('username');
-        const data = await getDataUser(username);
         var btn = document.getElementById("add-friend-btn");
         
+        const data = await getDataUser(username);
+    
         document.getElementById("profile-image-img").src = data.picture_url;
-        document.getElementById("profile-info-username").innerHTML = data.username || "error en el fetch";
-        
-        
+        document.getElementById("profile-info-username").innerHTML = data.username;
+    
         if (username == currentUsername) { //hide the button MAKE FRIEND
             btn.style.display = "None";
         }else {
-            await handleButtonFriend(username, currentUsername);
+            handleButtonFriend(username, currentUsername);
             btn.style.display = "Block";}
-            
             profilePopup.style.display = 'flex';
-        }
+    }
         
-        window.closeProfilePopup = function closeProfilePopup() {
-            profilePopup.style.display = 'none';
-        }
+    window.closeProfilePopup = function closeProfilePopup() {
+        profilePopup.style.display = 'none';
+    }
         
-        window.openSettingsPopup =  function openSettingsPopup() {
-            let email = sessionStorage.getItem("email");
-            showPicture(email);
-            showUsername(email);
-            
-            document.querySelectorAll(".preset-img").forEach(img => {
-                img.addEventListener("click", async () => {
-                    const src = img.src
-                    document.getElementById("current-profile-pic").src = src;
-                });
-            })
-            document.getElementById("save-btn-images").addEventListener("click", async () => {
-                const src =  document.getElementById("current-profile-pic").src;
-                updatePicture(email, src);
-                players = downloadPlayerList(); //descarga la lista actualizada con el cambio para displayear en buscar
-                window.closeSettingsPopup();
+    window.openSettingsPopup =  function openSettingsPopup() {
+        let email = sessionStorage.getItem("email");
+        showPicture(email);
+        showUsername(email);
+        
+        document.querySelectorAll(".preset-img").forEach(img => {
+            img.addEventListener("click", async () => {
+                const src = img.src
+                document.getElementById("current-profile-pic").src = src;
             });
+        })
 
-            
-            document.getElementById("save-btn-name").addEventListener("click", () => {
-                const newUsername = document.getElementById("username").value;
-                const email = sessionStorage.getItem("email");
-                
-                updateUsername(email, newUsername);
-            });
-            
-            document.getElementById("save-btn-password").addEventListener("click", () => {
-                const oldPass = document.getElementById("old-password").value;
-                const newPass1 = document.getElementById("new-password1").value;
-                const newPass2 = document.getElementById("new-password2").value;
-                const email = sessionStorage.getItem("email");
-                
-                updatePassword(email, oldPass, newPass1, newPass2);
-            });
+        document.getElementById("save-btn-images").addEventListener("click", async () => {
+            const src =  document.getElementById("current-profile-pic").src;
+            updatePicture(email, src);
+            window.closeSettingsPopup();
+        });
 
-            document.getElementById('settingsPopup').style.display = 'flex';
-        }
+        document.getElementById("save-btn-name").addEventListener("click", () => {
+            const newUsername = document.getElementById("username").value;
+            const email = sessionStorage.getItem("email");
+            
+            updateUsername(email, newUsername);
+        });
+        
+        document.getElementById("save-btn-password").addEventListener("click", () => {
+            const oldPass = document.getElementById("old-password").value;
+            const newPass1 = document.getElementById("new-password1").value;
+            const newPass2 = document.getElementById("new-password2").value;
+            const email = sessionStorage.getItem("email");
+            
+            updatePassword(email, oldPass, newPass1, newPass2);
+        });
+
+        document.getElementById('settingsPopup').style.display = 'flex';
+    }
 
         window.closeSettingsPopup = function closeSettingsPopup() {
             settingsPopup.style.display = 'none';
@@ -296,112 +245,7 @@ export async function initHome() {
                 return false; 
             }
         }
-        //////////////////////////////////////////////////////////////////////////////////////
-        // const url = "/api/settings/isFriendShip";
-        
-        // try {
-            //     const response = await fetch(url, {
-                //         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
-                
-                //         const data = await response.json();
-                
-                //         if (data.menssaje == "Son amigos") {
-                    //             btn.innerHTML = "Amigo";
-                    //             btn.style.backgroundColor = "var(--primary-color)";
-                    //             btn.style.color = "white";
-                    //         } else {
-    //             btn.innerHTML = "Añadir Amigo";
-    //             btn.style.backgroundColor = "#f5f5f5";
-    //             btn.style.color = "#333";
-    //         }
-    // } catch (error) {
-        //     alert("Error en la solicitud.");
-        //     console.error("Error:", error);
-        // }
-        //////////////////////////////////////////////////////////////////////////////////////
-        
-        async function isFriend(username1, username2) {
-            
-            const url = "/api/settings/isFriendShip";
-            
-            try {
-                const response = await fetch(url, {
-                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
-                    
-                    const data = await response.json();
-                    
-                    if (data.message == "Son amigos") {
-                        return true;
-                    } else {
-                        return false;
-                    }
-            } catch (error) {
-                alert("Error en la solicitud.");
-                console.error("Error:", error);
-            }
-        }
-    
-    
-        async function handleButtonFriend(username1, username2) {
-            var btn = document.getElementById("add-friend-btn");
-            
-            const friends = await isFriend(username1, username2);
-            
-            console.log("debugeo handleButtonFriend is friends= ", friends);
 
-            if (friends) {
-                btn.innerHTML = "Amigo";
-                btn.style.backgroundColor = "var(--primary-color)";
-                btn.style.color = "white";
-            } else {
-                btn.innerHTML = "Añadir Amigo";
-                btn.style.backgroundColor = "#f5f5f5";
-                btn.style.color = "#333";
-            }
-        }
-
-        async function addFriend(username1, username2) {
-            
-        var url = "/api/settings/friendShip/";
-        var action = "add";
-        console.log("debugeo ", username1, ", ", username2);
-        try {
-            const response = await fetch(url + action, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
-                
-                const data = await response.json();
-                
-                if (data.menssaje == "Son amigos") {
-                    return true;
-                } else {
-                    return false;
-                }
-        } catch (error) {
-            alert("Error en la solicitud.");
-            console.error("Error:", error);
-        }
-    }
-
-    async function removeFriend(username1, username2) {
-        
-        var url = "/api/settings/friendShip/";
-        var action = "remove";
-        try {
-            const response = await fetch(url + action, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
-                
-                const data = await response.json();
-                
-                if (data.menssaje == "Ya no son amigos") {
-                    return true;
-                } else {
-                   return false;
-                }
-        } catch (error) {
-            alert("Error en la solicitud.");
-            console.error("Error:", error);
-        }
-    }
 
     window.toggleFriendStatus = async function toggleFriendStatus() {
         const currentUsername = sessionStorage.getItem('username');

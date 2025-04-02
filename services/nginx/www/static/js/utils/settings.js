@@ -1,7 +1,8 @@
+
 export async function showUsername(email){
     
     //await handleJwtToken();
-    await fetch('/api/settings/username', {
+    await fetch('/api/settings/dataUser', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -9,15 +10,15 @@ export async function showUsername(email){
         body: JSON.stringify({ email })
     })
     .then(response => response.json())
-    .then(data => { document.getElementById('current-username').textContent = data.username || "no tiene username";})
+    .then(data => { document.getElementById('current-username').textContent = data.username;})
     .catch(error => {
-    console.error("Error al obtener el username:", error);
-    document.getElementById('current-username').textContent = "Error al cargar el username";
+        alert(data.error || "Error to obtein the username.");
+        console.error("Error to obtein the username:", error);
     });
 }
 
 export async function updateUsername(email, newUsername) {
-    const url = "/api/settings/name";
+    const url = "/api/settings/updateName";
     
     try {
         //await handleJwtToken();
@@ -53,7 +54,7 @@ export async function updatePassword(email, oldPass, newPass1, newPass2) {
         return;
     }
 
-    const url = "/api/settings/password";
+    const url = "/api/settings/updatePassword";
     
     try {
         //await handleJwtToken(); // Asegura que el token JWT esté actualizado
@@ -85,11 +86,11 @@ export async function updatePassword(email, oldPass, newPass1, newPass2) {
 
 export async function showPicture(email) {
 
-    const url = "/api/settings/pictureUrl";
+    const url = "/api/settings/dataUser";
     
     try {
-        //await handleJwtToken(); // Asegura que el token JWT esté actualizado
 
+        //await handleJwtToken(); // Asegura que el token JWT esté actualizado
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -103,17 +104,17 @@ export async function showPicture(email) {
         if (response.ok) {
             document.getElementById("current-profile-pic").src = data.picture_url;
         } else {
-            alert(data.error || "Error al cambiar la contraseña.");
+            alert(data.error || "Error to change the picture profile.");
         }
     } catch (error) {
-        alert("Error en la solicitud.");
+        alert("Error to fetch to change picture.");
         console.error("Error:", error);
     }
 }
 
 export async function updatePicture(email, src) {
 
-    const url = "/api/settings/changePictureUrl";
+    const url = "/api/settings/updatePictureUrl";
 
     try {
         //await handleJwtToken(); // Asegura que el token JWT esté actualizado
@@ -131,10 +132,10 @@ export async function updatePicture(email, src) {
         if (response.ok) {
             return;
         } else {
-            alert(data.error || "Error al cambiar la url de la imagen.");
+            alert(data.error || "Error to change the picture profile.");
         }
     } catch (error) {
-        alert("Error en la solicitud.");
+        alert("Error to change the picture profile.");
         console.error("Error:", error);
     }
 

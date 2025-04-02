@@ -189,7 +189,7 @@ def refresh_token_view(request):
 		return Response({'error': 'Invalid or expired refresh token', 'details': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 	
 @api_view(['POST'])
-def name_view(request):
+def updateName_view(request):
 	
 	email = request.data.get("email")
 	newUsername = request.data.get("newUsername")
@@ -206,26 +206,6 @@ def name_view(request):
 		user.username = newUsername
 		user.save()
 		return Response({'message': 'username changed succesfully'}, status=status.HTTP_200_OK)
-
-	except (CustomUser.DoesNotExist):
-		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
-	except CustomError as e:
-		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
-	
-@api_view(['POST'])
-def updateUsername_view(request):
-	
-	email = request.data.get("email")
-	
-	if not email:
-		return Response({"error": "Faltan datos en el request"}, status=status.HTTP_400_BAD_REQUEST)
-	
-	if not CustomUser.objects.filter(email=email).exists():
-		return Response({"error": "no existe el usuario"}, status=status.HTTP_400_BAD_REQUEST)
-
-	try:
-		user = CustomUser.objects.get(email=email)
-		return Response({'username': user.username, 'message': 'username obteined succesfully'}, status=status.HTTP_200_OK)
 
 	except (CustomUser.DoesNotExist):
 		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
@@ -254,18 +234,7 @@ def updatePassword_view(request):
     return Response({"message": "Contraseña actualizada correctamente."}, status=status.HTTP_200_OK)
 
 @api_view(["POST"])
-def pictureUrl_view(request):
-    email = request.data.get("email")
-
-    try:
-        user = CustomUser.objects.get(email=email)
-    except CustomUser.DoesNotExist:
-        return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
-    return Response({"message": "Contraseña actualizada correctamente.", "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
-
-@api_view(["POST"])
-def changePictureUrl_view(request):
+def updatePictureUrl_view(request):
 
 	email = request.data.get("email")
 	src = request.data.get("src")
@@ -313,9 +282,9 @@ def isFriendShip_view(request):
 		return Response({"error": "missing a username"}, status=status.HTTP_400_BAD_REQUEST)
 	
 	if Friendship.are_friends(username1, username2):
-		return Response({"message": "Son amigos"}, status=status.HTTP_200_OK)
+		return Response({"message": "Are friends"}, status=status.HTTP_200_OK)
 	else:
-		return Response({"message": "No son amigos"}, status=status.HTTP_200_OK)
+		return Response({"message": "Are not friends"}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def friendShip_view(request, action):
