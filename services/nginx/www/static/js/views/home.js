@@ -14,7 +14,7 @@ export async function initHome() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    
+
 
     const totalCards = 4;
     const angleStep = 360 / totalCards;
@@ -129,11 +129,11 @@ export async function initHome() {
         profilePopup.style.display = 'none';
     }
 
-    window.openSettingsPopup =  function openSettingsPopup() {
+    window.openSettingsPopup = function openSettingsPopup() {
         let email = sessionStorage.getItem("email");
         showPicture(email);
         showUsername(email);
-        
+
         document.querySelectorAll(".preset-img").forEach(img => {
             img.addEventListener("click", async () => {
                 const src = img.src
@@ -141,7 +141,7 @@ export async function initHome() {
             });
         })
         document.getElementById("save-btn-images").addEventListener("click", async () => {
-            const src =  document.getElementById("current-profile-pic").src;
+            const src = document.getElementById("current-profile-pic").src;
             updatePicture(email, src);
             window.closeSettingsPopup();
         });
@@ -227,35 +227,35 @@ export async function initHome() {
             // Step 1: Get user data and extract user_id
             const userResponse = await fetch(`/api/usr/user/${username}`);
             const userData = await userResponse.json();
-            
+
             if (!userData) {
                 console.error("User data not found");
                 return;
             }
-            
+
             const user_id = userData.id;
             console.log("User data:", userData);
-            
+
             // Step 2: Get game statistics using user_id
             const statsResponse = await fetch(`/api/game/statistics/${user_id}/`);
             const statsData = await statsResponse.json();
-            
+
             if (!statsData) {
                 console.error("Game data not found");
                 return;
             }
             console.log("Game statistics data:", statsData);
-            
+
             // Step 3: Get game history using the same user_id
             const historyResponse = await fetch(`/api/game/history/${user_id}/`);
             const historyData = await historyResponse.json();
-            
+
             if (!historyData) {
                 console.error("Game history not found");
                 return;
             }
             console.log("Game history data:", historyData);
-            
+
 
             // Populate elements with user data
             profileUsernameElement.innerText = userData.username;
@@ -266,32 +266,49 @@ export async function initHome() {
             profilePongGamesWonElement.innerText = statsData.online_pong_matches_won || 0;
             profileRpsGamesPlayedElement.innerText = statsData.online_matches_played || 0;
             profileRpsGamesWonElement.innerText = statsData.online_rps_matches_won || 0;
-            
+
             // Populate elements with game history
-            Object.entries(historyData.tournament_matches).forEach(([tournamentId, tournamentMatches]) => {
-                const tournamentElement = document.createElement('div');
-                tournamentElement.innerHTML = `<h3>Torneo ${tournamentId}</h3>`;
-                tournamentMatches.forEach(match => {
-                    const matchElement = document.createElement('div');
-                    matchElement.innerHTML = buildSingleMatchHistory(match);
-                    tournamentElement.appendChild(matchElement);
+            if (historyData.tournament_matches && Object.keys(historyData.tournament_matches).length > 0) {
+                Object.entries(historyData.tournament_matches).forEach(([tournamentId, tournamentMatches]) => {
+                    const tournamentElement = document.createElement('div');
+                    tournamentElement.innerHTML = `<h3 style="text-align: center;">Torneo ${tournamentId}</h3>`;
+                    tournamentMatches.forEach(match => {
+                        const matchElement = document.createElement('div');
+                        matchElement.innerHTML = buildSingleMatchHistory(match);
+                        tournamentElement.appendChild(matchElement);
+                    });
+                    profileTournamentHistoryElement.appendChild(tournamentElement);
                 });
-                profileTournamentHistoryElement.appendChild(tournamentElement);
-            });
-
-            historyData.online_matches.forEach(match => {
-                const historyElement = document.createElement('div');
-                historyElement.innerHTML = buildSingleMatchHistory(match);
-                profileOnlineHistoryElement.appendChild(historyElement);
-            });
-
-            historyData.local_matches.forEach(match => {
-                const historyElement = document.createElement('div');
-                historyElement.innerHTML = buildSingleMatchHistory(match);
-                profileLocalHistoryElement.appendChild(historyElement);
+            } else {
+                const noTournamentElement = document.createElement('div');
+                noTournamentElement.innerHTML = `<h3 style="text-align: center;">No hay partidos de torneo</h3>`;
+                profileTournamentHistoryElement.appendChild(noTournamentElement);
             }
-            );
-            
+
+            if (historyData.local_matches && Object.keys(historyData.local_matches).length > 0) {
+                historyData.online_matches.forEach(match => {
+                    const historyElement = document.createElement('div');
+                    historyElement.innerHTML = buildSingleMatchHistory(match);
+                    profileOnlineHistoryElement.appendChild(historyElement);
+                });
+            } else {
+                const noOnlineElement = document.createElement('div');
+                noOnlineElement.innerHTML = `<h3 style="text-align: center;">No hay partidos online</h3>`;
+                profileOnlineHistoryElement.appendChild(noOnlineElement);
+            }
+
+            if (historyData.local_matches && Object.keys(historyData.local_matches).length > 0) {
+                historyData.local_matches.forEach(match => {
+                    const historyElement = document.createElement('div');
+                    historyElement.innerHTML = buildSingleMatchHistory(match);
+                    profileLocalHistoryElement.appendChild(historyElement);
+                });
+            } else {
+                const noLocalElement = document.createElement('div');
+                noLocalElement.innerHTML = `<h3 style="text-align: center;">No hay partidos locales</h3>`;
+                profileLocalHistoryElement.appendChild(noLocalElement);
+            }
+
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -335,13 +352,13 @@ export async function initHome() {
             `;
     }
 
-    
+
     window.updateStatus = function updateStatus(isOnline) {
         var statusCircle = document.getElementById("status-circle");
         if (isOnline) {
             statusCircle.style.backgroundColor = "var(--primary-color)";
         } else {
-            statusCircle.style.backgroundColor =  "var(--btn-bg-color)";
+            statusCircle.style.backgroundColor = "var(--btn-bg-color)";
         }
     }
 
@@ -435,7 +452,7 @@ export async function initHome() {
         title.style.transform = 'translateY(0)';
     });
 
-    
+
 
     tabButtons.forEach(button => {
         window.eventManager.addEventListener(button, 'click', () => {
