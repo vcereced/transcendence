@@ -12,7 +12,7 @@
         </div>
 
         <div class="dropdown-menu" id="dropdownMenu">
-            <a onclick="openProfilePopup()">Ver Perfil</a>
+            <a onclick="openProfilePopup(sessionStorage.getItem('username'))">Ver Perfil</a>
             <a onclick="openSettingsPopup()">Ajustes</a>
             <a>Salir</a>
         </div>
@@ -71,7 +71,7 @@
             <button class="close-btn" onclick="closeProfilePopup()">&times;</button>
             <div class="profile-header">
                 <div class="profile-image">
-                    <img id="profile-avatar" src="../../media/1.gif" alt="Foto de perfil">
+                    <img id="profile-image-img" src="../../media/1.gif" alt="Foto de perfil">
                 </div>
                 <div class="profile-info">
                     <h2 id="profile-username">
@@ -80,7 +80,7 @@
                     <p>Torneos ganados / jugados: <span id="tournaments-won"></span> / <span id="tournaments-played"></span></p>
                     <p>Pong ganados / jugados: <span id="pong-won"></span> / <span id="pong-played"></span></p>
                     <p>Piedra-papel-tijeras ganados / jugados: <span id="rps-won"></span> / <span id="rps-played"></span></p>
-                    <button id="add-friend-btn" onclick="toggleFriendStatus()">Añadir Amigo</button>
+                    <button id="add-friend-btn">Añadir Amigo</button>
                 </div>
             </div>
             <div class="statistics">
