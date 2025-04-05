@@ -325,6 +325,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 if data["type"] == "game_end":
                     print(f"\033[91m {data} <- data GAME END \033[0m")
                     await self.game_end_notification(data)
+                if data["type"] == "new_round": 
+                    print(f"\033[91m {data} <- data NEW ROUND \033[0m")
+                    await self.send(json.dumps({
+                        "type": "new_round",
+                        "tournament_id": data["tournament_id"],
+                        "new_round": data["tournament_tree"],
+                        "round_id": data["round_id"],
+                        "username": self.username,
+                    }))
 
             await asyncio.sleep(0.042)
 

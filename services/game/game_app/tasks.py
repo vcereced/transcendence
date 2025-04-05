@@ -35,7 +35,6 @@ def check_ia_vs_ia(game_data):
 
 @shared_task(name="create_game")
 def create_game(game_data):
-    #print in GREEN 
     print(f"\033[92mCreating game with data: {game_data}\033[0m")
     if check_ia_vs_ia(game_data): return
     with transaction.atomic():

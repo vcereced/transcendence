@@ -73,6 +73,22 @@ def send_create_game_task(players):
 #                   TOURNAMENT LOGIC
 ###########################################################
 
+def send_new_round_notification(tournament_id, round_id, tournament_tree):
+    """
+    Envía una notificación a los jugadores sobre el inicio de una nueva ronda.
+    """
+    channel = f"tournament_{tournament_id}"
+    message = {
+        "type": "new_round",
+        "round_id": round_id,
+        "tournament_tree": tournament_tree,
+        "tournament_id": tournament_id,
+    }
+    redis_client.publish(channel, json.dumps(message))
+    #print in blue
+    print(f"\033[34m" + f"Notificación de nueva ronda enviada: {message}" + "\033[0m")
+
+
 def start_next_round(tournament_id, round_id, winners):
     
     next_round_id = str(int(round_id) + 1)  # Pasamos a la siguiente ronda
@@ -123,6 +139,8 @@ def start_next_round(tournament_id, round_id, winners):
             "tournament_id": tournament_id,
             "tree_id": match["tree_id"]
         })
+    # Enviar notificación a los jugadores sobre la nueva ronda
+    send_new_round_notification(tournament_id, next_round_id, new_round_matches)
 
 
 #CHECKPOINT!!!!!

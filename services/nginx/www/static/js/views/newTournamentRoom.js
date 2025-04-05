@@ -230,7 +230,24 @@ export function initNewTournamentRoom(tournamentId) {
     return () => window.eventManager.removeAllEventListeners();
 }
 
-//SOCKET MANAGEMENT
+//SOCKET MANAGEMENT3
+/**
+ * This function checks if the username is in the new round.
+ * If it is, it redirects the user to the game #rock-paper-scissors.
+ * @param {*} data 
+ */
+function checkNewRound(new_round, myUser) {
+    const isUserInRound = new_round.some(match => {
+        const left = match.players.left.username;
+        const right = match.players.right.username;
+        return left === myUser || right === myUser;
+    });
+    if (isUserInRound) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 function startTournamentWebSocket(tournamentId) {
     console.log('tournamentId>', tournamentId.id);
@@ -259,6 +276,22 @@ function startTournamentWebSocket(tournamentId) {
             setTimeout(() => {
                 update_tournament_tree(data);
             }, 1500);
+        }
+        if (data.type === "new_round") {
+                //check if my user is in the new round so i can be redirected to the game
+                console.log("%cNew round data:", "color: blue", data);
+                const roundId = Number(data.round_id) - 1;
+                console.log("%cMy ROUND STARTING:", "color: red", roundId);
+                console.log("%cROUND IS:", "color: green", data.new_round);
+                const myUser = data.username;
+                //check if myUser is in data.new_round
+                if  (checkNewRound(data.new_round, myUser)) {
+                    console.log("%cMy user is in the new round:", "color: green", myUser);
+                    setTimeout(() => {
+                        window.location.hash = '#rock-paper-scissors';
+                    }
+                    , 1500);
+                }
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
