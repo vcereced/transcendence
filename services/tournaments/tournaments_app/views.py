@@ -7,6 +7,8 @@ import redis
 from django.conf import settings
 import json
 from .tasks import send_create_game_task
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
 redis_client = redis.Redis(
     host=settings.REDIS_HOST,
@@ -14,6 +16,23 @@ redis_client = redis.Redis(
 	db=settings.REDIS_DB,
     decode_responses= True
 )
+
+# API endpoint to get the name of a tournament by its ID the commented code is for the whole tournament
+
+# @api_view(['GET']) 
+# def get_tournament_name(request, tournament_id):
+#     try:
+#         tournament = Tournament.objects.get(id=tournament_id)
+#         
+#         serializer = TournamentSerializer(tournament)
+#         return Response(serializer.data, status=200)
+#     except Tournament.DoesNotExist:
+#         return JsonResponse({"error": "Tournament not found"}, status=404)
+def get_tournament_name(request, tournament_id):
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+    return JsonResponse({"name": tournament.name}, status=200)
+################################################################################
+
 
 @api_view(['POST'])
 def create_tournament(request):
@@ -37,7 +56,7 @@ def list_tournaments(request):
 
 # Prepare this for allowing users to join a tournament, be aware
 # of the edge cases like the tournament not existing or the user already being in the tournament.
-# or the tournament being full. TAKE CARE OF THIS !!! JAVI WILL BE TESTING THIS !!!
+# or the tournament being full. TAKE CARE OF THIS !!!
 @api_view(['POST'])
 def join_tournament(request, tournament_id):
     try:

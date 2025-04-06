@@ -3,6 +3,7 @@
 from celery import shared_task
 from celery import Celery
 from django.conf import settings
+from .models import Tournament
 import redis
 import json
 
@@ -88,6 +89,14 @@ def send_new_round_notification(tournament_id, round_id, tournament_tree):
     #print in blue
     print(f"\033[34m" + f"Notificación de nueva ronda enviada: {message}" + "\033[0m")
 
+def save_tournament_tree(tournament_id, tournament_tree):
+    """
+    Guarda el árbol del torneo en la base de datos.
+    """
+    tournament = Tournament.objects.get(id=tournament_id)
+    tournament.tournament_tree = tournament_tree
+    tournament.save()
+    print(f"Árbol del torneo {tournament_id} guardado en la base de datos.")
 
 def start_next_round(tournament_id, round_id, winners):
     
@@ -97,6 +106,7 @@ def start_next_round(tournament_id, round_id, winners):
 
     if len(winners) == 1:
         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
+        save_tournament_tree(tournament_id, get_tournament_history(tournament_id))
         return  
 
     # Obtener el último tree_id utilizado

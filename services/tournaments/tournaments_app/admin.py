@@ -4,7 +4,7 @@ from .models import Tournament
 
 
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'created_at')
+    list_display = ('id', 'name', 'created_at', 'tournament_tree')
     search_fields = ('name',)
     ordering = ('-created_at',)
 

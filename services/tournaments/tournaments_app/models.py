@@ -7,6 +7,7 @@ class Tournament(models.Model):
     name = models.CharField(max_length=100, unique=True)
     # description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    tournament_tree = models.JSONField(default=dict) 
     # players = models.ManyToManyField('auth.User')  # Usamos el modelo User por defecto de Django
 
     def __str__(self):
