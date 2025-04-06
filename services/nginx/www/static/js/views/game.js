@@ -176,7 +176,7 @@ export async function initGame() {
             if (data.game_state.start_countdown !== 0) {
                 showPopup(`Comenzando en ${startCountdown}`);
             }
-
+            //MAYBE  IT IS HERE...
             if (data.game_state.is_finished && !popupShown) {
                 socket.close();
                 showPopup(`${data.game_state.winner_username} gana!`);

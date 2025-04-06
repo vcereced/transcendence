@@ -485,21 +485,18 @@ function restoreTournamentTree() {
                 const { tree_id, players, winner, loser } = match;
                 const treeIdStr = String(tree_id);
                 const participants = Object.values(players).filter(p => p && p.username);
-        
+                
                 
                 if (treeIdStr === "7") {
                     participants.forEach((participant) => {
                         const username = participant.username;
-                        console.log("%cRestarando Game 7:", "color: red")
-                        console.log("%cUsername:", "color: blue", username);
-                        console.log("%cWinner:", "color: green", winner);
-                        console.log("%cLoser:", "color: orange", loser);
+                        let isWinner = false;
+                        let isLoser = false;
                         
-                        // check if status is pending
-                        y
-                        const isWinner = username === winner.username;
-                        const isLoser = username === loser.username;
-        
+                        if (match.status != "pending") {
+                            isWinner = username === winner.username;
+                            isLoser = username === loser.username;
+                        }
                         
                         const originTreeId = Object.keys(players).find(
                             key => players[key]?.username === username

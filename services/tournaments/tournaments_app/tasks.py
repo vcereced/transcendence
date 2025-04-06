@@ -237,7 +237,7 @@ def start_matchmaking(message):
     # Completar la lista si hay menos de 8 jugadores
     if len(players) < 8:
         print("Jugadores insuficientes. Agregando jugadores ficticios para completar.")
-        current_id = 4242  # ID inicial para los usuarios ficticios
+        current_id = 0  # ID inicial para los usuarios ficticios
         for i in range(len(players) + 1, 9):  # Rellenar hasta tener 8 jugadores
             players.append({
                 "username": f"IA{i}",

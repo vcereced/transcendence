@@ -2,4 +2,10 @@ from django.contrib import admin
 from .models import Tournament
 # Register your models here.
 
-admin.site.register(Tournament)
+
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'created_at')
+    search_fields = ('name',)
+    ordering = ('-created_at',)
+
+admin.site.register(Tournament, TournamentAdmin)

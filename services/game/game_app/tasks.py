@@ -11,7 +11,7 @@ import time
 
 def check_ia_vs_ia(game_data):
     print (f"Checking if IA vs IA game: {game_data['left_player_id']} vs {game_data['right_player_id']}")
-    if game_data["left_player_id"] == 4242 and game_data["right_player_id"] == 4242:
+    if game_data["left_player_id"] == 0 and game_data["right_player_id"] == 0:
 
         print("IA vs IA game creation skipped.")
         winner_id = game_data["left_player_id"] if random.choice([True, False]) else game_data["right_player_id"]
