@@ -1,0 +1,22 @@
+/* Estilos para el popup */
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 5px;
+    font-size: 16px;
+    z-index: 9999;  /* Asegura que el popup esté por encima de otros elementos */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Animación para hacer que el popup aparezca y desaparezca */
+.popup.show {
+    display: block;
+    opacity: 1;
+}

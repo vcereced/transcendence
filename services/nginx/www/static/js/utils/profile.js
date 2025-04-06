@@ -9,7 +9,7 @@ export async function isFriend(username1, username2) {
         return data.message === "Are friends";
 
     } catch (error) {
-        alert("Error to check are friends");
+        window.showPopup("Error to check are friends" + error);
         console.error("Error:", error);
     }
 }
@@ -25,7 +25,8 @@ export async function addFriend(username1, username2) {
         return data.menssaje === "Are friends";
         
     } catch (error) {
-        alert("Error to add friends");
+        window.showPopup("Error to add friends" + error);
+       
         console.error("Error:", error);
     }
 }
@@ -42,7 +43,8 @@ export async function removeFriend(username1, username2) {
         return data.menssaje === "Are not friends";
 
     } catch (error) {
-        alert("Error to remove friends.");
+       
+        window.showPopup("Error to remove friends" + error);
         console.error("Error:", error);
     }
 }
@@ -81,9 +83,9 @@ export async function getDataUser(username) {
         if (response.ok) {
             return data;
         } else {
-            alert(data.error || "Error to obtein data from User.");}
+            window.showPopup(data.error || "Error to obtein data from User.");}
     } catch (error) {
-        alert("Error en la solicitud.");
+        window.showPopup("Error en la solicitud." + error);
         console.error("Error:", error);
     }
 }

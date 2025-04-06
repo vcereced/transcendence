@@ -19,6 +19,22 @@ from rest_framework import generics
 
 SECRET_KEY = os.getenv("JWT_SECRET")
 
+@api_view(['GET'])
+def logout_view(request):
+
+	refresh_token = request.COOKIES.get('refreshToken')
+
+	if not refresh_token:
+		return Response({'error': 'No refresh token in cookies'}, status=400)
+
+	try:
+		token = RefreshToken(refresh_token)
+		token.blacklist()
+
+		return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+	except Exception as e:
+		return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 def resend_otp_view(request):
 	

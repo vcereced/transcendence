@@ -15,8 +15,14 @@
     <link href="/static/css/versus_wait.css" rel="stylesheet" type="text/css">
     <link href="/static/css/game_view.css" rel="stylesheet" type="text/css">
     <link href="/static/css/2FA.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/popup.css" rel="stylesheet" type="text/css">
 </head>
 <body data-page="default"> <!-- Valor fijo en lugar de usar bloque de Django -->
+    <!-- pop up for alerts -->
+    <div id="popup-alert" class="popup">
+        <span id="popup-alert-message">Mensaje de alerta</span>
+    </div>
+
     <!-- Main Content -->
     <div id="main-content">
         <!-- Aquí se cargará el contenido dinámico de la SPA -->
@@ -24,5 +30,7 @@
 
     <!-- Enlazar tu JavaScript -->
     <script type="module" src="/static/js/spa-navigation.js" defer></script> <!-- Asegúrate que la ruta es correcta -->
+    <script type="module" src="/static/js/utils/debugging.js" defer></script> <!-- Asegúrate que la ruta es correcta -->
+
 </body>
 </html>

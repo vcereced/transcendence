@@ -14,7 +14,7 @@
         <div class="dropdown-menu" id="dropdownMenu">
             <a onclick="openProfilePopup(sessionStorage.getItem('username'))">Ver Perfil</a>
             <a onclick="openSettingsPopup()">Ajustes</a>
-            <a>Salir</a>
+            <a onclick="logout()">Salir</a>
         </div>
 
         <div class="fullscreen-icon" onclick="toggleFullscreen()">
@@ -74,7 +74,7 @@
                     <img id="profile-image-img" src="../../media/1.gif" alt="Foto de perfil">
                 </div>
                 <div class="profile-info">
-                    <h2 id="profile-username">
+                    <h2 id="profile-info-username">
                         <div class="status-circle" id="status-circle"></div>
                     </h2>
                     <p>Torneos ganados / jugados: <span id="tournaments-won"></span> / <span id="tournaments-played"></span></p>
@@ -161,4 +161,10 @@
             </div>
         </div>
     </div>
+
+    <div id="popup-alert" class="popup">
+        <span id="popup-alert-message">Mensaje de alerta</span>
+    </div>
+    
+
 </div>

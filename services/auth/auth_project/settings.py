@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 	'rest_framework_simplejwt',
     'django_otp',
     'django_otp.plugins.otp_totp',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 #DESARROLLOO DESCOMENTAR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -100,11 +101,12 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Duración del token
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),  # Duración del token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Duración del token de refresco
     'ROTATE_REFRESH_TOKENS': True,                  # Renueva el refresh token al utilizarlo
     'BLACKLIST_AFTER_ROTATION': True,               # Evitar que se reutilicen tokens de refresco rotados
     'AUTH_HEADER_TYPES': ('Bearer',),               # El tipo de encabezado esperado
+
 }
 
 

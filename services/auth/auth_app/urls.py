@@ -18,5 +18,6 @@ urlpatterns = [
     path('updateName', views.updateName_view, name='updateName'),
     path('updatePassword', views.updatePassword_view, name='updatePassword'),
     path('dataUser', views.dataUser_view, name='dataUser'),
+    path('logout', views.logout_view, name='logout'),
 
 ]

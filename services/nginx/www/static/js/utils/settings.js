@@ -10,7 +10,7 @@ export async function showUsername(email){
         body: JSON.stringify({ email })
     })
     .then(response => response.json())
-    .then(data => { document.getElementById('current-username').textContent = data.username;})
+    .then(data => {document.getElementById('current-username').textContent = data.username;})
     .catch(error => {
         alert(data.error || "Error to obtein the username.");
         console.error("Error to obtein the username:", error);
@@ -33,6 +33,7 @@ export async function updateUsername(email, newUsername) {
         const data = await response.json();
         if (response.ok) {
             window.sessionStorage.setItem("username", newUsername);
+            window.showPopup("usuario cambiado correctamente");
             window.closeSettingsPopup();
         } else {
             alert(data.error || "Error al actualizar el nombre de usuario");
@@ -46,12 +47,14 @@ export async function updateUsername(email, newUsername) {
 export async function updatePassword(email, oldPass, newPass1, newPass2) {
     
     if(!oldPass || !newPass1 || !newPass2) {
-        alert("todos los campos son necesarios");
+        window.showPopup("todos los campos son necesarios");
+       // alert("todos los campos son necesarios");
         return;
     }
     
     if (newPass1 !== newPass2) {
-        alert("Las nuevas contraseñas no coinciden.");
+        window.showPopup("Las nuevas contraseñas no coinciden.");
+        //alert("Las nuevas contraseñas no coinciden.");
         return;
     }
 
@@ -75,12 +78,15 @@ export async function updatePassword(email, oldPass, newPass1, newPass2) {
         const data = await response.json();
         
         if (response.ok) {
+            window.showPopup("Contraseña cambiada correctamente.");
             window.closeSettingsPopup();
         } else {
-            alert(data.error || "Error al cambiar la contraseña.");
+            window.showPopup(data.error);
+          //  alert(data.error || "Error al cambiar la contraseña.");
         }
     } catch (error) {
-        alert("Error en la solicitud.");
+        window.showPopup("Error en la solicitud.");
+        //alert("Error en la solicitud.");
         console.error("Error:", error);
     }
 }
@@ -105,10 +111,12 @@ export async function showPicture(email) {
         if (response.ok) {
             document.getElementById("current-profile-pic").src = data.picture_url;
         } else {
-            alert(data.error || "Error to change the picture profile.");
+            window.showPopup(data.error );
+            //alert(data.error || "Error to change the picture profile.");
         }
     } catch (error) {
-        alert("Error to fetch to change picture.");
+        window.showPopup("Error to fetch to change picture.");
+       // alert("Error to fetch to change picture.");
         console.error("Error:", error);
     }
 }
@@ -131,12 +139,15 @@ export async function updatePicture(email, src) {
         const data = await response.json();
         
         if (response.ok) {
+            window.showPopup("imagen de perfil cambiada correctamente");
             return;
         } else {
+            window.showPopup(data.error);
             alert(data.error || "Error to change the picture profile.");
         }
     } catch (error) {
-        alert("Error to change the picture profile.");
+        window.showPopup("Error to change the picture profile.");
+      //  alert("Error to change the picture profile.");
         console.error("Error:", error);
     }
 

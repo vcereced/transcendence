@@ -103,6 +103,36 @@ export async function initHome() {
         players = downloadPlayerList();
     }
 
+    window.logout = function logout() {
+
+        const url = "/api/usr/logout";
+        fetch( url, {
+            method: "GET",
+            credentials: "include",
+        })
+        .then(response => {
+            if (response.ok) {
+                document.cookie = "accessToken=; Max-Age=0; path=/";
+                document.cookie = "refreshToken=; Max-Age=0; path=/";
+                sessionStorage.removeItem("action");
+                sessionStorage.removeItem("username");
+                sessionStorage.removeItem("email");
+                window.showPopup("deslogeo correctamente!");
+            } else {
+                return response.json().then(data => {
+                    window.showPopup("Error al desloguear: " + (data.error));
+                });
+            }
+        })
+        .catch(err => {
+            window.showPopup("Error al desloguear en catch: " + err.message);
+        })
+        .finally(() => {
+            window.location.hash = "#new-login";
+        });
+    };
+    
+
     async function downloadPlayerList() {
         try {
             const response = await fetch("/api/settings/playersList");
