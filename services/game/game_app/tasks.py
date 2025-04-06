@@ -7,6 +7,7 @@ import json
 from celery import Celery, current_app
 from django.db import transaction
 import random
+import time
 
 def check_ia_vs_ia(game_data):
     print (f"Checking if IA vs IA game: {game_data['left_player_id']} vs {game_data['right_player_id']}")
@@ -18,7 +19,10 @@ def check_ia_vs_ia(game_data):
         winner_username = game_data["left_player_username"] if winner_id == game_data["left_player_id"] else game_data["right_player_username"]
         loser_username = game_data["right_player_username"] if winner_id == game_data["left_player_id"] else game_data["left_player_username"]
         print(f"🏆 Game simulated finished. Winner: {winner_username}, Loser: {loser_username}")
-       
+    
+        delay = random.randint(1, 6)
+        time.sleep(delay)
+        print(f"Sending `game_end` task")
         current_app.send_task( 
             "game_end",
             args=[{

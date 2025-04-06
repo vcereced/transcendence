@@ -15,10 +15,15 @@ export function initNewTournamentRoom(tournamentId) {
         room_socket = startTournamentWebSocket(tournamentId);
     }
     const startButton = document.getElementById("start-tournament-btn");
+    let tournamentName = sessionStorage.getItem("tournamentName") 
     if (startButton) {
         startButton.addEventListener("click", () => {
             sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
         });
+    }
+    if (tournamentName) {
+        const tournamentNameElement = document.getElementById("text-to-copy");
+        tournamentNameElement.textContent = tournamentName;
     }
 
     restoreTournamentTree();
