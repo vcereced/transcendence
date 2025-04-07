@@ -150,6 +150,8 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
             message = await self.pubsub.get_message(ignore_subscribe_messages=True)
             if message:
                 data = json.loads(message["data"])
+                #print in purple
+                print(f"\033[95m {data} <- data RECEIVED!!!!! \033[0m")
                 if data["type"] == "user_count_update":
                     await self.send(json.dumps({
                         "tournament_id": data.get("tournament_id"),

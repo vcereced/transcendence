@@ -41,7 +41,12 @@ def create_tournament(request):
     serializer = TournamentSerializer(data=request.data)
     if serializer.is_valid():
         tournament = serializer.save()
-        redis_client.publish('tournaments_channel', f'{tournament.id}')
+        message = {
+            "type": "tournament_created",
+            "tournamentId": tournament.id,
+            "tournamentName": tournament.name,
+        }
+        redis_client.publish('tournaments_channel', json.dumps(message))
         redis_client.set(f'tournament_{tournament.id}_player_count', 0)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     print("serializer.errors")

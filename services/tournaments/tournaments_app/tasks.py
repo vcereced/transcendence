@@ -3,7 +3,7 @@
 from celery import shared_task
 from celery import Celery
 from django.conf import settings
-from .models import Tournament
+from .models import Tournament, Participant
 import redis
 import json
 
@@ -70,6 +70,46 @@ def send_create_game_task(players):
 
     print("Tarea enviada al servicio de juegos.")
 
+
+#############################################################
+#                   DATABASE LOGIC
+#############################################################
+
+
+def save_participants_to_database(tournament_id, players):
+    """Saves the participants in the database.
+    This function is called when the tournament is created."""
+    tournament = Tournament.objects.get(id=tournament_id)
+    for player in players:
+        print(f"Guardando participante: {player['username']}")
+        participant, created = Participant.objects.get_or_create(
+            user_id=player["user_id"],
+            # defaults={"username": player["username"]}
+            username=player["username"]
+        )
+        if created == False:
+            print(f"El participante {participant.username} ya existe en la base de datos.")
+        tournament.participants.add(participant)
+    tournament.save()
+
+def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
+    """Saves the tournament final tree in the database.
+    This function is called when the tournament is finished.
+    """
+    tournament = Tournament.objects.get(id=tournament_id)
+    tournament.tournament_tree = tournament_tree
+    if winner:
+        
+        try:
+            winner_participant = Participant.objects.get(user_id=winner["id"])
+        except Participant.DoesNotExist:
+            print(f"El participante {winner} no existe en la base de datos.")
+            return
+        tournament.champion = winner_participant
+    tournament.save()
+    print(f"Árbol del torneo {tournament_id} guardado en la base de datos.")
+
+    
 ###########################################################
 #                   TOURNAMENT LOGIC
 ###########################################################
@@ -89,14 +129,7 @@ def send_new_round_notification(tournament_id, round_id, tournament_tree):
     #print in blue
     print(f"\033[34m" + f"Notificación de nueva ronda enviada: {message}" + "\033[0m")
 
-def save_tournament_tree(tournament_id, tournament_tree):
-    """
-    Guarda el árbol del torneo en la base de datos.
-    """
-    tournament = Tournament.objects.get(id=tournament_id)
-    tournament.tournament_tree = tournament_tree
-    tournament.save()
-    print(f"Árbol del torneo {tournament_id} guardado en la base de datos.")
+
 
 def start_next_round(tournament_id, round_id, winners):
     
@@ -106,7 +139,7 @@ def start_next_round(tournament_id, round_id, winners):
 
     if len(winners) == 1:
         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
-        save_tournament_tree(tournament_id, get_tournament_history(tournament_id))
+        save_tournament_to_database(tournament_id, get_tournament_history(tournament_id), winner=winners[0])
         return  
 
     # Obtener el último tree_id utilizado
@@ -222,10 +255,9 @@ def get_tournament_history(tournament_id):
 @shared_task(name='start_matchmaking')
 def start_matchmaking(message):
     """
-    Empareja jugadores para un torneo y envía tareas para crear juegos 1vs1.
-    Si hay menos de 8 jugadores, completa con usuarios ficticios.
+    Pairs players for the tournament and sends tasks to create games.
     """
-    print(f"Comenzando emparejamiento de jugadores paraa el torneo {message['tournament_id']}.")
+    print(f"Comenzando emparejamiento de jugadores para el torneo {message['tournament_id']}.")
 
     # Obtener el ID del torneo
     tournament_id = message['tournament_id']
@@ -255,8 +287,14 @@ def start_matchmaking(message):
             })
             # current_id += 1
         print(f"Lista completada con jugadores ficticios: {players}")
+    
+    try :
+        save_participants_to_database(tournament_id, players)
+    except Exception as e:
+        print(f"Error al guardar los participantes en la base de datos: {e}")
+        
 
-    # THIS IS THE MATCHMAKING ALGORITHM IT SHOULD BE REPLACED BY A BETTER ONE
+    # THIS IS THE MATCHMAKING ALGORITHM IT SHOULD BE REPLACED BY A BETTER ONE AND IN ANOTHER FUNCTION
     pairs = []
     for i in range(0, len(players) - 1, 2):  # Tomar pares consecutivos
         left_player = players[i]
