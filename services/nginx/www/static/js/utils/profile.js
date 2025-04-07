@@ -21,12 +21,9 @@ export async function addFriend(username1, username2) {
     try {
         const response = await fetch(url + action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
         const data = await response.json();
-        
-        return data.menssaje === "Are friends";
-        
+        window.showPopup("now you are friends");
     } catch (error) {
         window.showPopup("Error to add friends" + error);
-       
         console.error("Error:", error);
     }
 }
@@ -39,8 +36,7 @@ export async function removeFriend(username1, username2) {
     try {
         const response = await fetch(url + action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
         const data = await response.json();
-            
-        return data.menssaje === "Are not friends";
+        window.showPopup("not being friends anymore");
 
     } catch (error) {
        

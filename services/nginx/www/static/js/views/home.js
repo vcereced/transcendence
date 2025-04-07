@@ -303,13 +303,11 @@ export async function initHome() {
             btn.innerHTML = "Amigo";
             btn.style.backgroundColor = "var(--primary-color)";
             btn.style.color = "white";
-            console.log("entra a añadir");
         } else if (btn.innerHTML === "Amigo" /*& friends*/ ) {
             await removeFriend(currentUsername, username)
             btn.innerHTML = "Añadir Amigo";
             btn.style.backgroundColor = "#f5f5f5";
             btn.style.color = "#333";
-            console.log("entra a borrar amigo");
         }
     };
 
