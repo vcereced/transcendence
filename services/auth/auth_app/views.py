@@ -291,3 +291,7 @@ class UserDetail(generics.RetrieveAPIView):
 	queryset = CustomUser.objects.all()
 	serializer_class = UserSerializer
 	lookup_field = 'username'
+
+class UserDetailById(generics.RetrieveAPIView):
+	queryset = CustomUser.objects.all()
+	serializer_class = UserSerializer

@@ -134,10 +134,9 @@ export function initTournamentsList() {
                 }
             };
 
-            ws.onerror = (error) => console.error("WebSocket Error:", error);
-            ws.onclose = () => {
-                console.log("WebSocket closed. Reconnecting in 5 seconds...");
-                setTimeout(startGlobalWebSocket, 5000);
+            ws.onclose = () => console.error("WebSocket closed");
+            ws.onerror = (error) => {
+                console.error("WebSocket error", error);
             };
             return ws;
         });

@@ -4,14 +4,17 @@ import redis.asyncio as redis
 import asyncio
 import jwt
 from .tasks import send_start_matchmaking_task, end_game_simulation
-from .redis_manager import RedisManager 
+from .redis_manager import RedisManager
+from celery import current_app
+import requests
 
 
 # =========================================
 #           EXTERNAL METHODS AND MACROS
 # =========================================
 
-LOGGED_USERS_SET = "logged_users"
+LOGGED_USERS_SET_KEY = "logged_users"
+IN_QUEUE_USER_IDS_SET_KEY = "in_queue_user_ids"
 
 async def extract_user_info(self):
     """Extrae información del usuario desde el JWT en las cookies."""
@@ -32,8 +35,6 @@ async def extract_user_info(self):
                 break
 
 
-#This is a temporary solution; it should be replaced by a Redis set... or not ?
-waiting_players = []
 class LoginConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
@@ -44,9 +45,9 @@ class LoginConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         self.redis_manager = RedisManager()
-        await self.redis_manager.add_to_set(LOGGED_USERS_SET, self.user_id)
+        await self.redis_manager.add_to_set(LOGGED_USERS_SET_KEY, self.user_id)
         print(f"User {self.username} connected with ID {self.user_id}")
-        logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET)
+        logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET_KEY)
         print(f"Logged users qty: {len(logged_users)}")
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -71,8 +72,8 @@ class LoginConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         print(f"User {self.username} disconnected with ID {self.user_id}")
-        await self.redis_manager.remove_from_set(LOGGED_USERS_SET, self.user_id)
-        logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET)
+        await self.redis_manager.remove_from_set(LOGGED_USERS_SET_KEY, self.user_id)
+        logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET_KEY)
         print(f"Logged users qty: {len(logged_users)}")
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -83,43 +84,98 @@ class LoginConsumer(AsyncWebsocketConsumer):
         )
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
+
 class VersusConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
         print("Connecting to Versus WebSocket")
         
         self.room_group_name = "versus_room"
-        # self.redis_manager = RedisManager()
 
         await extract_user_info(self)
+        self.redis_manager = RedisManager()
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+        await self.send(json.dumps({"type": "connected", "user_id": self.user_id, "username": self.username}))
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         if data["type"] == "join_queue":
             await self.join_queue()
+
+    async def request_username_from_auth(self, id):
+        """Realiza una solicitud a la API de autenticación para obtener el nombre de usuario."""
+        url = f"http://auth:8001/user/id/{id}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()["username"]
+        else:
+            print(f"Error fetching username: {response.status_code}")
+            return None
+        
+    async def find_opponent(self):
+        users_in_queue = await self.redis_manager.get_set_members(IN_QUEUE_USER_IDS_SET_KEY)
+
+        if len(users_in_queue) < 1 or self.user_id in users_in_queue:
+            return None
+
+        return users_in_queue.pop()
     
     async def join_queue(self):
-        if self.username not in waiting_players:
-            waiting_players.append(self)
-            print(f"User {self.username} joined the queue")
-            print(f"Waiting players qty: {len(waiting_players)}")
-            if len(waiting_players) >= 2:
-                player1 = waiting_players.pop(0)
-                player2 = waiting_players.pop(0)
-                await player1.send(json.dumps({"type": "start_game", "opponent": player2.username}))
-                await player2.send(json.dumps({"type": "start_game", "opponent": player1.username}))
-            else:
-                print("Waiting for more players to join the queue")
+        opponent_id = await self.find_opponent()
+        if opponent_id:
+            opponent_id = int(opponent_id)
+            opponent_username = await self.request_username_from_auth(opponent_id)
+            await self.redis_manager.remove_from_set(IN_QUEUE_USER_IDS_SET_KEY, opponent_id)
+            # Create a game task
+            game_creation_data = {
+                "left_player_id": self.user_id,
+                "left_player_username": self.username,
+                "right_player_id": opponent_id,
+                "right_player_username": opponent_username,
+                "tournament_id": 0,
+                "tree_index": 0
+            }
+            # Send the task to the game service
+            current_app.send_task(
+                'create_game', 
+                args=[game_creation_data], 
+                queue='game_tasks')
+            print(f"Game created between {self.user_id} and {opponent_id}")
+            # Send a message to both players
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "match_found",
+                    "ids": [self.user_id, opponent_id],
+                    "usernames": [self.username, opponent_username],
+                }
+            )
+        else:
+            # Add the user to the queue
+            await self.redis_manager.add_to_set(IN_QUEUE_USER_IDS_SET_KEY, self.user_id)
+            print(f"User {self.username} added to the queue")
+
+    async def match_found(self, event):
+        """Maneja el evento de partida encontrada."""
+        ids = event["ids"]
+        usernames = event["usernames"]
+        await self.send(json.dumps({
+            "type": "match_found",
+            "ids": ids,
+            "usernames": usernames
+        }))
+            
                 
     async def disconnect(self, close_code):
         print(f"User {self.username} disconnected")
         # Remove the user from the queue
-        if self in waiting_players:
-            waiting_players.remove(self)
+        try:
+            self.redis_manager.remove_from_set(IN_QUEUE_USER_IDS_SET_KEY, self.user_id)
             print(f"User {self.username} removed from the queue")
-            print(f"Waiting players qty: {len(waiting_players)}")
+        except ValueError:
+            print(f"User {self.username} not in the queue")          
+            
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
