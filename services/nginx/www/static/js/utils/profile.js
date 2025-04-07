@@ -1,8 +1,11 @@
+import { handleJwtToken } from '../views/jwtValidator.js';
+
 export async function isFriend(username1, username2) {
         
     const url = "/api/settings/isFriendShip";
     
     try {
+        await handleJwtToken();
         const response = await fetch(url, {method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});    
         const data = await response.json();
             
@@ -19,6 +22,7 @@ export async function addFriend(username1, username2) {
     var action = "add";
 
     try {
+        await handleJwtToken();
         const response = await fetch(url + action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
         const data = await response.json();
         window.showPopup("now you are friends");
@@ -34,6 +38,7 @@ export async function removeFriend(username1, username2) {
     var action = "remove";
 
     try {
+        await handleJwtToken();
         const response = await fetch(url + action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
         const data = await response.json();
         window.showPopup("not being friends anymore");
@@ -72,7 +77,7 @@ export async function getDataUser(username) {
     const url = "/api/settings/dataUser";
     
     try {
-        //await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken(); // Asegura que el token JWT esté actualizado
         const response = await fetch(url, {method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username })});
         const data = await response.json();
             

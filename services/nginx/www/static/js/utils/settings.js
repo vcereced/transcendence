@@ -1,7 +1,8 @@
+import { handleJwtToken } from '../views/jwtValidator.js';
 
 export async function showUsername(email){
     
-    //await handleJwtToken();
+    await handleJwtToken();
     await fetch('/api/settings/dataUser', {
         method: 'POST',
         headers: {
@@ -21,7 +22,7 @@ export async function updateUsername(email, newUsername) {
     const url = "/api/settings/updateName";
     
     try {
-        //await handleJwtToken();
+        await handleJwtToken();
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -61,7 +62,7 @@ export async function updatePassword(email, oldPass, newPass1, newPass2) {
     const url = "/api/settings/updatePassword";
     
     try {
-        //await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken(); // Asegura que el token JWT esté actualizado
 
         const response = await fetch(url, {
             method: "POST",
@@ -97,7 +98,7 @@ export async function showPicture(email) {
     
     try {
 
-        //await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken(); // Asegura que el token JWT esté actualizado
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -126,7 +127,7 @@ export async function updatePicture(email, src) {
     const url = "/api/settings/updatePictureUrl";
 
     try {
-        //await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken(); // Asegura que el token JWT esté actualizado
 
         const response = await fetch(url, {
             method: "POST",

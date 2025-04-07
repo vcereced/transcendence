@@ -308,12 +308,11 @@ def isFriendShip_view(request):
 def friendShip_view(request, action):
 	username1 = request.data.get('username1')
 	username2 = request.data.get('username2')
-	print("debugeo= ", username1, ", ", username2)
+
 	if not username1 or not username2:
 		return Response({"error": "Missing username1 or username2"}, status=400)
 
 	if action == 'add':
-		print("entra en add")
 		# Añadir amigos
 		if not Friendship.are_friends(username1, username2):
 			Friendship.add_friend(username1, username2)
@@ -322,7 +321,6 @@ def friendShip_view(request, action):
 			return Response({"error": "They are already friends or the usernames are the same"}, status=200)
     
 	elif action == 'remove':
-		print("entra en remove")
 		# Eliminar amigos
 		if Friendship.remove_friend(username1, username2):
 			return Response({"message": "Ya no son amigos"}, status=200)

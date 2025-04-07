@@ -135,6 +135,7 @@ export async function initHome() {
 
     async function downloadPlayerList() {
         try {
+            await handleJwtToken();
             const response = await fetch("/api/settings/playersList");
             if (!response.ok) {
                 throw new Error("Error al obtener la lista de jugadores");
