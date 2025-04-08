@@ -30,6 +30,8 @@ RUN mkdir -p /var/log/nginx && chown root:root /var/log/nginx && chmod 755 /var/
     touch /var/log/nginx/access_debug.log && chmod 644 /var/log/nginx/access_debug.log && chown root:root /var/log/nginx/access_debug.log && \
     touch /var/log/nginx/error.log && chmod 644 /var/log/nginx/error.log && chown root:root /var/log/nginx/error.log
 
+COPY ./www/static/media/*  /media/
+
 # Expone el puerto 443/80
 EXPOSE 443
 EXPOSE 80
