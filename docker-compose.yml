@@ -44,6 +44,7 @@ services:
       - "1025:1025"
     volumes:
       - ./services/auth:/app  # Bind mount for code synchronization
+      - shared_volumen:/media/ 
     env_file:
       - .env
     networks:

@@ -245,11 +245,11 @@ export async function initHome() {
             
             const formData = new FormData();
             formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
-            
+            formData.append("username", username);
             // Realizar la solicitud POST al servidor
-            fetch("/api/upload-profile-pic", {
+            fetch("/api/settings/upload-profile-pic", {
                 method: "POST",
-                body: formData, username,
+                body: formData,
             })
             .then(response => response.json())
             .then(data => {
