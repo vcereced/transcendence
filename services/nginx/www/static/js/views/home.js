@@ -221,6 +221,50 @@ export async function initHome() {
             window.closeSettingsPopup();
         });
 
+        document.getElementById("upload-profile-pic").addEventListener("change", function(event) {
+            const file = event.target.files[0]; // Obtiene el archivo seleccionado
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Cambia la imagen de previsualización con la imagen seleccionada
+                    document.getElementById("current-profile-pic").src = e.target.result;
+                };
+                reader.readAsDataURL(file); // Convierte la imagen seleccionada en una URL de datos
+            }
+        });
+
+        document.getElementById("save-btn-images-host").addEventListener("click", function() {
+            const fileInput = document.getElementById("upload-profile-pic");
+            const username = sessionStorage.getItem("username");
+            const file = fileInput.files[0]; // Obtener el archivo seleccionado
+            
+            if (!file) {
+                window.showPopup("Por favor, selecciona una imagen.");
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
+            
+            // Realizar la solicitud POST al servidor
+            fetch("/api/upload-profile-pic", {
+                method: "POST",
+                body: formData, username,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.showPopup("Imagen de perfil actualizada correctamente");
+                } else {
+                    window.showPopup("Error al subir la imagen");
+                }
+            })
+            .catch(error => {
+                window.showPopup("Error al enviar la imagen");
+                console.error(error);
+            });
+        });
+
         document.getElementById("save-btn-name").addEventListener("click", () => {
             const newUsername = document.getElementById("username").value;
             const email = sessionStorage.getItem("email");
