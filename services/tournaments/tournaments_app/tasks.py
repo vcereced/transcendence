@@ -101,7 +101,7 @@ def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
     if winner:
         
         try:
-            winner_participant = Participant.objects.get(user_id=winner["id"])
+            winner_participant = Participant.objects.get(user_id=winner["id"], username=winner["username"])
         except Participant.DoesNotExist:
             print(f"El participante {winner} no existe en la base de datos.")
             return

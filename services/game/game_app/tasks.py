@@ -14,10 +14,14 @@ def check_ia_vs_ia(game_data):
     if game_data["left_player_id"] == 0 and game_data["right_player_id"] == 0:
 
         print("IA vs IA game creation skipped.")
-        winner_id = game_data["left_player_id"] if random.choice([True, False]) else game_data["right_player_id"]
-        loser_id = game_data["right_player_id"] if winner_id == game_data["left_player_id"] else game_data["left_player_id"]
-        winner_username = game_data["left_player_username"] if winner_id == game_data["left_player_id"] else game_data["right_player_username"]
-        loser_username = game_data["right_player_username"] if winner_id == game_data["left_player_id"] else game_data["left_player_username"]
+        winner_side = random.choice(["left", "right"])
+        if winner_side == "left":
+            winner_username = game_data["left_player_username"]
+            loser_username = game_data["right_player_username"]
+        else:
+            winner_username = game_data["right_player_username"]
+            loser_username = game_data["left_player_username"]
+
         print(f"🏆 Game simulated finished. Winner: {winner_username}, Loser: {loser_username}")
     
         delay = random.randint(1, 6)

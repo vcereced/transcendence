@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Tournament
-from .serializers import TournamentSerializer
+from .models import Tournament, Participant
+from .serializers import TournamentSerializer, UserTournamentStatsSerializer
 import redis
 from django.conf import settings
 import json
@@ -31,6 +32,33 @@ redis_client = redis.Redis(
 def get_tournament_name(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     return JsonResponse({"name": tournament.name}, status=200)
+
+#ENDPOINT TO GET TOURNAMENTS PLAYED AND WON BY A USER BY ID
+class UserTournamentStatsAPIView(APIView):
+    def get(self, request, user_id):
+        if user_id == 0:
+            return Response({"error": "Invalid user ID (0 is reserved for AI and you wont get this info)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            participant = Participant.objects.get(user_id=user_id)
+        except Participant.DoesNotExist:
+            return Response({"error": "Participant not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        tournaments_played = Tournament.objects.filter(participants=participant)
+        tournaments_won = Tournament.objects.filter(champion=participant)
+
+        data = {
+            "user_id": user_id,
+            "tournaments_played_count": tournaments_played.count(),
+            "tournaments_won_count": tournaments_won.count(),
+            "tournaments_played_names": [t.name for t in tournaments_played],
+            "tournaments_won_names": [t.name for t in tournaments_won],
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+
 ################################################################################
 
 
