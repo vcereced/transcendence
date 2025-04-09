@@ -235,7 +235,7 @@ export function initNewTournamentRoom(tournamentId) {
     return () => window.eventManager.removeAllEventListeners();
 }
 
-//SOCKET MANAGEMENT3
+//SOCKET MANAGEMENT
 /**
  * This function checks if the username is in the new round.
  * If it is, it redirects the user to the game #rock-paper-scissors.
@@ -280,7 +280,7 @@ function startTournamentWebSocket(tournamentId) {
             // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
-            }, 1500);
+            }, 200);
         }
         if (data.type === "new_round") {
                 //check if my user is in the new round so i can be redirected to the game
@@ -295,7 +295,7 @@ function startTournamentWebSocket(tournamentId) {
                     setTimeout(() => {
                         window.location.hash = '#rock-paper-scissors';
                     }
-                    , 1500);
+                    , 800);
                 }
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
