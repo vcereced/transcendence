@@ -37,6 +37,7 @@ export function initVersusWait() {
 
     // --- DOM ELEMENTS ---
 
+    const versusWaitArea = document.getElementsByClassName('versus_wait')[0];
     const gameScreen = document.getElementById('gameScreen');
     const title = document.querySelector('.site-title');
     let screenRect = gameScreen.getBoundingClientRect();
@@ -47,7 +48,7 @@ export function initVersusWait() {
 
     // --- FUNCTIONS ---
 
-    window.createObstacles = function createObstacles(num) {
+    function createObstacles(num) {
         const obstacleSize = 40;
         const availableWidth = window.innerWidth;
         const availableHeight = window.innerHeight;
@@ -88,12 +89,12 @@ export function initVersusWait() {
             obstacle.classList.add('obstacle');
             obstacle.style.left = `${x}px`;
             obstacle.style.top = `${y}px`;
-            document.body.appendChild(obstacle);
+            versusWaitArea.appendChild(obstacle);
             obstacles.push({ x, y, width: obstacleSize, height: obstacleSize });
         }
     }
 
-    window.placeBall = function placeBall() {
+    function placeBall() {
         do {
             ballX = Math.random() * window.innerWidth;
             ballY = Math.random() * window.innerHeight;
@@ -106,7 +107,7 @@ export function initVersusWait() {
         return { ballX, ballY };
     }
 
-    window.moveBall = function moveBall() {
+    function moveBall() {
         ballX += velocityX;
         ballY += velocityY;
 
@@ -168,12 +169,12 @@ export function initVersusWait() {
         alert('Si sales perderás tu posición en la cola de espera. ¿Estás seguro de que quieres salir?');
     }
 
-    window.deleteObstacles = function deleteObstacles() {
+    function deleteObstacles() {
         document.querySelectorAll('.obstacle').forEach(el => el.remove());
         obstacles = [];
     }
 
-    window.recreateElements = function recreateElements() {
+    function recreateElements() {
         deleteObstacles();
         screenRect = gameScreen.getBoundingClientRect();
         createObstacles(Math.floor(Math.random() * 30) + 1);
@@ -254,7 +255,7 @@ export function initVersusWait() {
     ball.classList.add('ball');
     ball.style.width = `${BALL_SIZE}px`;
     ball.style.height = `${BALL_SIZE}px`;
-    document.body.appendChild(ball);
+    versusWaitArea.appendChild(ball);
     createObstacles(Math.floor(Math.random() * 30) + 1);
     placeBall();
     moveBall();
