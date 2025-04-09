@@ -15,7 +15,7 @@ import jwt
 import os
 from .models import CustomUser, EmailOTPDevice, Friendship  # Importa tu modelo personalizado
 from auth_app.utils.utilsToptDevice import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice, CustomError
-from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser
+from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser, removeOldImagen
 
 from rest_framework import generics
 
@@ -261,6 +261,9 @@ def updatePictureUrl_view(request):
 
 	try:
 		user = CustomUser.objects.get(email=email)
+
+		removeOldImagen(user)
+
 		user.profile_picture = src
 		user.save()
 	except CustomUser.DoesNotExist:
@@ -341,11 +344,12 @@ def upload_profile_pic_view(request):
 		return Response({"error": "image or username"}, status=400)
 
 	try:
-		file_path = default_storage.save(f'{image.name}', image)
-
 		user = CustomUser.objects.get(username=username)
+		removeOldImagen(user)
+		file_path = default_storage.save(f'{image.name}', image)
 		user.profile_picture = "/media/" + file_path
 		user.save()
+
 	except CustomUser.DoesNotExist:
 		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 	
