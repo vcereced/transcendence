@@ -1,5 +1,5 @@
 // static/js/views/home.js
-import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from '../utils/settings.js';
+import { showUsername, showPicture, updateUsername, updatePassword, updatePicture, uploadImage } from '../utils/settings.js';
 import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getDataUser } from '../utils/profile.js';
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
@@ -233,39 +233,22 @@ export async function initHome() {
             }
         });
 
-        document.getElementById("save-btn-images-host").addEventListener("click", function() {
+        document.getElementById("save-btn-images-host").addEventListener("click", async () => {
+            
             const fileInput = document.getElementById("upload-profile-pic");
             const username = sessionStorage.getItem("username");
             const file = fileInput.files[0]; // Obtener el archivo seleccionado
+            const formData = new FormData();
             
             if (!file) {
                 window.showPopup("Por favor, selecciona una imagen.");
                 return;
             }
             
-            const formData = new FormData();
             formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
             formData.append("username", username);
-            // Realizar la solicitud POST al servidor
-            fetch("/api/settings/upload-profile-pic", {
-                method: "POST",
-                body: formData,
-            })
-            .then(response => {
-                if (!response.ok) throw new Error("Error en la respuesta del servidor");
-                return response.json();
-            })
-            .then(data => {
-                if (data.message === "imagen guardada correctamente") {
-                    window.showPopup("Imagen de perfil actualizada correctamente");
-                } else {
-                    window.showPopup("Error al subir la imagen");
-                }
-            })
-            .catch(error => {
-                window.showPopup("Error al enviar la imagen");
-                console.error(error);
-            });
+
+            uploadImage(formData);
         });
 
         document.getElementById("save-btn-name").addEventListener("click", () => {
