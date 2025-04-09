@@ -3,6 +3,7 @@
 from celery import shared_task
 from celery import Celery
 from django.conf import settings
+from .models import Tournament, Participant
 import redis
 import json
 
@@ -69,9 +70,66 @@ def send_create_game_task(players):
 
     print("Tarea enviada al servicio de juegos.")
 
+
+#############################################################
+#                   DATABASE LOGIC
+#############################################################
+
+
+def save_participants_to_database(tournament_id, players):
+    """Saves the participants in the database.
+    This function is called when the tournament is created."""
+    tournament = Tournament.objects.get(id=tournament_id)
+    for player in players:
+        print(f"Guardando participante: {player['username']}")
+        participant, created = Participant.objects.get_or_create(
+            user_id=player["user_id"],
+            # defaults={"username": player["username"]}
+            username=player["username"]
+        )
+        if created == False:
+            print(f"El participante {participant.username} ya existe en la base de datos.")
+        tournament.participants.add(participant)
+    tournament.save()
+
+def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
+    """Saves the tournament final tree in the database.
+    This function is called when the tournament is finished.
+    """
+    tournament = Tournament.objects.get(id=tournament_id)
+    tournament.tournament_tree = tournament_tree
+    if winner:
+        
+        try:
+            winner_participant = Participant.objects.get(user_id=winner["id"], username=winner["username"])
+        except Participant.DoesNotExist:
+            print(f"El participante {winner} no existe en la base de datos.")
+            return
+        tournament.champion = winner_participant
+    tournament.save()
+    print(f"Árbol del torneo {tournament_id} guardado en la base de datos.")
+
+    
 ###########################################################
 #                   TOURNAMENT LOGIC
 ###########################################################
+
+def send_new_round_notification(tournament_id, round_id, tournament_tree):
+    """
+    Envía una notificación a los jugadores sobre el inicio de una nueva ronda.
+    """
+    channel = f"tournament_{tournament_id}"
+    message = {
+        "type": "new_round",
+        "round_id": round_id,
+        "tournament_tree": tournament_tree,
+        "tournament_id": tournament_id,
+    }
+    redis_client.publish(channel, json.dumps(message))
+    #print in blue
+    print(f"\033[34m" + f"Notificación de nueva ronda enviada: {message}" + "\033[0m")
+
+
 
 def start_next_round(tournament_id, round_id, winners):
     
@@ -81,13 +139,15 @@ def start_next_round(tournament_id, round_id, winners):
 
     if len(winners) == 1:
         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
+        save_tournament_to_database(tournament_id, get_tournament_history(tournament_id), winner=winners[0])
         return  
 
     # Obtener el último tree_id utilizado
     last_round_key = f"round_{round_id}"
     last_round_matches = redis_client.hget(tournament_tree_key, last_round_key)
     last_round_matches = json.loads(last_round_matches) if last_round_matches else []
-    
+    #print in yellow
+    print(f"\033[33m" + f"Últimos partidos de la ronda {round_id}: {last_round_matches}" + "\033[0m")
     if last_round_matches:
         last_tree_id = max(int(match["tree_id"]) for match in last_round_matches)
     else:
@@ -100,8 +160,8 @@ def start_next_round(tournament_id, round_id, winners):
         match = {
             "tree_id": str(next_tree_id),
             "players": {
-                "left": {"id": winners[i], "username": f"{winners[i]}"},
-                "right": {"id": winners[i + 1], "username": f"{winners[i + 1]}"},
+                "left": {"id": winners[i]["id"], "username": f"{winners[i]['username']}"},
+                "right": {"id": winners[i + 1]["id"], "username": f"{winners[i + 1]['username']}"},
             },
             "winner": None,
             "loser": None,
@@ -122,9 +182,11 @@ def start_next_round(tournament_id, round_id, winners):
             "tournament_id": tournament_id,
             "tree_id": match["tree_id"]
         })
+    # Enviar notificación a los jugadores sobre la nueva ronda
+    send_new_round_notification(tournament_id, next_round_id, new_round_matches)
 
 
-
+#CHECKPOINT!!!!!
 def update_tournament_tree(tournament_id, tree_id, winner):
     """
     Guarda el resultado de un partido en Redis y avanza a la siguiente ronda si es necesario.
@@ -150,8 +212,10 @@ def update_tournament_tree(tournament_id, tree_id, winner):
         for match in current_round:
             print(f"Match: {match}")
             if match["tree_id"] == str(tree_id):
-                match["winner"] = winner
-                match["loser"] = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
+                winning_player = match["players"]["left"] if match["players"]["left"]["username"] == winner else match["players"]["right"]
+                losing_player = match["players"]["left"] if match["players"]["right"]["username"] == winner else match["players"]["right"]
+                match["winner"] = {"id": winning_player["id"], "username": winning_player["username"]}
+                match["loser"] = {"id": losing_player["id"], "username": losing_player["username"]}
                 loser = match["players"]["left"]["username"] if match["players"]["right"]["username"] == winner else match["players"]["right"]["username"]
                 print("\033[32m" + f"🏆 Ganador del partido {tree_id}: {winner}. Perdedor: {loser}" + "\033[0m")
                 match["status"] = "completed"
@@ -191,10 +255,9 @@ def get_tournament_history(tournament_id):
 @shared_task(name='start_matchmaking')
 def start_matchmaking(message):
     """
-    Empareja jugadores para un torneo y envía tareas para crear juegos 1vs1.
-    Si hay menos de 8 jugadores, completa con usuarios ficticios.
+    Pairs players for the tournament and sends tasks to create games.
     """
-    print(f"Comenzando emparejamiento de jugadores paraa el torneo {message['tournament_id']}.")
+    print(f"Comenzando emparejamiento de jugadores para el torneo {message['tournament_id']}.")
 
     # Obtener el ID del torneo
     tournament_id = message['tournament_id']
@@ -216,16 +279,22 @@ def start_matchmaking(message):
     # Completar la lista si hay menos de 8 jugadores
     if len(players) < 8:
         print("Jugadores insuficientes. Agregando jugadores ficticios para completar.")
-        current_id = 691  # ID inicial para los usuarios ficticios
+        current_id = 0  # ID inicial para los usuarios ficticios
         for i in range(len(players) + 1, 9):  # Rellenar hasta tener 8 jugadores
             players.append({
                 "username": f"IA{i}",
                 "user_id": current_id
             })
-            current_id += 1
+            # current_id += 1
         print(f"Lista completada con jugadores ficticios: {players}")
+    
+    try :
+        save_participants_to_database(tournament_id, players)
+    except Exception as e:
+        print(f"Error al guardar los participantes en la base de datos: {e}")
+        
 
-    # THIS IS THE MATCHMAKING ALGORITHM IT SHOULD BE REPLACED BY A BETTER ONE
+    # THIS IS THE MATCHMAKING ALGORITHM IT SHOULD BE REPLACED BY A BETTER ONE AND IN ANOTHER FUNCTION
     pairs = []
     for i in range(0, len(players) - 1, 2):  # Tomar pares consecutivos
         left_player = players[i]

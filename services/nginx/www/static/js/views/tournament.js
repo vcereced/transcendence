@@ -41,7 +41,7 @@ async function loadTournaments() {
     try {
         await handleJwtToken();
         const [tournamentResponse, playerCountsResponse] = await Promise.all([
-            fetch('/api/tournament/'), // Obtener los torneos existentes
+            fetch('/api/tournament/list'), // Obtener los torneos existentes
             fetch('/api/tournament/player_counts') // Obtener los contadores de jugadores
         ]);
 		 //DESGLOSAR BIEN ESTE ERROR HANDLING!!
@@ -73,7 +73,10 @@ async function loadTournaments() {
             const joinButton = document.createElement("button");
             joinButton.className = "btn btn-success btn-sm";
             joinButton.textContent = "Unirse";
-            joinButton.onclick = () => joinTournament(tournament.id);
+            joinButton.onclick = () => {
+                console.timeLog("Unirse al torneo: " + tournament);
+                joinTournament(tournament.id);
+            };
 
             li.appendChild(joinButton);
             tournamentList.appendChild(li);

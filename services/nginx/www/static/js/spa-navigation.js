@@ -49,6 +49,7 @@ function parseRoute(path) {
         // Buscar rutas con parámetros dinámicos, como ":id"
         const paramMatch = key.match(/:([^\/]+)/);
         if (paramMatch) {
+            console.log("paramMatch", paramMatch);
             const paramKey = paramMatch[1];
             const basePath = key.split("/:")[0]; 
 
@@ -67,7 +68,7 @@ function parseRoute(path) {
 async function router() {
     const path = location.hash.slice(1) || "/index";
     const { route, params } = parseRoute(path);
-    console.log("Ruta:", route, "Parámetros:", params.id);
+    console.log("Ruta:", route, "Parámetros:", params);
 
 
     if (route) {

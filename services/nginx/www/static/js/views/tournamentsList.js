@@ -34,7 +34,7 @@ export function initTournamentsList() {
         try {
             await handleJwtToken();
             const [tournamentResponse, playerCountsResponse] = await Promise.all([
-                fetch('/api/tournament/'),
+                fetch('/api/tournament/list'),
                 fetch('/api/tournament/player_counts')
             ]);
 
@@ -51,11 +51,11 @@ export function initTournamentsList() {
                 const gameItem = createGameItem({
                     id: tournament.id,
                     name: tournament.name,
-                    date: "-", // No hay fecha en la API
+                    date: "-", // TO DO : No hay fecha en la API
                     users: playerCounts[tournament.id] || 0
                 }, 'available');
                 const joinButton = gameItem.querySelector('.btn');
-                joinButton.addEventListener('click', () => joinTournament(tournament.id));
+                joinButton.addEventListener('click', () => joinTournament(tournament.id, tournament.name));
                 availableContainer.appendChild(gameItem);
             });
 
@@ -92,16 +92,17 @@ export function initTournamentsList() {
 
     }
 
-    async function joinTournament(tournamentId) {
+    async function joinTournament(tournamentId, tournamentName) {
         try {
-            await handleJwtToken(); // Verificar el token de JWT
+            await handleJwtToken();
             const response = await fetch(`/api/tournament/${tournamentId}/join`, {
                 method: 'POST',
             });
 
             if (response.ok) {
-                alert("Te has unido al torneo exitosamente!");
-                // Redirigir a la sala del torneo después de un pequeño delay
+                alert("Te has unido al torneo exitosamente!"); //GARYDD1 TO DO: REPLACE THIS WITH THE POPUP
+                sessionStorage.setItem("tournamentName", tournamentName);
+                console.log("%ctournamentName settled", "color:blue", tournamentName);
                 setTimeout(() => {
                     location.hash = `tournament/room/${tournamentId}`;
                 }, 700);

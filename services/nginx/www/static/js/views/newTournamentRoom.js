@@ -15,10 +15,15 @@ export function initNewTournamentRoom(tournamentId) {
         room_socket = startTournamentWebSocket(tournamentId);
     }
     const startButton = document.getElementById("start-tournament-btn");
+    let tournamentName = sessionStorage.getItem("tournamentName") 
     if (startButton) {
         startButton.addEventListener("click", () => {
             sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
         });
+    }
+    if (tournamentName) {
+        const tournamentNameElement = document.getElementById("text-to-copy");
+        tournamentNameElement.textContent = tournamentName;
     }
 
     restoreTournamentTree();
@@ -230,7 +235,24 @@ export function initNewTournamentRoom(tournamentId) {
     return () => window.eventManager.removeAllEventListeners();
 }
 
-//SOCKET MANAGEMENT
+//SOCKET MANAGEMENT3
+/**
+ * This function checks if the username is in the new round.
+ * If it is, it redirects the user to the game #rock-paper-scissors.
+ * @param {*} data 
+ */
+function checkNewRound(new_round, myUser) {
+    const isUserInRound = new_round.some(match => {
+        const left = match.players.left.username;
+        const right = match.players.right.username;
+        return left === myUser || right === myUser;
+    });
+    if (isUserInRound) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 function startTournamentWebSocket(tournamentId) {
     console.log('tournamentId>', tournamentId.id);
@@ -251,14 +273,30 @@ function startTournamentWebSocket(tournamentId) {
             start_tournament(data);
             setTimeout(() => {
                 window.location.hash = '#rock-paper-scissors'; 
-            }, 1000);
+            }, 1500);
         }
         if (data.type === "game_end") {
             // update after a small delay to see the changesk
             // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
-            }, 0.1);
+            }, 1500);
+        }
+        if (data.type === "new_round") {
+                //check if my user is in the new round so i can be redirected to the game
+                console.log("%cNew round data:", "color: blue", data);
+                const roundId = Number(data.round_id) - 1;
+                console.log("%cMy ROUND STARTING:", "color: red", roundId);
+                console.log("%cROUND IS:", "color: green", data.new_round);
+                const myUser = data.username;
+                //check if myUser is in data.new_round
+                if  (checkNewRound(data.new_round, myUser)) {
+                    console.log("%cMy user is in the new round:", "color: green", myUser);
+                    setTimeout(() => {
+                        window.location.hash = '#rock-paper-scissors';
+                    }
+                    , 1500);
+                }
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
         //OR TO START THE TOURNAMENT.
@@ -426,6 +464,7 @@ function clearTournamentTree() {
     console.log('Datos del torneo eliminados de sessionStorage');
 }
 
+
 function restoreTournamentTree() {
     
     const savedTree = sessionStorage.getItem("tournament_tree");
@@ -437,9 +476,8 @@ function restoreTournamentTree() {
         for (const key in rawTree) {
             parsedTournamentTree[key] = JSON.parse(rawTree[key]);
         }
-
+        
         console.log("Restaurando árbol desde localStorage:", parsedTournamentTree);
-
         for (const roundKey in parsedTournamentTree) {
             const roundMatches = parsedTournamentTree[roundKey];
         
@@ -447,16 +485,18 @@ function restoreTournamentTree() {
                 const { tree_id, players, winner, loser } = match;
                 const treeIdStr = String(tree_id);
                 const participants = Object.values(players).filter(p => p && p.username);
-        
+                
                 
                 if (treeIdStr === "7") {
                     participants.forEach((participant) => {
                         const username = participant.username;
-        
+                        let isWinner = false;
+                        let isLoser = false;
                         
-                        const isWinner = username === winner;
-                        const isLoser = username === loser;
-        
+                        if (match.status != "pending") {
+                            isWinner = username === winner.username;
+                            isLoser = username === loser.username;
+                        }
                         
                         const originTreeId = Object.keys(players).find(
                             key => players[key]?.username === username
@@ -510,17 +550,18 @@ function restoreTournamentTree() {
                                 content === '' ||
                                 content.startsWith('player') ||
                                 content.startsWith('winner') ||
-                                content === 'champion'
+                                content === 'champion' 
                             );
                         });
         
                         if (availableDiv) {
                             availableDiv.textContent = username;
-                            if (username === winner) availableDiv.classList.add("winner");
-                            else if (username === loser) availableDiv.classList.add("loser");
-
+                            
+                            
                             if (winner) {
-                                updateNextMatch(matchElement, winner, treeIdStr);
+                                if (username === winner.username) availableDiv.classList.add("winner");
+                                else if (username === loser.username) availableDiv.classList.add("loser");
+                                updateNextMatch(matchElement, winner.username, treeIdStr);
                             }
                             
                             const idx = playerDivs.indexOf(availableDiv);

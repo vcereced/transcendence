@@ -150,6 +150,8 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
             message = await self.pubsub.get_message(ignore_subscribe_messages=True)
             if message:
                 data = json.loads(message["data"])
+                #print in purple
+                print(f"\033[95m {data} <- data RECEIVED!!!!! \033[0m")
                 if data["type"] == "user_count_update":
                     await self.send(json.dumps({
                         "tournament_id": data.get("tournament_id"),
@@ -269,12 +271,13 @@ class RoomConsumer(AsyncWebsocketConsumer):
         )
 
     async def game_end_notification(self, event):
-        """Envía una notificación cuando termina un juego."""
+        """Envía una notificación al frontEnd cuando termina un juego."""
         #obtain the tournament tree
         tournament_tree_key = f"tournament_{self.room_name}_tree"
         tournament_tree = await self.redis_manager.redis.hgetall(tournament_tree_key)
         tournament_tree = {k.decode("utf-8"): v.decode("utf-8") for k, v in tournament_tree.items()}
         print(f"\033[31mEl árbol del torneo es: {tournament_tree}\033[0m")
+        print (f"\033[91m {event} <- data GAME END EVENT!!!!!!!!!!!!!!!\033[0m")
         # Enviar notificación de fin de juego
         await self.send(json.dumps({
             "type": "game_end",
@@ -324,6 +327,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 if data["type"] == "game_end":
                     print(f"\033[91m {data} <- data GAME END \033[0m")
                     await self.game_end_notification(data)
+                if data["type"] == "new_round": 
+                    print(f"\033[91m {data} <- data NEW ROUND \033[0m")
+                    await self.send(json.dumps({
+                        "type": "new_round",
+                        "tournament_id": data["tournament_id"],
+                        "new_round": data["tournament_tree"],
+                        "round_id": data["round_id"],
+                        "username": self.username,
+                    }))
 
             await asyncio.sleep(0.042)
 

@@ -69,6 +69,8 @@ services:
     container_name: tournaments
     volumes:
       - ./services/tournaments:/app
+    ports:
+      - "8013:8003"  #Admin console
     networks:
       - app-network
 
@@ -98,10 +100,10 @@ services:
 
   game_drf:
     build:
-      context: ./services/game  # Directory for game Dockerfile and code
+      context: ./services/game  #Directory for game Dockerfile and code
     container_name: game_drf
     volumes:
-      - ./services/game:/app  # Bind mount for code synchronization
+      - ./services/game:/app  #Bind mount for code synchronization
     env_file:
       - .env
     command: [/bin/sh, drf_entrypoint.sh]
