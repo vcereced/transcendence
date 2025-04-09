@@ -165,8 +165,8 @@ export function initVersusWait() {
         }
     }
 
-    window.exitGame = function exitGame() {
-        alert('Si sales perderás tu posición en la cola de espera. ¿Estás seguro de que quieres salir?');
+    window.exitQueue = function exitQueue() {
+        window.location.hash = "#";
     }
 
     function deleteObstacles() {
