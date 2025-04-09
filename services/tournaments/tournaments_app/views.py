@@ -83,6 +83,8 @@ def create_tournament(request):
 
 @api_view(['GET'])
 def list_tournaments(request):
+    # tournaments = Tournament.objects.filter(status="open").values('name')   BE AWARE OF ADDING THE STATUS FIELD TO THE TOURNAMENT MODEL!
+    # return Response(list(tournaments))  USE THIS IF YOU WANT TO GET ONLY THE NAMES OF CURRENT TOURNAMENTS
     tournaments = Tournament.objects.all()
     serializer = TournamentSerializer(tournaments, many=True)
     return Response(serializer.data)

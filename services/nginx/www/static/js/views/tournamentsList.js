@@ -34,7 +34,7 @@ export function initTournamentsList() {
         try {
             await handleJwtToken();
             const [tournamentResponse, playerCountsResponse] = await Promise.all([
-                fetch('/api/tournament/'),
+                fetch('/api/tournament/list'),
                 fetch('/api/tournament/player_counts')
             ]);
 

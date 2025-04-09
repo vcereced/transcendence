@@ -41,7 +41,7 @@ async function loadTournaments() {
     try {
         await handleJwtToken();
         const [tournamentResponse, playerCountsResponse] = await Promise.all([
-            fetch('/api/tournament/'), // Obtener los torneos existentes
+            fetch('/api/tournament/list'), // Obtener los torneos existentes
             fetch('/api/tournament/player_counts') // Obtener los contadores de jugadores
         ]);
 		 //DESGLOSAR BIEN ESTE ERROR HANDLING!!
