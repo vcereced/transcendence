@@ -340,16 +340,16 @@ def upload_profile_pic_view(request):
 	if not image or not username:
 		return Response({"error": "image or username"}, status=400)
 
-	file_path = default_storage.save(f'/profile_pic/{image.name}', image)
-
 	try:
+		file_path = default_storage.save(f'{image.name}', image)
+
 		user = CustomUser.objects.get(username=username)
-		user.profile_picture = file_path
+		user.profile_picture = "/media/" + file_path
 		user.save()
 	except CustomUser.DoesNotExist:
 		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 	
-	return Response({"message": "imagen guardada correctamente", "file_path": {file_path}}, status=200)
+	return Response({"message": "imagen guardada correctamente", "file_path": {"/media/" + file_path}}, status=200)
 
 class UserDetail(generics.RetrieveAPIView):
 	queryset = CustomUser.objects.all()

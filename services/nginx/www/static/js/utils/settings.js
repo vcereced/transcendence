@@ -153,3 +153,35 @@ export async function updatePicture(email, src) {
     }
 
 }
+
+export async function uploadImage() {
+
+    const url = "/api/settings/upload-profile-pic";
+
+    try {
+        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, src })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            window.showPopup("imagen de perfil cambiada correctamente");
+            return;
+        } else {
+            window.showPopup(data.error);
+            alert(data.error || "Error to change the picture profile.");
+        }
+    } catch (error) {
+        window.showPopup("Error to change the picture profile.");
+      //  alert("Error to change the picture profile.");
+        console.error("Error:", error);
+    }
+
+}

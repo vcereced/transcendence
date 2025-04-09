@@ -251,9 +251,12 @@ export async function initHome() {
                 method: "POST",
                 body: formData,
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error("Error en la respuesta del servidor");
+                return response.json();
+            })
             .then(data => {
-                if (data.success) {
+                if (data.message === "imagen guardada correctamente") {
                     window.showPopup("Imagen de perfil actualizada correctamente");
                 } else {
                     window.showPopup("Error al subir la imagen");
