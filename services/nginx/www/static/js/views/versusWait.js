@@ -1,6 +1,7 @@
 // static/js/views/versus_wait.js
 
-import EventListenerManager from '../utils/eventListenerManager.js';
+import { handleJwtToken } from './jwtValidator.js';
+import { hasAccessToken } from '../utils/auth_management.js';
 
 export async function renderVersusWait() {
     const response = await fetch('static/html/versus_wait.html');
@@ -10,14 +11,21 @@ export async function renderVersusWait() {
 
 export function initVersusWait() {
 
+    // --- INITIALIZATION ---
 
-    let versus_socket = null;
-    if (versus_socket === null) {
-        versus_socket = startVersusWebSocket(versus_socket);
+    if (!hasAccessToken()) {
+        window.sessionStorage.setItem("afterLoginRedirect", "#game");
+        window.location.hash = "#new-login"
+        return;
     }
+    handleJwtToken();
+
+    let versus_socket = new WebSocket(`wss://${window.location.host}/ws/versus/`);
+
     // --- VARIABLES AND CONSTANTS ---
 
-    
+    let userId = window.sessionStorage.getItem('userId');
+    let username = window.sessionStorage.getItem('username');
 
     const BALL_SIZE = 20;
     let obstacles = [];
@@ -29,19 +37,23 @@ export function initVersusWait() {
 
     // --- DOM ELEMENTS ---
 
+    const versusWaitArea = document.getElementsByClassName('versus_wait')[0];
     const gameScreen = document.getElementById('gameScreen');
     const title = document.querySelector('.site-title');
     let screenRect = gameScreen.getBoundingClientRect();
     const ball = document.createElement('div');
+    const playerUsername = document.getElementById('player-username');
+    const opponentUsername = document.getElementById('opponent-username');
+    const matchmakingStatus = document.getElementById('matchmaking-status');
 
     // --- FUNCTIONS ---
 
-    window.createObstacles = function createObstacles(num) {
+    function createObstacles(num) {
         const obstacleSize = 40;
         const availableWidth = window.innerWidth;
         const availableHeight = window.innerHeight;
-        totalAvailableArea = availableWidth * availableHeight;
-        totalObstacleArea = num * (obstacleSize * obstacleSize);
+        const totalAvailableArea = availableWidth * availableHeight;
+        const totalObstacleArea = num * (obstacleSize * obstacleSize);
 
         // Si no hay suficiente espacio, no crear obstáculos
         if (totalObstacleArea > totalAvailableArea * 0.5) {
@@ -77,12 +89,12 @@ export function initVersusWait() {
             obstacle.classList.add('obstacle');
             obstacle.style.left = `${x}px`;
             obstacle.style.top = `${y}px`;
-            document.body.appendChild(obstacle);
+            versusWaitArea.appendChild(obstacle);
             obstacles.push({ x, y, width: obstacleSize, height: obstacleSize });
         }
     }
 
-    window.placeBall = function placeBall() {
+    function placeBall() {
         do {
             ballX = Math.random() * window.innerWidth;
             ballY = Math.random() * window.innerHeight;
@@ -95,7 +107,7 @@ export function initVersusWait() {
         return { ballX, ballY };
     }
 
-    window.moveBall = function moveBall() {
+    function moveBall() {
         ballX += velocityX;
         ballY += velocityY;
 
@@ -153,16 +165,16 @@ export function initVersusWait() {
         }
     }
 
-    window.exitGame = function exitGame() {
-        alert('Si sales perderás tu posición en la cola de espera. ¿Estás seguro de que quieres salir?');
+    window.exitQueue = function exitQueue() {
+        window.location.hash = "#";
     }
 
-    window.deleteObstacles = function deleteObstacles() {
+    function deleteObstacles() {
         document.querySelectorAll('.obstacle').forEach(el => el.remove());
         obstacles = [];
     }
 
-    window.recreateElements = function recreateElements() {
+    function recreateElements() {
         deleteObstacles();
         screenRect = gameScreen.getBoundingClientRect();
         createObstacles(Math.floor(Math.random() * 30) + 1);
@@ -182,7 +194,7 @@ export function initVersusWait() {
 
     // --- EVENT LISTENERS ---
 
-    
+
     window.eventManager.addEventListener(document, 'mousemove', (event) => {
         mouseX = event.clientX;
         mouseY = event.clientY;
@@ -190,19 +202,6 @@ export function initVersusWait() {
 
     window.eventManager.addEventListener(window, 'resize', recreateElements);
 
-    window.eventManager.addEventListener(document.getElementById("copy-icon"), "click", function () {
-        const text = document.getElementById("text-to-copy").innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            const message = document.getElementById("copied-message");
-            message.style.opacity = "1";
-            setTimeout(() => {
-                message.style.opacity = "0";
-            }, 1500);
-        }).catch(err => {
-            console.error("Error al copiar: ", err);
-        });
-    });
-    
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
@@ -213,40 +212,53 @@ export function initVersusWait() {
         title.style.transform = 'translateY(0)';
     });
 
+    versus_socket.onopen = () => {
+        versus_socket.send(JSON.stringify({ type: "join_queue" }));
+    };
 
-    // --- INITIALIZATION ---
+    versus_socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        userId = parseInt(window.sessionStorage.getItem('userId'));
+        username = window.sessionStorage.getItem('username');
+        if (data.type === "connected") {
+            window.sessionStorage.setItem('userId', data.user_id);
+            window.sessionStorage.setItem('username', data.username);
+        }
+        if (data.type === "match_found" && data.ids.includes(userId)) {
+            opponentUsername.textContent = data.usernames[0] === username ? data.usernames[1] : data.usernames[0];
+            matchmakingStatus.textContent = "Match Found! Starting game";
+            setTimeout(() => {
+                window.location.hash = "#rock-paper-scissors";
+                versus_socket.close();
+            }
+                , 2000);
+        }
+    };
 
+    versus_socket.onerror = (error) => {
+        setTimeout(() => {
+            versus_socket = new WebSocket(`wss://${window.location.host}/ws/versus/`);
+        }, 2000);
+    };
+
+    versus_socket.onclose = () => {};
+
+    window.onhashchange = () => {
+        versus_socket.close();
+    };
+
+
+    // --- POST INITIALIZATION ---
+
+
+    playerUsername.textContent = username;
     ball.classList.add('ball');
     ball.style.width = `${BALL_SIZE}px`;
     ball.style.height = `${BALL_SIZE}px`;
-    document.body.appendChild(ball);
+    versusWaitArea.appendChild(ball);
     createObstacles(Math.floor(Math.random() * 30) + 1);
     placeBall();
     moveBall();
+
+
 }
-
-
-function startVersusWebSocket(versus_socket) {
-
-    versus_socket = new WebSocket(`wss://${window.location.host}/ws/versus/`);
-    versus_socket.onopen = () => {
-        console.log("WebSocket connection established.");
-        versus_socket.send(JSON.stringify({ type: "join_queue" }));
-    };
-    versus_socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log("Message received:", data);
-        console.log("Message type:", data.type);
-        if (data.type === "start_game") {
-            window.location.hash = "#game";
-        }
-
-    };
-    versus_socket.onerror = (error) => console.error("WebSocket Error:", error);
-    versus_socket.onclose = () => {
-        console.log("WebSocket closed. Reconnecting in 5 seconds...");
-        setTimeout(startVersusWebSocket, 5000);
-    };
-    return versus_socket;
-}
-    

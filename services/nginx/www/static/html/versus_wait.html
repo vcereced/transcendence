@@ -7,26 +7,18 @@
     </div>
     <div class="screen" id="gameScreen">
         <i class="fas fa-globe icon"></i>
-        <p>Tiempo de espera aproximado: 3mins</p>
+        <p id="matchmaking-status" class="dots">Buscando un oponente digno</p>
         <br>
-        <!-- <div class="copy-container">
-            <span id="text-to-copy">TRN-PLAYER1 </span>
-            <i class="fas fa-copy copy-icon" id="copy-icon"></i>
-            <br>
-            <br>
-        </div> -->
-        <div id="copied-message" class="copied-message">ID de torneo copiado</div>
         <div class="status">
             <div class="bracket">
                 <div class="column" id="round1">
-                    <div class="match">Player1 </div>
+                    <div id="player-username" class="match"></div>
                 </div>
                 <div class="column" id="round2">
-                    <div class="match"><span class="dots"></span></div>
+                    <div id="opponent-username" class="match">?</div>
                 </div>
             </div>
         </div>
-        <!-- <button class="start-btn" onclick="exitGame()">Comenzar torneo</button> -->
-        <button class="exit-btn" onclick="exitGame()">Abandonar</button>
+        <button class="exit-btn" onclick="exitQueue()">Abandonar</button>
     </div>
 </div>
