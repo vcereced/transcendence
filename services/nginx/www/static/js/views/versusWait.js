@@ -193,14 +193,14 @@ export function initVersusWait() {
 
     // --- EVENT LISTENERS ---
 
-    
+
     window.eventManager.addEventListener(document, 'mousemove', (event) => {
         mouseX = event.clientX;
         mouseY = event.clientY;
     });
 
     window.eventManager.addEventListener(window, 'resize', recreateElements);
-    
+
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
         title.style.transform = 'translateY(-5px)';
@@ -212,32 +212,29 @@ export function initVersusWait() {
     });
 
     versus_socket.onopen = () => {
-        console.log("WebSocket connection established.");
         versus_socket.send(JSON.stringify({ type: "join_queue" }));
     };
 
     versus_socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("Received data:", data);
+        userId = parseInt(window.sessionStorage.getItem('userId'));
+        username = window.sessionStorage.getItem('username');
         if (data.type === "connected") {
-            username = data.username;
-            userId = data.user_id;
+            window.sessionStorage.setItem('userId', data.user_id);
+            window.sessionStorage.setItem('username', data.username);
         }
-        if (data.type === "match_found" && userId in data.ids) {
-            console.log("Match found!");
-            opponentUsername.textContent =
+        if (data.type === "match_found" && data.ids.includes(userId)) {
+            opponentUsername.textContent = data.usernames[0] === username ? data.usernames[1] : data.usernames[0];
             matchmakingStatus.textContent = "Match Found! Starting game";
             setTimeout(() => {
                 window.location.hash = "#rock-paper-scissors";
                 versus_socket.close();
             }
-            , 2000);
+                , 2000);
         }
-
     };
 
     versus_socket.onerror = (error) => {
-        console.log("WebSocket error. Retrying in 2 seconds...");
         setTimeout(() => {
             versus_socket = new WebSocket(`wss://${window.location.host}/ws/versus/`);
         }, 2000);
@@ -245,11 +242,15 @@ export function initVersusWait() {
 
     versus_socket.onclose = () => {};
 
+    window.onhashchange = () => {
+        versus_socket.close();
+    };
+
 
     // --- POST INITIALIZATION ---
 
-    
-    playerUsername.textContent = window.sessionStorage.getItem('username');
+
+    playerUsername.textContent = username;
     ball.classList.add('ball');
     ball.style.width = `${BALL_SIZE}px`;
     ball.style.height = `${BALL_SIZE}px`;
@@ -258,6 +259,5 @@ export function initVersusWait() {
     placeBall();
     moveBall();
 
-    
+
 }
-    

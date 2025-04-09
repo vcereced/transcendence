@@ -88,8 +88,6 @@ class LoginConsumer(AsyncWebsocketConsumer):
 class VersusConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
-        print("Connecting to Versus WebSocket")
-        
         self.room_group_name = "versus_room"
 
         await extract_user_info(self)
@@ -115,8 +113,9 @@ class VersusConsumer(AsyncWebsocketConsumer):
         
     async def find_opponent(self):
         users_in_queue = await self.redis_manager.get_set_members(IN_QUEUE_USER_IDS_SET_KEY)
+        users_in_queue = [int(user) for user in users_in_queue]
 
-        if len(users_in_queue) < 1 or self.user_id in users_in_queue:
+        if len(users_in_queue) < 1 or int(self.user_id) in users_in_queue:
             return None
 
         return users_in_queue.pop()
@@ -141,7 +140,6 @@ class VersusConsumer(AsyncWebsocketConsumer):
                 'create_game', 
                 args=[game_creation_data], 
                 queue='game_tasks')
-            print(f"Game created between {self.user_id} and {opponent_id}")
             # Send a message to both players
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -152,9 +150,7 @@ class VersusConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            # Add the user to the queue
             await self.redis_manager.add_to_set(IN_QUEUE_USER_IDS_SET_KEY, self.user_id)
-            print(f"User {self.username} added to the queue")
 
     async def match_found(self, event):
         """Maneja el evento de partida encontrada."""
@@ -168,14 +164,11 @@ class VersusConsumer(AsyncWebsocketConsumer):
             
                 
     async def disconnect(self, close_code):
-        print(f"User {self.username} disconnected")
-        # Remove the user from the queue
         try:
-            self.redis_manager.remove_from_set(IN_QUEUE_USER_IDS_SET_KEY, self.user_id)
-            print(f"User {self.username} removed from the queue")
+            await self.redis_manager.remove_from_set(IN_QUEUE_USER_IDS_SET_KEY, self.user_id)
         except ValueError:
-            print(f"User {self.username} not in the queue")          
-            
+            print(f"User {self.username} not in the queue")
+        
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
