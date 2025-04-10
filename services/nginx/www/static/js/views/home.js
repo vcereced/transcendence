@@ -449,31 +449,41 @@ export async function initHome() {
             reader.readAsDataURL(file); // Convierte la imagen seleccionada en una URL de datos
         }
     });
-    
-    document.getElementById("save-btn-images").addEventListener("click", async () => {
-        const src = document.getElementById("current-profile-pic").src;
-        let email = sessionStorage.getItem("email");
-        updatePicture(email, src);
-        window.closeSettingsPopup();
-        closeSettingsPopup();
-    });
+
+    // document.getElementById("save-btn-images").addEventListener("click", async () => {
+    //     const src = document.getElementById("current-profile-pic").src;
+    //     let email = sessionStorage.getItem("email");
+    //     updatePicture(email, src);
+    //     window.closeSettingsPopup();
+    // });
 
     document.getElementById("save-btn-images-host").addEventListener("click", async () => {
         
-        const fileInput = document.getElementById("upload-profile-pic");
-        const username = sessionStorage.getItem("username");
-        const file = fileInput.files[0]; // Obtener el archivo seleccionado
-        const formData = new FormData();
-        
-        if (!file) {
-            window.showPopup("Por favor, selecciona una imagen.");
-            return;
-        }
-        
-        formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
-        formData.append("username", username);
+        const src = document.getElementById("current-profile-pic").src;
+        const allowedNames = ["default0.gif", "default1.gif", "default2.gif", "default3.gif", "default4.gif"];
 
-        uploadImage(formData);
+        const isDefault = allowedNames.some(name => src.endsWith(name));
+
+        if (isDefault) {
+
+            let email = sessionStorage.getItem("email");
+            updatePicture(email, src);
+
+        }else {
+
+            const fileInput = document.getElementById("upload-profile-pic");
+            const username = sessionStorage.getItem("username");
+            const file = fileInput.files[0]; // Obtener el archivo seleccionado
+            const formData = new FormData();
+            
+            if (!file) {
+                window.showPopup("Por favor, selecciona una imagen.");
+                return;
+            }
+            formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
+            formData.append("username", username);
+            uploadImage(formData);
+        }
         closeSettingsPopup();
     });
 

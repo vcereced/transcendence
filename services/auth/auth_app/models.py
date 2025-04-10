@@ -10,7 +10,7 @@ from django.conf import settings
 class CustomUser(AbstractUser):  
     
     email = models.EmailField(unique=True)
-    profile_picture = models.CharField(max_length=255, null=True, blank=True, default="/media/default.gif")
+    profile_picture = models.CharField(max_length=255, null=True, blank=True, default="/media/default0.gif")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
