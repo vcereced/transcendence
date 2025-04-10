@@ -6,6 +6,7 @@ class Tournament(models.Model):
     tournament_tree = models.JSONField(default=dict)
     champion = models.ForeignKey('Participant', on_delete=models.SET_NULL, null=True, blank=True, related_name='won_tournaments')
     participants = models.ManyToManyField('Participant', through='TournamentParticipant', blank=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

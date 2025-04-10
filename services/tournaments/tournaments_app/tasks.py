@@ -106,6 +106,8 @@ def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
             print(f"El participante {winner} no existe en la base de datos.")
             return
         tournament.champion = winner_participant
+        tournament.is_active = False
+        print(f"FINALIZANDO TORNEO {tournament_id} CON CAMPEÓN: {winner_participant.username}")
     tournament.save()
     print(f"Árbol del torneo {tournament_id} guardado en la base de datos.")
 

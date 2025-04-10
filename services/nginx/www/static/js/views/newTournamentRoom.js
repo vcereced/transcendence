@@ -18,6 +18,8 @@ export function initNewTournamentRoom(tournamentId) {
     let tournamentName = sessionStorage.getItem("tournamentName") 
     if (startButton) {
         startButton.addEventListener("click", () => {
+            if (startButton.disabled) return;
+            startButton.disabled = true;
             sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
         });
     }
@@ -161,7 +163,8 @@ export function initNewTournamentRoom(tournamentId) {
     }
 
     window.exitGame = function exitGame() {
-        alert('Si sales perderás tu posición en la cola de espera. ¿Estás seguro de que quieres salir?');
+        // alert('Si sales perderás tu posición en la cola de espera. ¿Estás seguro de que quieres salir?');
+        window.location.hash = '#';
     }
 
     window.deleteObstacles = function deleteObstacles() {
@@ -235,7 +238,7 @@ export function initNewTournamentRoom(tournamentId) {
     return () => window.eventManager.removeAllEventListeners();
 }
 
-//SOCKET MANAGEMENT3
+//SOCKET MANAGEMENT
 /**
  * This function checks if the username is in the new round.
  * If it is, it redirects the user to the game #rock-paper-scissors.
@@ -280,7 +283,7 @@ function startTournamentWebSocket(tournamentId) {
             // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
-            }, 1500);
+            }, 1000);
         }
         if (data.type === "new_round") {
                 //check if my user is in the new round so i can be redirected to the game
@@ -295,7 +298,7 @@ function startTournamentWebSocket(tournamentId) {
                     setTimeout(() => {
                         window.location.hash = '#rock-paper-scissors';
                     }
-                    , 1500);
+                    , 500);
                 }
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
@@ -373,7 +376,6 @@ function start_tournament(data) {
 }
 
 
-
 function update_tournament_tree(data) {
 
     const { match_id, winner, loser } = data;
@@ -436,12 +438,24 @@ function isFinalMatch(matchId) {
 function updateChampion(winner) {
     console.log("El campeón es:", winner);
     const champion = document.querySelector(".champion .player");
+    const trophyIcon = document.querySelector('.new-tournament-room .screen .icon');
     if (champion) {
         champion.classList.add("championship");
         champion.textContent = winner;
+
+        if (trophyIcon) {
+            trophyIcon.style.color = 'gold';  
+            trophyIcon.style.textShadow = '0 0 10px gold'; 
+        }
+
     }
 }
 
+/**
+ * * This function is called when the user navigates back in history.
+ * It checks if the URL contains '#tournament' or '#game' or '#rock-paper-scissors'.
+ * If not, it closes the WebSocket connection and clears the tournament tree.
+ */
 window.addEventListener('hashchange', function(event) {
     // Verificar si la URL contiene '#tournament' o '#game'
     console.log('URL:', window.location.hash);
@@ -468,7 +482,11 @@ function clearTournamentTree() {
 function restoreTournamentTree() {
     
     const savedTree = sessionStorage.getItem("tournament_tree");
+    const userList = sessionStorage.getItem("user_list");
 
+    if (userList) {
+        updateUserList(JSON.parse(userList));
+    }
     if (savedTree) {
         const parsedTournamentTree = {};
         const rawTree = JSON.parse(savedTree);

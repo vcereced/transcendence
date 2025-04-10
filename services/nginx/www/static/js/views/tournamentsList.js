@@ -48,14 +48,23 @@ export function initTournamentsList() {
             const playerCounts = await playerCountsResponse.json();
 
             tournaments.forEach(tournament => {
+                console.log("Tournament data:", tournament);
                 const gameItem = createGameItem({
+                
                     id: tournament.id,
                     name: tournament.name,
-                    date: "-", // TO DO : No hay fecha en la API
+                    date: tournament.created_at,
                     users: playerCounts[tournament.id] || 0
                 }, 'available');
                 const joinButton = gameItem.querySelector('.btn');
-                joinButton.addEventListener('click', () => joinTournament(tournament.id, tournament.name));
+                // joinButton.addEventListener('click', () => joinTournament(tournament.id, tournament.name));
+                joinButton.addEventListener('click', async (e) => {
+                    const button = e.currentTarget;
+                    if (button.disabled) return;
+                    button.disabled = true;
+                    await joinTournament(tournament.id, tournament.name);
+                });
+                
                 availableContainer.appendChild(gameItem);
             });
 

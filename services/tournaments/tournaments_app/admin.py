@@ -6,7 +6,7 @@ class TournamentParticipantInline(admin.TabularInline):
     extra = 1  # Número de formularios vacíos que se muestran
 
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'created_at', 'champion', 'tournament_tree')
+    list_display = ('id', 'is_active', 'name', 'created_at', 'champion', 'tournament_tree')
     search_fields = ('name',)
     ordering = ('-created_at',)
     inlines = [TournamentParticipantInline]  # Añade los participantes como inline en el torneo

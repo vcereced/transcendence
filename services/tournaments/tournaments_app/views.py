@@ -57,6 +57,13 @@ class UserTournamentStatsAPIView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+def list_tournaments(request):
+    # return Response(list(tournaments))  USE THIS IF YOU WANT TO GET ONLY THE NAMES OF CURRENT TOURNAMENTS
+    tournaments = Tournament.objects.filter(is_active=True) #BE AWARE OF ADDING THE STATUS FIELD TO THE TOURNAMENT MODEL!
+    # tournaments = Tournament.objects.all()
+    serializer = TournamentSerializer(tournaments, many=True)
+    return Response(serializer.data)
 
 
 ################################################################################
@@ -81,13 +88,6 @@ def create_tournament(request):
     print(serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-def list_tournaments(request):
-    # tournaments = Tournament.objects.filter(status="open").values('name')   BE AWARE OF ADDING THE STATUS FIELD TO THE TOURNAMENT MODEL!
-    # return Response(list(tournaments))  USE THIS IF YOU WANT TO GET ONLY THE NAMES OF CURRENT TOURNAMENTS
-    tournaments = Tournament.objects.all()
-    serializer = TournamentSerializer(tournaments, many=True)
-    return Response(serializer.data)
 
 # Prepare this for allowing users to join a tournament, be aware
 # of the edge cases like the tournament not existing or the user already being in the tournament.
