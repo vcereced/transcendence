@@ -1,5 +1,5 @@
 // static/js/views/home.js
-import { showUsername, showPicture, updateUsername, updatePassword, updatePicture } from '../utils/settings.js';
+import { showUsername, showPicture, updateUsername, updatePassword, updatePicture, uploadImage } from '../utils/settings.js';
 import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getDataUser } from '../utils/profile.js';
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
@@ -205,39 +205,10 @@ export async function initHome() {
         
     window.openSettingsPopup =  function openSettingsPopup() {
         let email = sessionStorage.getItem("email");
+        document.getElementById('settingsPopup').style.display = 'flex';
+
         showPicture(email);
         showUsername(email);
-
-        document.querySelectorAll(".preset-img").forEach(img => {
-            img.addEventListener("click", async () => {
-                const src = img.src
-                document.getElementById("current-profile-pic").src = src;
-            });
-        })
-
-        document.getElementById("save-btn-images").addEventListener("click", async () => {
-            const src = document.getElementById("current-profile-pic").src;
-            updatePicture(email, src);
-            window.closeSettingsPopup();
-        });
-
-        document.getElementById("save-btn-name").addEventListener("click", () => {
-            const newUsername = document.getElementById("username").value;
-            const email = sessionStorage.getItem("email");
-            
-            updateUsername(email, newUsername);
-        });
-        
-        document.getElementById("save-btn-password").addEventListener("click", () => {
-            const oldPass = document.getElementById("old-password").value;
-            const newPass1 = document.getElementById("new-password1").value;
-            const newPass2 = document.getElementById("new-password2").value;
-            const email = sessionStorage.getItem("email");
-            
-            updatePassword(email, oldPass, newPass1, newPass2);
-        });
-
-        document.getElementById('settingsPopup').style.display = 'flex';
     }
 
         window.closeSettingsPopup = function closeSettingsPopup() {
@@ -458,6 +429,81 @@ export async function initHome() {
     }
 
     // --- EVENT LISTENERS ---
+
+    document.querySelectorAll(".preset-img").forEach(img => {
+        img.addEventListener("click", async () => {
+            const src = img.src
+            document.getElementById("current-profile-pic").src = src;
+        });
+    })
+
+    
+    document.getElementById("upload-profile-pic").addEventListener("change", function(event) {
+        const file = event.target.files[0]; // Obtiene el archivo seleccionado
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Cambia la imagen de previsualización con la imagen seleccionada
+                document.getElementById("current-profile-pic").src = e.target.result;
+            };
+            reader.readAsDataURL(file); // Convierte la imagen seleccionada en una URL de datos
+        }
+    });
+
+    // document.getElementById("save-btn-images").addEventListener("click", async () => {
+    //     const src = document.getElementById("current-profile-pic").src;
+    //     let email = sessionStorage.getItem("email");
+    //     updatePicture(email, src);
+    //     window.closeSettingsPopup();
+    // });
+
+    document.getElementById("save-btn-images-host").addEventListener("click", async () => {
+        
+        const src = document.getElementById("current-profile-pic").src;
+        const allowedNames = ["default0.gif", "default1.gif", "default2.gif", "default3.gif", "default4.gif"];
+
+        const isDefault = allowedNames.some(name => src.endsWith(name));
+
+        if (isDefault) {
+
+            let email = sessionStorage.getItem("email");
+            updatePicture(email, src);
+
+        }else {
+
+            const fileInput = document.getElementById("upload-profile-pic");
+            const username = sessionStorage.getItem("username");
+            const file = fileInput.files[0]; // Obtener el archivo seleccionado
+            const formData = new FormData();
+            
+            if (!file) {
+                window.showPopup("Por favor, selecciona una imagen.");
+                return;
+            }
+            formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
+            formData.append("username", username);
+            uploadImage(formData);
+        }
+        closeSettingsPopup();
+    });
+
+    document.getElementById("save-btn-name").addEventListener("click", () => {
+        const newUsername = document.getElementById("username").value;
+        const email = sessionStorage.getItem("email");
+        updateUsername(email, newUsername);
+        closeSettingsPopup();
+    });
+
+    document.getElementById("save-btn-password").addEventListener("click", () => {
+        const oldPass = document.getElementById("old-password").value;
+        const newPass1 = document.getElementById("new-password1").value;
+        const newPass2 = document.getElementById("new-password2").value;
+        const email = sessionStorage.getItem("email");
+        
+        updatePassword(email, oldPass, newPass1, newPass2);
+        closeSettingsPopup();
+    });
+
 
     window.eventManager.addEventListener(carousel, 'mousedown', (e) => {
         isDragging = true;

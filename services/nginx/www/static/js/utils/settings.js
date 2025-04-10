@@ -153,3 +153,31 @@ export async function updatePicture(email, src) {
     }
 
 }
+
+export async function uploadImage(formData) {
+
+    const url = "/api/settings/upload-profile-pic";
+
+    try {
+        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+
+        const response = await fetch(url, {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            window.showPopup("Imagen de perfil actualizada correctamente");
+            return;
+        } else {
+            window.showPopup(data.error);
+            alert(data.error);
+        }
+    } catch (error) {
+        window.showPopup(error);
+        console.error("Error:", error);
+    }
+
+}

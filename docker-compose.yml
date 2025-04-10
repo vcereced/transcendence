@@ -11,6 +11,7 @@ services:
       - ./services/nginx/www:/usr/share/nginx/html  
       - ./services/nginx/conf/jwt_validation.lua:/etc/nginx/lua/jwt_validation.lua              
       - ./services/nginx/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - shared_volumen:/media/ #CAUTIOOOOOOOOOOOOOOOOOON EN EL FUTURO, LOS ARCHIVOS DEL VOLUMENDOCKER SOBREESCRIBIRAR LO QUE SE COPIE EN TU DIRECTORIO, ES DECIR PREVALECE EL CONTENIDO DEL VOLUMENT FRENTE A TODA ACCION.
     depends_on:
       - auth
       - websocket
@@ -43,6 +44,7 @@ services:
       - "1025:1025"
     volumes:
       - ./services/auth:/app  # Bind mount for code synchronization
+      - shared_volumen:/media/ 
     env_file:
       - .env
     networks:
@@ -178,3 +180,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  shared_volumen:

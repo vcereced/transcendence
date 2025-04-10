@@ -1,5 +1,7 @@
 from django.urls import path, include
 from . import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 
 urlpatterns = [
@@ -21,4 +23,6 @@ urlpatterns = [
     path('logout', views.logout_view, name='logout'),
     path('user/<str:username>', views.UserDetail.as_view(), name='user_detail'),
 	path('user/id/<int:pk>', views.UserDetailById.as_view(), name='user_detail_by_id'),
-]
+    path('upload-profile-pic', views.upload_profile_pic_view, name='upload_profile_pic'),
+    
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

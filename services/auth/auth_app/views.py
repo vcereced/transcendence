@@ -9,11 +9,13 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.response import Response
+from django.core.files.storage import default_storage
+from django.http import JsonResponse
 import jwt
 import os
 from .models import CustomUser, EmailOTPDevice, Friendship  # Importa tu modelo personalizado
 from auth_app.utils.utilsToptDevice import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice, CustomError
-from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser
+from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser, removeOldImagen
 
 from rest_framework import generics
 
@@ -259,6 +261,9 @@ def updatePictureUrl_view(request):
 
 	try:
 		user = CustomUser.objects.get(email=email)
+
+		removeOldImagen(user)
+
 		user.profile_picture = src
 		user.save()
 	except CustomUser.DoesNotExist:
@@ -329,6 +334,26 @@ def friendShip_view(request, action):
 	
 	return Response({"error": "Invalid action"}, status=400)
 
+@api_view(['POST'])
+def upload_profile_pic_view(request):
+
+	image = request.FILES.get('profile_pic')
+	username = request.POST.get('username')
+
+	if not image or not username:
+		return Response({"error": "image or username"}, status=400)
+
+	try:
+		user = CustomUser.objects.get(username=username)
+		removeOldImagen(user)
+		file_path = default_storage.save(f'{image.name}', image)
+		user.profile_picture = "/media/" + file_path
+		user.save()
+
+	except CustomUser.DoesNotExist:
+		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+	
+	return Response({"message": "imagen guardada correctamente", "file_path": {"/media/" + file_path}}, status=200)
 
 class UserDetail(generics.RetrieveAPIView):
 	queryset = CustomUser.objects.all()

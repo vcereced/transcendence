@@ -1,6 +1,7 @@
 from django.utils.timezone import now
 from .utilsToptDevice import CustomError  # Importa tu modelo personalizado
 from auth_app.models import EmailOTPDevice, CustomUser
+from django.core.files.storage import default_storage
 
 def verifyEmailTOPTDevice(email, otp_token):
 
@@ -36,3 +37,13 @@ def verifyPendingUser(email, username, password):
 		return 'ok'
 	else:
 		return 'error'
+	
+def removeOldImagen(user):
+
+	defaultName = ["default.gif", "default1.gif", "default2.gif", "default3.gif", "default4.gif"]
+
+	if user.profile_picture and user.profile_picture not in defaultName:
+		old_path = user.profile_picture.replace("/media/", "")
+
+		if default_storage.exists(old_path):
+			default_storage.delete(old_path)
