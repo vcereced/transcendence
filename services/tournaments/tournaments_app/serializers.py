@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import Tournament
 
 class TournamentSerializer(serializers.ModelSerializer):
+
+    created_at = serializers.DateTimeField(format="%d %B %Y %H:%M", read_only=True)
+
     class Meta:
         model = Tournament
         fields = '__all__'

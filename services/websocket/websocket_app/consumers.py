@@ -392,6 +392,20 @@ class RoomConsumer(AsyncWebsocketConsumer):
     #           Helper Methods
     # =========================================
 
+
+    async def request_tournament_status(self, id):
+        """Realiza una solicitud a la API de Tournaments para saber si el torneo ya ha comenzado."""
+        url = f"http://tournaments:8003/{id}/name"
+        response = requests.get(url)
+        if response.status_code == 200:
+            if response.json()["is_active"] == True:
+                return True
+            else :
+                return False
+        else:
+            print(f"Error fetching username: {response.status_code}")
+            return None
+
     async def receive(self, text_data):
         """Maneja los mensajes entrantes del frontend."""
         data = json.loads(text_data)
@@ -401,6 +415,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         if message_type == "start_tournament":
             print("\033[92mRecibido evento para iniciar torneo\033[0m")
             message = {"tournament_id": self.room_name}
+            if await self.request_tournament_status(self.room_name) == False:
+                print("\033[92mEl torneo ya ha comenzado\033[0m")
+                await self.send(json.dumps({"type": "tournament_already_started"}))
+                return
             send_start_matchmaking_task(message)
 
             # Esperar a que se cree el árbol del torneo en Redis

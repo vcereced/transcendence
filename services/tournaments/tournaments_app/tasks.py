@@ -264,6 +264,14 @@ def start_matchmaking(message):
     # Obtener el ID del torneo
     tournament_id = message['tournament_id']
 
+    
+    tournament = Tournament.objects.get(id=tournament_id)
+    if tournament.is_active == False:
+        print(f"El torneo {tournament_id} ya está inactivo.")
+        return
+    tournament.is_active = False
+    tournament.save()
+
     # Obtener la lista de usuarios del torneo desde Redis
     user_list = redis_client.smembers(f"tournament_{tournament_id}_users")
     print("User list:")
@@ -289,6 +297,12 @@ def start_matchmaking(message):
             })
             # current_id += 1
         print(f"Lista completada con jugadores ficticios: {players}")
+
+    # Si hay más de 8 jugadores, tomar solo los primeros 8 WARNING !! 
+    if len(players) > 8:
+        players = players[:8]
+        print(f"Lista truncada a los primeros 8 jugadores: {players}")
+    # Guardar los participantes en la base de datos
     
     try :
         save_participants_to_database(tournament_id, players)

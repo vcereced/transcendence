@@ -31,7 +31,7 @@ redis_client = redis.Redis(
 #         return JsonResponse({"error": "Tournament not found"}, status=404)
 def get_tournament_name(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
-    return JsonResponse({"name": tournament.name}, status=200)
+    return JsonResponse({"name": tournament.name, "is_active": tournament.is_active}, status=200)
 
 #ENDPOINT TO GET TOURNAMENTS PLAYED AND WON BY A USER BY ID
 class UserTournamentStatsAPIView(APIView):
