@@ -21,7 +21,7 @@ export async function initGame() {
     }
     handleJwtToken();
 
-    let socket = new WebSocket(`wss://${window.location.host}/ws/game/pong/`);
+    let pongSocket = new WebSocket(`wss://${window.location.host}/ws/game/pong/`);
 
 
     // --- DOM ELEMENTS ---
@@ -121,8 +121,8 @@ export async function initGame() {
             keysPressed.push('arrowDown');
         }
 
-        if (keysPressed.length > 0 && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
+        if (keysPressed.length > 0 && pongSocket.readyState === WebSocket.OPEN) {
+            pongSocket.send(JSON.stringify({
                 type: 'paddle_move',
                 keys: keysPressed,
             }));
@@ -156,11 +156,11 @@ export async function initGame() {
 
     // --- EVENT LISTENERS ---
 
-    socket.onopen = function (event) {
+    pongSocket.onopen = function (event) {
         console.log("Conectado al WebSocket de Game.");
     };
 
-    socket.onmessage = function (event) {
+    pongSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
 
         if (data.type === 'game_state_update') {
@@ -178,7 +178,6 @@ export async function initGame() {
             }
             //MAYBE  IT IS HERE...
             if (data.game_state.is_finished && !popupShown) {
-                socket.close();
                 showPopup(`${data.game_state.winner_username} gana!`);
                 setTimeout(() => {
                     if (tournamentId > 0) {
@@ -224,12 +223,12 @@ export async function initGame() {
 
     };
 
-    socket.onclose = function (event) {
+    pongSocket.onclose = function (event) {
         console.log("Desconectado del WebSocket de Game.");
         console.log(event);
     };
 
-    socket.onerror = function (event) {
+    pongSocket.onerror = function (event) {
         // deleteCookie("accessToken");
         // deleteCookie("refreshToken");
         // window.location.reload();
@@ -295,5 +294,9 @@ export async function initGame() {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
     });
+
+    window.onhashchange = () => {
+        pongSocket.close();
+    };
 
 }

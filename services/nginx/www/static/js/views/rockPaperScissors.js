@@ -21,7 +21,7 @@ export async function initRockPaperScissors() {
     }
     handleJwtToken();
 
-    let socket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
+    let rpsSocket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
 
 
     // --- VARIABLES AND CONSTANTS ---
@@ -47,7 +47,7 @@ export async function initRockPaperScissors() {
     window.choose = function choose(option, player) {
         requestedChoices[`${player}Player`] = option;
         if (requestedChoices.leftPlayer && requestedChoices.rightPlayer) {
-            socket.send(JSON.stringify({
+            rpsSocket.send(JSON.stringify({
                 type: 'choice_change',
                 choices: requestedChoices,
             }));
@@ -87,11 +87,11 @@ export async function initRockPaperScissors() {
 
     // --- EVENT LISTENERS ---
 
-    socket.onopen = function (event) {
+    rpsSocket.onopen = function (event) {
         console.log("Conectado al WebSocket.");
     };
 
-    socket.onmessage = function (event) {
+    rpsSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
 
         if (data.type === 'game_state_update') {
@@ -102,7 +102,6 @@ export async function initRockPaperScissors() {
 
             if (data.game_state.is_finished && !popupShown) {
                 if (data.game_state.winner_username !== "") {
-                    socket.close();
                     showPopup(`${data.game_state.winner_username} gana!`);
                     setTimeout(() => { window.location.hash = "#game" }, 2000);
                 } else {
@@ -128,11 +127,11 @@ export async function initRockPaperScissors() {
 
     };
 
-    socket.onclose = function (event) {
+    rpsSocket.onclose = function (event) {
         console.log("Desconectado del WebSocket.");
     };
 
-    socket.onerror = function (event) {
+    rpsSocket.onerror = function (event) {
         // window.location.hash = "#login"
         // deleteCookie("accessToken");
         // deleteCookie("refreshToken");
@@ -172,6 +171,10 @@ export async function initRockPaperScissors() {
             choose('scissors', 'right');
         }
     });
+
+    window.onhashchange = () => {
+        rpsSocket.close();
+    };
 }
 
 
