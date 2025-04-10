@@ -195,8 +195,10 @@ export async function initHome() {
             btn.style.display = "None";
         }else {
             handleButtonFriend(username, currentUsername);
-            btn.style.display = "Block";}
-            profilePopup.style.display = 'flex';
+            btn.style.display = "Block";
+        }
+        window.populateProfilePopup(username);
+        profilePopup.style.display = 'flex';
     }
         
     window.closeProfilePopup = function closeProfilePopup() {
@@ -307,6 +309,15 @@ export async function initHome() {
             }
             console.log("Game statistics data:", statsData);
 
+            // Step 2.5: Get tournament statistics using user_id
+            const tournamentResponse = await fetch(`/api/tournament/user/${user_id}/tournament-stats`);
+            const tournamentData = await tournamentResponse.json();
+            if (!tournamentData) {
+                console.error("Tournament data not found");
+                return;
+            }
+            console.log("Tournament statistics data:", tournamentData);
+
             // Step 3: Get game history using the same user_id
             const historyResponse = await fetch(`/api/game/history/${user_id}/`);
             const historyData = await historyResponse.json();
@@ -318,11 +329,9 @@ export async function initHome() {
             console.log("Game history data:", historyData);
 
 
-            // Populate elements with user data
-            profileUsernameElement.innerText = userData.username;
-            profileAvatarElement.src = userData.profile_picture || "../../media/default-avatar.png";
-
             // Populate elements with game data
+            profileTournamentsPlayedElement.innerText = tournamentData.tournaments_played_count || 0;
+            profileTournamentsWonElement.innerText = tournamentData.tournaments_won_count || 0;
             profilePongGamesPlayedElement.innerText = statsData.online_matches_played || 0;
             profilePongGamesWonElement.innerText = statsData.online_pong_matches_won || 0;
             profileRpsGamesPlayedElement.innerText = statsData.online_matches_played || 0;
@@ -351,7 +360,7 @@ export async function initHome() {
                 profileTournamentHistoryElement.appendChild(noTournamentElement);
             }
 
-            if (historyData.local_matches && Object.keys(historyData.local_matches).length > 0) {
+            if (historyData.online_matches && Object.keys(historyData.online_matches).length > 0) {
                 historyData.online_matches.forEach(match => {
                     const historyElement = document.createElement('div');
                     historyElement.innerHTML = buildSingleMatchHistory(match);
