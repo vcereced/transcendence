@@ -7,7 +7,7 @@ class Tournament(models.Model):
     champion = models.ForeignKey('Participant', on_delete=models.SET_NULL, null=True, blank=True, related_name='won_tournaments')
     participants = models.ManyToManyField('Participant', through='TournamentParticipant', blank=True)
     is_active = models.BooleanField(default=True)
-
+    
     def __str__(self):
         return self.name
 
@@ -21,7 +21,6 @@ class Participant(models.Model):
 class TournamentParticipant(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
     participant = models.ForeignKey(Participant, on_delete=models.CASCADE)
-    # Puedes agregar más campos aquí si es necesario en el futuro (por ejemplo, el rol del participante en el torneo)
 
     class Meta:
         unique_together = ('tournament', 'participant')
