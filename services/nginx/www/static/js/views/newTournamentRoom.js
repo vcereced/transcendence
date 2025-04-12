@@ -545,6 +545,11 @@ function restoreTournamentTree() {
                                 championDiv.textContent = username;
                                 championDiv.classList.add("championship");
                             }
+                            const trophyIcon = document.querySelector('.new-tournament-room .screen .icon');
+                            if (trophyIcon) {
+                                trophyIcon.style.color = 'gold';  
+                                trophyIcon.style.textShadow = '0 0 10px gold'; 
+                            }
                         }
                     });
         
@@ -555,7 +560,6 @@ function restoreTournamentTree() {
         
                 matchElements.forEach((matchElement) => {
                     const playerDivs = Array.from(matchElement.querySelectorAll(".player"));
-        
                     
                     playerDivs.forEach(div => div.classList.remove("winner", "loser"));
         
@@ -563,19 +567,14 @@ function restoreTournamentTree() {
                         const username = participant.username;
         
                         const availableDiv = playerDivs.find(div => {
-                            const content = div.textContent.trim().toLowerCase();
+                            const classList = Array.from(div.classList);
                             return (
-                                content === '' ||
-                                content.startsWith('player') ||
-                                content.startsWith('winner') ||
-                                content === 'champion' 
+                                classList.includes("player") 
                             );
                         });
         
                         if (availableDiv) {
                             availableDiv.textContent = username;
-                            
-                            
                             if (winner) {
                                 if (username === winner.username) availableDiv.classList.add("winner");
                                 else if (username === loser.username) availableDiv.classList.add("loser");
