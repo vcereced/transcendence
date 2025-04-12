@@ -1,6 +1,7 @@
 // static/js/views/new_login.js
 
 import EventListenerManager from '../utils/eventListenerManager.js';
+import { getDataUser } from '../utils/profile.js';
 
 export async function renderNewLogin() {
     const response = await fetch('static/html/new_login.html');
@@ -8,122 +9,46 @@ export async function renderNewLogin() {
     return htmlContent;
 }
 
-let login_socket = null;
-let logged_users = [];
+window.login_socket = null;
+window.logged_users = [];
+
 function initLoginSocket() {
     
-    if (login_socket === null) {
-        login_socket = new WebSocket(`wss://${window.location.host}/ws/login/`);
+    if (window.login_socket === null) {
+        window.login_socket = new WebSocket(`wss://${window.location.host}/ws/login/`);
     }
 
-    login_socket.onopen = function(event) {
-        console.log("login_socket open");
+    window.login_socket.onopen = function(event) {
     }
 
-    login_socket.onmessage = function(event) {
+    window.login_socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
         console.log("login_socket message");
         console.log(data);
+        
         if (data.type === "logged_users") {
-            logged_users = data.logged_users;
-        } 
+            window.logged_users = data.logged_users;
+        }
+        const popup = document.getElementById("profilePopup");
+        if (popup && popup.style.display === "flex") {
+            const username = document.getElementById("profile-info-username")?.innerText;
+            openProfilePopup(username);
+        }
     }
-    login_socket.onclose = function(event) {
+    window.login_socket.onclose = function(event) {
+        window.login_socket = null;
         console.log("login_socket close");
     }
 
-    login_socket.onerror = function(event) {
+    window.login_socket.onerror = function(event) {
+        window.login_socket = null;
         console.log("login_socket error");
         console.log(event);
     }
 }
 
-export { login_socket , initLoginSocket , logged_users } ;
 
-// function emailRegister(data){
-
-// 	const registerResponseMessage = document.getElementById("register-response-message");
-//     const registerDataSection = document.getElementById("register-data-container");
-//     const qrSection = document.getElementById("qr-section");
-//     const verifyOtpButton = document.getElementById("reg-verify-otp");
-//     const otpInput = document.getElementById("otp-token");
-
-//     registerDataSection.style.display = 'none';
-// 	qrSection.style.display = 'block';
-//     registerResponseMessage.innerText = data.message;
-
-// 	verifyOtpButton.addEventListener("click", async () => {
-//         const otpToken = otpInput.value;
-
-//         const response = await fetch("/api/usr/verify_email_otp", {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//             },
-//             body: JSON.stringify({
-//                 //auth_method : "Email",
-//                 //username: document.getElementById("reg-name").value,
-//                 //password: document.getElementById("reg-password").value,
-//                 email: document.getElementById("reg-email").value,
-//                 otp_token: otpToken
-//             }),
-//         });
-
-//         const data = await response.json();
-
-//         if (response.ok) {
-//             registerResponseMessage.innerText = data.message;
-//         } else if (data.error) {
-//             registerResponseMessage.innerText = data.error;
-//         }
-//     });
-// }
-
-
-// function loginOtp(data) {
-// 	const loginResponseMessage = document.getElementById("login-response-message");
-//     const qrSection2 = document.getElementById("login-otp-section");
-// 	const loginForm = document.getElementById("login-form");
-//     const verifyOtpButton = document.getElementById("verify-otp");
-// 	const otpInput = document.getElementById("login-otp-token");
-//     const loginDataSection = document.getElementById("login-data-container");
-    
-//     loginDataSection.style.display = 'none';
-//     qrSection2.style.display = 'block';
-//     loginResponseMessage.innerText = data.message;
-    
-//     verifyOtpButton.addEventListener("click", async (event) => {
-//         const otpToken = otpInput.value;
-
-//         const response = await fetch("/api/usr/login_email", {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//             },
-//             body: JSON.stringify({
-//                 email: document.getElementById("login-email").value,
-//                 password: document.getElementById("login-password").value,
-//                 otp_token: otpToken
-//             }),
-//         });
-
-//         const data = await response.json();
-
-//         if (response.ok) {
-//             console.log("Inicio de sesión ok");
-
-//             loginResponseMessage.innerHTML = data.message;
-
-//             document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
-//             document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
-
-//         } else {
-//             console.log("Error al iniciar sesión");
-//             loginResponseMessage.innerHTML = data.error;
-//         }
-//     });
-	
-// }
+export { initLoginSocket } ;
 
 export function initNewLogin() {
 
@@ -205,7 +130,7 @@ export function initNewLogin() {
                 //registerResponseMessage.innerText = data.email || data.username || data.error || "Error desconocido. Inténtalo de nuevo.";}
         } catch (error) {
             console.error("Error en la solicitud:", error);
-            window.showPopup("Hubo un problema con el registro.");
+            window.showPopup("Hubo un problema con la conexion.");
             //alert("Hubo un problema con el registro.");
         }
     }
@@ -243,7 +168,7 @@ export function initNewLogin() {
             }
         } catch (error) {
             console.error("Error en la solicitud:", error);
-            window.showPopup("Hubo un problema con el registro.");
+            window.showPopup("Hubo un problema con la conexion.");
            // alert("Hubo un problema con el registro.");
         }
     }

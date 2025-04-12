@@ -10,5 +10,5 @@ window.showPopup = function(message) {
     // Después de 3 segundos, lo oculta
     setTimeout(() => {
         popup.classList.remove('show');
-    }, 3000);  // El pop-up desaparecerá después de 3 segundos
+    }, 8000);  // El pop-up desaparecerá después de 3 segundos
 }
