@@ -1,7 +1,7 @@
 // static/js/views/2FA.js
 
 import EventListenerManager from '../utils/eventListenerManager.js';
-import { login_socket, initLoginSocket } from './newLogin.js';
+import { initLoginSocket } from './newLogin.js';
 export async function render2FA() {
     const response = await fetch('static/html/2FA.html');
     const htmlContent = await response.text();

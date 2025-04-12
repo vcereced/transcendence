@@ -4,7 +4,7 @@ import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getData
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
 import { handleJwtToken } from './jwtValidator.js';
-import { login_socket, initLoginSocket, logged_users } from './newLogin.js';
+import { initLoginSocket } from './newLogin.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
@@ -112,11 +112,13 @@ export async function initHome() {
         })
         .then(response => {
             if (response.ok) {
-                document.cookie = "accessToken=; Max-Age=0; path=/";
-                document.cookie = "refreshToken=; Max-Age=0; path=/";
+                window.login_socket.close();
+                document.cookie = "accessToken=0; Max-Age=0; path=/";
+                document.cookie = "refreshToken=0; Max-Age=0; path=/";
                 sessionStorage.removeItem("action");
                 sessionStorage.removeItem("username");
                 sessionStorage.removeItem("email");
+
                 window.showPopup("deslogeo correctamente!");
             } else {
                 return response.json().then(data => {
@@ -188,8 +190,10 @@ export async function initHome() {
         
         const data = await getDataUser(username);
     
+        const userId = data.id;
         document.getElementById("profile-image-img").src = data.picture_url;
         document.getElementById("profile-info-username").innerHTML = data.username;
+        updateStatus(userId);
     
         if (username == currentUsername) { //hide the button MAKE FRIEND
             btn.style.display = "None";
@@ -256,8 +260,10 @@ export async function initHome() {
         //--DONE BY GARYDD1---
         window.checkOnlineStatus = function checkOnlineStatus(userId) {
             
-            if (logged_users.includes(userId)) {
-                return true; 
+            userId = String(userId);
+
+            if (window.logged_users.includes(userId)) {
+                return true;
             } else {
                 return false; 
             }
@@ -422,9 +428,9 @@ export async function initHome() {
     window.updateStatus = function updateStatus(userId) {
         var statusCircle = document.getElementById("status-circle");
         if (checkOnlineStatus(userId)) {
-            statusCircle.style.backgroundColor = "var(--primary-color)";
+            statusCircle.style.backgroundColor = "green";
         } else {
-            statusCircle.style.backgroundColor = "var(--btn-bg-color)";
+            statusCircle.style.backgroundColor = "red";
         }
     }
 

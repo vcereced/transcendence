@@ -273,7 +273,7 @@ def updatePictureUrl_view(request):
 
 @api_view(['GET'])
 def playersList_view(request):
-    players = CustomUser.objects.values('username', 'profile_picture')
+    players = CustomUser.objects.values('id', 'username', 'profile_picture')
     return Response(players)
 
 @api_view(['POST'])
@@ -294,7 +294,7 @@ def dataUser_view(request):
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 	else:
-		return Response({"message": "data extrated succesfully", "username": user.username, "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
+		return Response({"message": "data extrated succesfully", "id": user.id, "username": user.username, "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def isFriendShip_view(request):
@@ -346,6 +346,11 @@ def upload_profile_pic_view(request):
 	try:
 		user = CustomUser.objects.get(username=username)
 		removeOldImagen(user)
+
+		file_path = f'{image.name}'
+		if default_storage.exists(file_path):
+			return Response({"error": "La imagen ya existe."}, status=400)
+
 		file_path = default_storage.save(f'{image.name}', image)
 		user.profile_picture = "/media/" + file_path
 		user.save()
