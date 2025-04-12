@@ -392,10 +392,6 @@ def determine_initial_serve(game: Game, game_state: GameState):
     except RockPaperScissorsGame.DoesNotExist:
         game_state.ball.dx *= random.choice([-1, 1])  # Serve to a random side
 
-    # ONLY FOR TESTING (ALWAYS SERVE LEFT and UP)
-    game_state.ball.dx = -s.INITIAL_BALL_SPEED
-    game_state.ball.dy = -s.INITIAL_BALL_SPEED
-
     return game_state
 
 
@@ -497,7 +493,6 @@ async def play_rps_round(rps_record: RockPaperScissorsGame, redis_client: redis.
 def determine_winner(
     left_choice, right_choice, left_player_username, right_player_username
 ):
-    return left_player_username # ONLY FOR TESTING
     if left_choice == right_choice:
         return ""
     if left_choice == "rock":
