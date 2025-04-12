@@ -120,8 +120,8 @@ def query_db_for_game(game_id):
 async def control_paddle_by_computer(game_id, side):
     try:
         redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
-        final_paddle_y = 0
-        target_paddle_y = 0
+        final_paddle_y = 0.5
+        target_paddle_y = 0.5
         game_state = await load_game_state(redis_client, game_id)
         last_seen_ball = game_state.ball
         last_seen_time = time.time()
@@ -139,7 +139,8 @@ async def control_paddle_by_computer(game_id, side):
 
             # Refresh the last seen ball position every refresh_rate seconds
             if time.time() - last_seen_time > refresh_rate:
-                last_seen_time = time.time()
+                if game_state.ball.dx != 0:
+                    last_seen_time = time.time()
                 last_seen_ball = game_state.ball
                 target_paddle_y = determine_target_paddle_y(
                     last_seen_ball, side, target_paddle_y
@@ -161,38 +162,44 @@ def determine_target_paddle_y(last_seen_ball: Ball, side, target_paddle_y):
         side == "right" and last_seen_ball.dx < 0
     ):
         return target_paddle_y
+    
+    if last_seen_ball.dx == 0:
+        return target_paddle_y
 
-    ball_velocity_angle = math.atan2(last_seen_ball.dy, last_seen_ball.dx)
-    x_distance_to_goal = (
-        s.FIELD_WIDTH - last_seen_ball.x if side == "right" else last_seen_ball.x
-    )
-    y_distance_to_goal = x_distance_to_goal * math.tan(ball_velocity_angle)  # WARNING
+    target_x = (s.FIELD_WIDTH - s.BALL_RADIUS) if side == "right" else s.BALL_RADIUS
 
-    target_paddle_y = last_seen_ball.y + y_distance_to_goal
+    ball_direction_angle = math.atan2(last_seen_ball.dy, last_seen_ball.dx)
+    changing_ball_dy = last_seen_ball.dy
+    start_line_x = last_seen_ball.x
+    start_line_y = last_seen_ball.y
 
-    # There is at least one wall rebound
-    if target_paddle_y > s.FIELD_HEIGHT or target_paddle_y < 0:
-        distance_to_first_rebound = (
-            s.FIELD_HEIGHT - last_seen_ball.y
-            if target_paddle_y > s.FIELD_HEIGHT
-            else last_seen_ball.y
-        )
-        amount_of_rebounds = (
-            int(y_distance_to_goal - distance_to_first_rebound) // s.FIELD_HEIGHT
-        )
-        final_offset = (
-            int(y_distance_to_goal - distance_to_first_rebound) % s.FIELD_HEIGHT
-        )
-        if target_paddle_y > s.FIELD_HEIGHT:
-            if amount_of_rebounds % 2 == 0:
-                target_paddle_y = s.FIELD_HEIGHT - final_offset
-            else:
-                target_paddle_y = final_offset
-        else:
-            if amount_of_rebounds % 2 == 0:
-                target_paddle_y = final_offset
-            else:
-                target_paddle_y = s.FIELD_HEIGHT - final_offset
+    end_line_x = target_x
+    end_line_y = start_line_y + (end_line_x - start_line_x) * math.tan(ball_direction_angle)
+
+    if (end_line_y > s.FIELD_HEIGHT - s.BALL_RADIUS):
+        end_line_y = s.FIELD_HEIGHT - s.BALL_RADIUS
+        end_line_x = (end_line_y - start_line_y) / math.tan(ball_direction_angle) + start_line_x
+    elif (end_line_y < s.BALL_RADIUS):
+        end_line_y = s.BALL_RADIUS
+        end_line_x = (end_line_y - start_line_y) / math.tan(ball_direction_angle) + start_line_x
+
+    while (1):
+        start_line_x = end_line_x
+        start_line_y = end_line_y
+        end_line_x = target_x
+        changing_ball_dy = -changing_ball_dy
+        ball_direction_angle = math.atan2(changing_ball_dy, last_seen_ball.dx)
+        end_line_y = start_line_y + (end_line_x - start_line_x) * math.tan(ball_direction_angle)
+        if (end_line_y > s.FIELD_HEIGHT - s.BALL_RADIUS):
+            end_line_y = s.FIELD_HEIGHT - s.BALL_RADIUS
+            end_line_x = (end_line_y - start_line_y) / math.tan(ball_direction_angle) + start_line_x
+        elif (end_line_y < s.BALL_RADIUS):
+            end_line_y = s.BALL_RADIUS
+            end_line_x = (end_line_y - start_line_y) / math.tan(ball_direction_angle) + start_line_x
+        if (side == "right" and end_line_x >= target_x) or (side == "left" and end_line_x <= target_x):
+            break
+
+    target_paddle_y = end_line_y
 
     return target_paddle_y
 
@@ -385,6 +392,10 @@ def determine_initial_serve(game: Game, game_state: GameState):
     except RockPaperScissorsGame.DoesNotExist:
         game_state.ball.dx *= random.choice([-1, 1])  # Serve to a random side
 
+    # ONLY FOR TESTING (ALWAYS SERVE LEFT and UP)
+    game_state.ball.dx = -s.INITIAL_BALL_SPEED
+    game_state.ball.dy = -s.INITIAL_BALL_SPEED
+
     return game_state
 
 
@@ -486,6 +497,7 @@ async def play_rps_round(rps_record: RockPaperScissorsGame, redis_client: redis.
 def determine_winner(
     left_choice, right_choice, left_player_username, right_player_username
 ):
+    return left_player_username # ONLY FOR TESTING
     if left_choice == right_choice:
         return ""
     if left_choice == "rock":
