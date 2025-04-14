@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Esperar a que la base de datos esté lista (solo si usas PostgreSQL o MySQL)
-sleep 5
+echo "Waiting for PostgreSQL..."
+while ! nc -z auth_db 5432; do
+  sleep 1
+done
+echo "PostgreSQL is available."
 
 # Aplicar migraciones
 python manage.py makemigrations
