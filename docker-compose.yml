@@ -86,6 +86,8 @@ services:
     ports:
       - "8013:8003"  #Admin console
     command: [/bin/sh, drf_entrypoint.sh]
+    env_file:
+      - .env
     networks:
       - app-network
 
@@ -151,6 +153,8 @@ services:
       - REDIS_HOST=redis  # Usaremos Redis para gestionar las conexiones de WebSocket
     depends_on:
       - redis
+    env_file :
+    - .env
     command: [/bin/sh, daphne_entrypoint.sh]
     networks:
       - app-network
