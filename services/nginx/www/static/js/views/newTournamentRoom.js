@@ -283,7 +283,7 @@ function startTournamentWebSocket(tournamentId) {
             // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
-            }, 1000);
+            }, 500);
         }
         if (data.type === "new_round") {
                 //check if my user is in the new round so i can be redirected to the game
@@ -298,7 +298,7 @@ function startTournamentWebSocket(tournamentId) {
                     setTimeout(() => {
                         window.location.hash = '#rock-paper-scissors';
                     }
-                    , 500);
+                    , 4000);
                 }
         }
         //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE

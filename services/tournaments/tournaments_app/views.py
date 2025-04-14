@@ -42,7 +42,13 @@ class UserTournamentStatsAPIView(APIView):
         try:
             participant = Participant.objects.get(user_id=user_id)
         except Participant.DoesNotExist:
-            return Response({"error": "Participant not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data = {
+            "user_id": -1,
+            "tournaments_played_count": 0,
+            "tournaments_won_count": 0,
+            "tournaments_played_names": [],
+            "tournaments_won_names": [],
+        }, status=status.HTTP_200_OK)
 
         tournaments_played = Tournament.objects.filter(participants=participant)
         tournaments_won = Tournament.objects.filter(champion=participant)
