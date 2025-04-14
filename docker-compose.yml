@@ -50,6 +50,18 @@ services:
     networks:
       - app-network  # Internal network only
 
+  auth_db:
+    image: postgres:17.4-alpine3.21
+    container_name: auth_db
+    environment:
+      POSTGRES_DB: auth_db
+    env_file:
+      - .env
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   websocket:
     build:
       context: ./services/websocket  # Ruta del microservicio de WebSocket
@@ -73,6 +85,18 @@ services:
       - ./services/tournaments:/app
     ports:
       - "8013:8003"  #Admin console
+    networks:
+      - app-network
+
+  tournaments_db:
+    image: postgres:17.4-alpine3.21
+    container_name: tournaments_db
+    environment:
+      POSTGRES_DB: tournaments_db
+    env_file:
+      - .env
+    volumes:
+      - tournaments_db_data:/var/lib/postgresql/data
     networks:
       - app-network
 
@@ -156,6 +180,18 @@ services:
     restart: always
     command: [/bin/sh, asyncio_entrypoint.sh]
 
+  game_db:
+    image: postgres:17.4-alpine3.21
+    container_name: game_db
+    environment:
+      POSTGRES_DB: game_db
+    env_file:
+      - .env
+    volumes:
+      - game_db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
 
 
   # tournament:
@@ -183,3 +219,6 @@ networks:
 
 volumes:
   shared_volumen:
+  auth_db_data:
+  game_db_data:
+  tournaments_db_data:
