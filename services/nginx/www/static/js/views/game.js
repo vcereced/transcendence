@@ -176,7 +176,7 @@ export async function initGame() {
             if (data.game_state.start_countdown !== 0) {
                 showPopup(`Comenzando en ${startCountdown}`);
             }
-            //MAYBE  IT IS HERE...
+            //MAYBE  IT IS HERE... Modified by Gartdd1
             if (data.game_state.is_finished && !popupShown) {
                 showPopup(`${data.game_state.winner_username} gana!`);
                 setTimeout(() => {
@@ -185,7 +185,7 @@ export async function initGame() {
                     } else {
                         window.location.hash = "#"
                     }
-                }, 3000);
+                }, 800);
             } else if (!data.game_state.is_finished && popupShown && startCountdown === 0) {
                 hidePopup();
             }
