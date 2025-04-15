@@ -21,4 +21,6 @@ ENV PYTHONUNBUFFERED 1
 EXPOSE 8003
 
 # Run Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8003"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8003"]
+
+CMD ["gunicorn", "tournaments_project.wsgi:application", "--bind", "0.0.0.0:8003"]

@@ -150,7 +150,7 @@ export function initTournamentsList() {
             }
         } catch (error) {
             console.error("Error al unirse al torneo:", error);
-            ¡showPopup("Error de conexión.", 3000);
+            showPopup("Error de conexión.", 3000);
         }
     }
 
