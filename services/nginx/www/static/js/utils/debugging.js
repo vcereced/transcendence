@@ -1,4 +1,4 @@
-window.showPopup = function(message) {
+window.showPopup = function(message, timeout = 8000) {
     const popup = document.getElementById('popup-alert');
     const popupMessage = document.getElementById('popup-alert-message');
     
@@ -10,5 +10,5 @@ window.showPopup = function(message) {
     // Después de 3 segundos, lo oculta
     setTimeout(() => {
         popup.classList.remove('show');
-    }, 8000);  // El pop-up desaparecerá después de 3 segundos
+    }, timeout);  // El pop-up desaparecerá después de 3 segundos
 }

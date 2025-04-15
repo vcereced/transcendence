@@ -28,6 +28,36 @@ export function initTournamentsList() {
 
     // --- FUNCTIONS ---
 
+    // Función para crear un torneo
+    async function createTournament(event) {
+        event.preventDefault(); // Evitar el comportamiento por defecto del formulario
+    
+        const tournamentName = document.getElementById("tournament-name").value;
+    
+        if (tournamentName) {
+            try {
+                await handleJwtToken();
+                const response = await fetch('/api/tournament/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: tournamentName }),
+                });
+    
+                if (response.ok) {
+                    showPopup("Torneo creado exitosamente!", 2000);
+                    loadTournaments(); // Recargar los torneos disponibles
+                } else {
+                    showPopup("Error al crear el torneo, intenta con otro nombre.", 2000);
+                }
+            } catch (error) {
+                console.error("Error al crear el torneo:", error);
+                showPopup("Error de conexión.", 2000);
+            }
+        }
+    }
+
     async function loadTournaments() {
         availableContainer.innerHTML = "";
 
@@ -40,7 +70,7 @@ export function initTournamentsList() {
 
             if (!tournamentResponse.ok || !playerCountsResponse.ok) {
                 console.error("Error al obtener torneos o contadores de jugadores");
-                alert("Hubo un problema al cargar los torneos.");
+                showPopup("Error al cargar los torneos, inténtalo más tarde", 3000);
                 return;
             }
 
@@ -109,18 +139,18 @@ export function initTournamentsList() {
             });
 
             if (response.ok) {
-                alert("Te has unido al torneo exitosamente!"); //GARYDD1 TO DO: REPLACE THIS WITH THE POPUP
+                showPopup(`Te has unido al torneo ${tournamentName}`, 4000);
                 sessionStorage.setItem("tournamentName", tournamentName);
                 console.log("%ctournamentName settled", "color:blue", tournamentName);
                 setTimeout(() => {
                     location.hash = `tournament/room/${tournamentId}`;
                 }, 700);
             } else {
-                alert("Error al unirse al torneo.");
+                showPopup(`Error al unirse al torneo ${tournamentName}`, 4000);
             }
         } catch (error) {
             console.error("Error al unirse al torneo:", error);
-            alert("Error de conexión.");
+            ¡showPopup("Error de conexión.", 3000);
         }
     }
 
@@ -208,6 +238,8 @@ export function initTournamentsList() {
 
     // --- INITIALIZATION ---
     loadTournaments();
+    const createForm = document.getElementById("create-tournament-form");
+    createForm.addEventListener("submit", createTournament);
     // displayGames();
 }
 

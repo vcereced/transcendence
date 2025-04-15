@@ -72,7 +72,7 @@ async function loadTournaments() {
 
             const joinButton = document.createElement("button");
             joinButton.className = "btn btn-success btn-sm";
-            joinButton.textContent = "Unirse";
+            joinButton.textContent = "Crear o unirse";
             joinButton.onclick = () => {
                 console.timeLog("Unirse al torneo: " + tournament);
                 joinTournament(tournament.id);

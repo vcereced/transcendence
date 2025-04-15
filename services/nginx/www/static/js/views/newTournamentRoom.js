@@ -211,8 +211,6 @@ export function initNewTournamentRoom(tournamentId) {
 
     window.eventManager.addEventListener(window, 'resize', recreateElements);
 
-    window.eventManager.addEventListener(document.getElementById("copy-icon"), "click", copyText);
-
     const title = document.querySelector('.site-title');
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
@@ -351,7 +349,7 @@ function sendWebSocketMessage(type, data) {
 }
 
 function start_tournament(data) {
-    alert("¡El torneo ha comenzado!");
+    showPopup("Torneo Iniciado! prepárate para jugar!", 4000);
     
     
     const parsedTournamentTree = {};

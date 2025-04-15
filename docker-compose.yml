@@ -114,6 +114,8 @@ services:
       - ./services/tournaments:/app
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@message-broker:5672//
+    env_file:
+      - .env
     command: [/bin/sh, celery_entrypoint.sh]
     networks:
       - app-network
