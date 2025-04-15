@@ -12,4 +12,5 @@ python manage.py makemigrations
 python manage.py migrate
 
 # Ejecutar el servidor
-exec python manage.py runserver 0.0.0.0:8001
+# exec python manage.py runserver 0.0.0.0:8001 COMMENTED BY GARYDD1
+exec gunicorn auth_project.wsgi:application --bind 0.0.0:8001

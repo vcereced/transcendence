@@ -48,7 +48,7 @@ services:
     env_file:
       - .env
     networks:
-      - app-network  # Internal network only
+      - app-network  
 
   auth_db:
     image: postgres:17.4-alpine3.21
@@ -64,14 +64,14 @@ services:
 
   websocket:
     build:
-      context: ./services/websocket  # Ruta del microservicio de WebSocket
+      context: ./services/websocket  
     container_name: websocket
     volumes:
       - ./services/websocket:/app  
     ports:
-      - "8012:8002"  # Exponer el puerto para WebSocket
+      - "8012:8002"  
     environment:
-      - REDIS_HOST=redis  # Usaremos Redis para gestionar las conexiones de WebSocket
+      - REDIS_HOST=redis  
     depends_on:
       - redis
     networks:
