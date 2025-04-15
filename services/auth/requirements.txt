@@ -5,3 +5,4 @@ qrcode
 django_otp
 pillow
 psycopg2>=2.9.10
+gunicorn
