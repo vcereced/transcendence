@@ -77,6 +77,25 @@ export async function initGame() {
 
     // --- FUNCTIONS ---
 
+    //PEVENT SCROLL DOWN AND UP OF THE WINDOW
+    window.eventManager.addEventListener(document, 'keydown', (event) => {
+        const keysToPrevent = ['ArrowUp', 'ArrowDown', 'w', 's'];
+        if (keysToPrevent.includes(event.key)) {
+            event.preventDefault(); // evita el scroll
+        }
+    
+        if (event.key === 'w') {
+            keys.w = true;
+        } else if (event.key === 's') {
+            keys.s = true;
+        }
+        if (event.key === 'ArrowUp') {
+            keys.arrowUp = true;
+        } else if (event.key === 'ArrowDown') {
+            keys.arrowDown = true;
+        }
+    });
+
     window.drawEverything = function drawEverything() {
         // Clear the canvas
         context.fillStyle = 'black';

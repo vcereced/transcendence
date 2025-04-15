@@ -16,4 +16,5 @@ python manage.py migrate
 
 
 echo "Starting drf server..."
-exec python manage.py runserver 0.0.0.0:8004
+# exec python manage.py runserver 0.0.0.0:8004 COMMENTED BY GARYDD1
+exec gunicorn game.wsgi:application --bind 0.0.0:8004 --timeout 60

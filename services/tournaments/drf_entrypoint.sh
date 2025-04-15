@@ -16,4 +16,4 @@ python manage.py migrate
 
 
 echo "Starting drf server..."
-exec python manage.py runserver 0.0.0.0:8003
+exec gunicorn tournaments_project.wsgi:application --bind 0.0.0.0:8003
