@@ -93,12 +93,6 @@ export async function initRockPaperScissors() {
 
     rpsSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
-<<<<<<< Updated upstream
-
-
-=======
-        console.log("%cMensaje del WebSocket:", "color:red",  data);
->>>>>>> Stashed changes
         if (data.type === 'game_state_update') {
             timerValue.textContent = data.game_state.time_left;
             gameFinished = data.game_state.is_finished;
