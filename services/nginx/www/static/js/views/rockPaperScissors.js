@@ -94,6 +94,7 @@ export async function initRockPaperScissors() {
     rpsSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
 
+
         if (data.type === 'game_state_update') {
             timerValue.textContent = data.game_state.time_left;
             gameFinished = data.game_state.is_finished;
@@ -123,6 +124,10 @@ export async function initRockPaperScissors() {
             rightPlayerUsername.textContent = data.right_player_username;
             freezeChoice(data.left_player_choice, 'left');
             freezeChoice(data.right_player_choice, 'right');
+        } else if (data.type === 'error') {
+            setTimeout(() => {
+                rpsSocket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
+            }, 1000);
         }
 
     };
@@ -131,13 +136,7 @@ export async function initRockPaperScissors() {
         console.log("Desconectado del WebSocket.");
     };
 
-    rpsSocket.onerror = function (event) {
-        // window.location.hash = "#login"
-        // deleteCookie("accessToken");
-        // deleteCookie("refreshToken");
-        // // Refresh the page
-        // window.location.reload();
-    }
+    rpsSocket.onerror = function (event) {}
 
 
     window.eventManager.addEventListener(title, 'mouseenter', () => {

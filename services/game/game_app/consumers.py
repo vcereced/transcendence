@@ -356,7 +356,7 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
         )
 
     async def send_error_and_close(self, error_message):
-        await self.send(text_data=json.dumps({"error": error_message}))
+        await self.send(text_data=json.dumps({"type": "error", "message": error_message}))
         await self.close()
 
     async def load_game_state(self, redis_client: redis.Redis):
