@@ -35,10 +35,13 @@ class RedisManager:
     async def add_user_to_tournament(self, tournament_key, username, user_id):
         """Añade un usuario a un torneo en Redis."""
         await self.redis.sadd(f"{tournament_key}_users", f"{username}: {user_id}")
-
-    async def remove_user_from_tournament(self, tournament_key, username):
+        users = await self.redis.smembers(f"{tournament_key}_users")
+        
+    async def remove_user_from_tournament(self, tournament_key, username, user_id):
         """Elimina un usuario de un torneo en Redis."""
-        await self.redis.srem(f"{tournament_key}_users", username)
+        await self.redis.srem(f"{tournament_key}_users", f"{username}: {user_id}")
+        users = await self.redis.smembers(f"{tournament_key}_users")
+        
 
     async def get_tournament_users(self, tournament_key):
         """Obtiene la lista de usuarios en un torneo."""

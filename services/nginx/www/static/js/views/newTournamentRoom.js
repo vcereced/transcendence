@@ -447,6 +447,7 @@ function updateChampion(winner) {
         }
 
     }
+    //Here we can save the tournament tree in the blockchain
 }
 
 /**

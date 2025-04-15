@@ -285,7 +285,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         """Maneja la desconexión de un usuario."""
         print(f"User {self.username} disconnected")
-        await self.redis_manager.remove_user_from_tournament(self.room_group_name, self.username)
+        await self.redis_manager.remove_user_from_tournament(self.room_group_name, self.username, self.user_id)
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.publish_local_update()
 
