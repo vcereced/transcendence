@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 async def discover_games():
+    running_games = set()
     redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
     while True:
         try:
@@ -36,10 +37,12 @@ async def discover_games():
                 0.1
             )  # Small delay to allow the game state to be created in redis
             if discovered_rps_id:
-                asyncio.create_task(play_rock_paper_scissors(int(discovered_rps_id)))
+                task = asyncio.create_task(play_rock_paper_scissors(int(discovered_rps_id)))
+                running_games.add(task)
                 print(f"Rock Paper Scissors discovered: {discovered_rps_id}")
             if discovered_game_id:
-                asyncio.create_task(play_game(int(discovered_game_id)))
+                task = asyncio.create_task(play_game(int(discovered_game_id)))
+                running_games.add(task)
                 print(f"Game discovered: {discovered_game_id}")
         except Exception as e:
             logger.error(f"Error in discover_games: {e}", exc_info=True)
