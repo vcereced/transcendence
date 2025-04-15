@@ -238,6 +238,9 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                         f"game:{self.game.id}:left_paddle_y",
                         json.dumps(self.game_state.left.paddle_y),
                     )
+                    if len(self.left_paddle_controller) == 2:
+                        self.last_paddle_update = time.time()
+                        return
 
             for controller in self.right_paddle_controller:
                 if (controller == "letters" and key in ["w", "s"]) or (
@@ -257,6 +260,9 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                         f"game:{self.game.id}:right_paddle_y",
                         json.dumps(self.game_state.right.paddle_y),
                     )
+                    if len(self.right_paddle_controller) == 2:
+                        self.last_paddle_update = time.time()
+                        return
 
         self.last_paddle_update = time.time()
 
