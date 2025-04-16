@@ -144,7 +144,6 @@ export async function updatePicture(email, src) {
             return;
         } else {
             window.showPopup(data.error);
-            alert(data.error || "Error to change the picture profile.");
         }
     } catch (error) {
         window.showPopup("Error to change the picture profile.");
@@ -173,7 +172,6 @@ export async function uploadImage(formData) {
             return;
         } else {
             window.showPopup(data.error);
-            alert(data.error);
         }
     } catch (error) {
         window.showPopup(error);

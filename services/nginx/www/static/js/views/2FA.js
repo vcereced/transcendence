@@ -41,6 +41,9 @@ export async function resendOtp() {
 export async function verifyOtpRegister(code) {
     
     let url = null;
+
+    
+
     try {
        if (sessionStorage.getItem("action") === "register"){
             url = "verify_email_otp_register";
