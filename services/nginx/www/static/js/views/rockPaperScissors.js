@@ -123,6 +123,7 @@ export async function initRockPaperScissors() {
             freezeChoice(data.left_player_choice, 'left');
             freezeChoice(data.right_player_choice, 'right');
         } else if (data.type === 'error') {
+            rpsSocket.close();
             setTimeout(() => {
                 rpsSocket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
             }, 1000);
