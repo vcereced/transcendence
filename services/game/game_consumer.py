@@ -273,7 +273,7 @@ async def load_game_state(redis_client: redis.Redis, game_id):
         else:
             raise Exception(f"Invalid game state: {game_state_serializer.errors}")
     else:
-        raise Exception("Game state not found")
+        return None
 
 
 async def save_game_state(redis_client: redis.Redis, game_id, game_state: GameState):
@@ -550,5 +550,29 @@ def save_rps_ending(rps_record: RockPaperScissorsGame):
     rps_record.save()
 
 
+
+def end_unfinished_games(redis_client: redis.Redis):
+    unfinished_pong_games = Game.objects.filter(is_finished=False)
+    unfinished_rps_games = RockPaperScissorsGame.objects.filter(is_finished=False)
+    for pong_game in unfinished_pong_games:
+        pong_game_state = load_game_state(redis_client, pong_game.id)
+        if pong_game_state is None:
+            pong_game_state = GameState.from_dict(
+                {
+                    "ball": {"x": 0, "y": 0, "dx": 0, "dy": 0},
+                    "left": {"paddle_y": 0, "score": 0},
+                    "right": {"paddle_y": 0, "score": 0},
+                    "winner_username": "",
+                    "is_finished": False,
+                    "start_countdown": s.START_COUNTDOWN,
+                    "next_side_to_collide": "",
+                }
+            )
+        finish_pong_game(redis_client, pong_game, pong_game_state)
+    for rps_game in unfinished_rps_games:
+        finish_rps_game(redis_client, rps_game, "")
+        
+
 if __name__ == "__main__":
+    end_unfinished_games()   
     asyncio.run(discover_games())
