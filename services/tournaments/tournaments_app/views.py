@@ -18,22 +18,11 @@ redis_client = redis.Redis(
     decode_responses= True
 )
 
-# API endpoint to get the name of a tournament by its ID the commented code is for the whole tournament
-
-# @api_view(['GET']) 
-# def get_tournament_name(request, tournament_id):
-#     try:
-#         tournament = Tournament.objects.get(id=tournament_id)
-#         
-#         serializer = TournamentSerializer(tournament)
-#         return Response(serializer.data, status=200)
-#     except Tournament.DoesNotExist:
-#         return JsonResponse({"error": "Tournament not found"}, status=404)
 def get_tournament_name(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     return JsonResponse({"name": tournament.name, "is_active": tournament.is_active}, status=200)
 
-#ENDPOINT TO GET TOURNAMENTS PLAYED AND WON BY A USER BY ID
+
 class UserTournamentStatsAPIView(APIView):
     def get(self, request, user_id):
         if user_id == 0:
@@ -65,14 +54,11 @@ class UserTournamentStatsAPIView(APIView):
 
 @api_view(['GET'])
 def list_tournaments(request):
-    # return Response(list(tournaments))  USE THIS IF YOU WANT TO GET ONLY THE NAMES OF CURRENT TOURNAMENTS
+    
     tournaments = Tournament.objects.filter(is_active=True) #BE AWARE OF ADDING THE STATUS FIELD TO THE TOURNAMENT MODEL!
-    # tournaments = Tournament.objects.all()
     serializer = TournamentSerializer(tournaments, many=True)
     return Response(serializer.data)
 
-
-################################################################################
 
 
 @api_view(['POST'])
@@ -95,19 +81,10 @@ def create_tournament(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Prepare this for allowing users to join a tournament, be aware
-# of the edge cases like the tournament not existing or the user already being in the tournament.
-# or the tournament being full. TAKE CARE OF THIS !!!
 @api_view(['POST'])
 def join_tournament(request, tournament_id):
     try:
         tournament = Tournament.objects.get(id=tournament_id)
-        # redis_client.incr(f'tournament_{tournament.id}_player_count')
-        # redis_client.publish('tournaments_channel', json.dumps({
-    	# "tournamentId": tournament.id,
-    	# "user_count": redis_client.get(f'tournament_{tournament.id}_player_count')}))
-        #This is for testing sending tasks to the game service
-        # send_create_game_task(players)
         return Response({"message": f"Te has unido al torneo '{tournament.name}'."}, status=status.HTTP_200_OK)
     except Tournament.DoesNotExist:
         return Response({"error": "Torneo no encontrado."}, status=status.HTTP_404_NOT_FOUND)
@@ -117,6 +94,6 @@ def list_tournament_player_counts(request):
     keys = redis_client.scan_iter(match='tournament_*_player_count')
     tournament_counts = {}
     for key in keys:
-        tournament_id = key.split('_')[1]  # Extraer el ID del torneo de la clave
+        tournament_id = key.split('_')[1] 
         tournament_counts[tournament_id] = redis_client.get(key)
     return Response(tournament_counts, status=status.HTTP_200_OK)

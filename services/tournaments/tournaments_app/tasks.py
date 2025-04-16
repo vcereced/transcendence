@@ -6,6 +6,7 @@ from django.conf import settings
 from .models import Tournament, Participant
 import redis
 import json
+import random
 
 redis_client = redis.Redis(
     host=settings.REDIS_HOST,
@@ -27,16 +28,16 @@ def acquire_lock(lock_key, timeout=5):
     Si no puede, espera hasta un máximo de 'timeout' segundos.
     Si obtiene el lock, devuelve un ID único del lock.
     """
-    lock_id = str(uuid.uuid4())  # Generar un ID único para el lock
-    end = time.time() + timeout  # Tiempo de expiración de la espera
+    lock_id = str(uuid.uuid4())  
+    end = time.time() + timeout  
     print(f"Intentando obtener lock {lock_key} con ID {lock_id}")
     while time.time() < end:
-        # Intentamos obtener el lock (NX significa "solo si no existe")
+        
         if redis_client.set(lock_key, lock_id, nx=True, ex=timeout):
             print(f"Lock {lock_key} obtenido con ID {lock_id}")
-            return lock_id  # Si lo conseguimos, devolvemos el lock ID
-        time.sleep(0.1)  # Esperamos un poco antes de volver a intentarlo
-    return None  # Si no conseguimos el lock en el tiempo especificado, retornamos None
+            return lock_id  
+        time.sleep(0.1)  
+    return None 
 
 def release_lock(lock_key, lock_id):
     """
@@ -49,10 +50,9 @@ def release_lock(lock_key, lock_id):
         return 0
     end
     """
-    redis_client.eval(script, 1, lock_key, lock_id)  # Ejecutamos el script Lua para liberar el lock
+    redis_client.eval(script, 1, lock_key, lock_id)  
     print(f"Lock {lock_key} liberado con ID {lock_id}")
 
-# This is not a Celery task, but a helper function to send a task to the 'game' service
 def send_create_game_task(players):
     message = {
         "left_player_id": players["left_player_id"],
@@ -84,7 +84,6 @@ def save_participants_to_database(tournament_id, players):
         print(f"Guardando participante: {player['username']}")
         participant, created = Participant.objects.get_or_create(
             user_id=player["user_id"],
-            # defaults={"username": player["username"]}
             username=player["username"]
         )
         if created == False:
@@ -118,7 +117,7 @@ def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
 
 def send_new_round_notification(tournament_id, round_id, tournament_tree):
     """
-    Envía una notificación a los jugadores sobre el inicio de una nueva ronda.
+    Sends a notification to the tournament channel(REDIS) when a new round starts.
     """
     channel = f"tournament_{tournament_id}"
     message = {
@@ -128,35 +127,32 @@ def send_new_round_notification(tournament_id, round_id, tournament_tree):
         "tournament_id": tournament_id,
     }
     redis_client.publish(channel, json.dumps(message))
-    #print in blue
-    print(f"\033[34m" + f"Notificación de nueva ronda enviada: {message}" + "\033[0m")
-
-
 
 def start_next_round(tournament_id, round_id, winners):
-    
-    next_round_id = str(int(round_id) + 1)  # Pasamos a la siguiente ronda
+    """
+    Starts the next round of the tournament.
+    This function is called when all matches in the current round are completed.
+    """    
+    next_round_id = str(int(round_id) + 1) 
     tournament_tree_key = f"tournament_{tournament_id}_tree"
-    print(f"Iniciando ronda {next_round_id} con ganadores: {winners}")
 
     if len(winners) == 1:
         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
         save_tournament_to_database(tournament_id, get_tournament_history(tournament_id), winner=winners[0])
         return  
 
-    # Obtener el último tree_id utilizado
+    
     last_round_key = f"round_{round_id}"
     last_round_matches = redis_client.hget(tournament_tree_key, last_round_key)
     last_round_matches = json.loads(last_round_matches) if last_round_matches else []
-    #print in yellow
-    print(f"\033[33m" + f"Últimos partidos de la ronda {round_id}: {last_round_matches}" + "\033[0m")
+    
     if last_round_matches:
         last_tree_id = max(int(match["tree_id"]) for match in last_round_matches)
     else:
-        last_tree_id = 0  # Si no hay partidos previos, empezamos desde 1
+        last_tree_id = 0 
 
     new_round_matches = []
-    next_tree_id = last_tree_id + 1  # Comenzar desde el siguiente disponible
+    next_tree_id = last_tree_id + 1 
 
     for i in range(0, len(winners) - 1, 2):
         match = {
@@ -170,7 +166,7 @@ def start_next_round(tournament_id, round_id, winners):
             "status": "pending"
         }
         new_round_matches.append(match)
-        next_tree_id += 1  # Incrementamos para el siguiente partido
+        next_tree_id += 1
 
     redis_client.hset(tournament_tree_key, f"round_{next_round_id}", json.dumps(new_round_matches))
     print(f"Iniciando ronda {next_round_id} con emparejamientos: {new_round_matches}")
@@ -184,30 +180,28 @@ def start_next_round(tournament_id, round_id, winners):
             "tournament_id": tournament_id,
             "tree_id": match["tree_id"]
         })
-    # Enviar notificación a los jugadores sobre la nueva ronda
+    
     send_new_round_notification(tournament_id, next_round_id, new_round_matches)
 
 
-#CHECKPOINT!!!!!
 def update_tournament_tree(tournament_id, tree_id, winner):
     """
-    Guarda el resultado de un partido en Redis y avanza a la siguiente ronda si es necesario.
+    Stores the tournament tree in Redis and updates the tournament status.
+    This function is called when a game ends.
+    It will start the next round if all matches in the current round are completed.
     """
-    lock_key = f"lock:tournament:{tournament_id}"  # Clave para el lock
-    lock_id = acquire_lock(lock_key)  # Intentamos obtener el lock
+    lock_key = f"lock:tournament:{tournament_id}" 
+    lock_id = acquire_lock(lock_key)  
 
     if not lock_id:
         print("No se pudo obtener el lock, omitiendo actualización.")
-        return  # Si no conseguimos el lock, terminamos la función sin hacer nada
+        return
 
     try:
-        # Ahora que tenemos el lock, podemos hacer las modificaciones en el árbol del torneo
-        print("\033[31m" + f"Actualizando árbol del torneo {tournament_id} para el partido {tree_id}" + "\033[0m")
+        
         tournament_tree_key = f"tournament_{tournament_id}_tree"
-        round_number = "1" if str(tree_id) in ["1", "2", "3", "4"] else "2" if str(tree_id) in ["5", "6"] else "3"
-        print(f"Round number: {round_number}")
-        round_key = f"round_{round_number}"
-        print(f"Round key: {round_key}")
+        round_number = "1" if str(tree_id) in ["1", "2", "3", "4"] else "2" if str(tree_id) in ["5", "6"] else "3"  
+        round_key = f"round_{round_number}"    
         current_round = redis_client.hget(tournament_tree_key, round_key)
         current_round = json.loads(current_round) if current_round else []
 
@@ -225,24 +219,22 @@ def update_tournament_tree(tournament_id, tree_id, winner):
 
         redis_client.hset(tournament_tree_key, round_key, json.dumps(current_round))
         print(f"🔄 Árbol actualizado en {round_key}: {current_round}")
-        # Si todos los partidos de la ronda han terminado, iniciar la siguiente ronda
         completed_games = [match for match in current_round if match["status"] == "completed"]
         print(f"Partidos completados: {len(completed_games)} de {len(current_round)}")
         if len(completed_games) == len(current_round):
             start_next_round(tournament_id, round_number, [match["winner"] for match in completed_games])
     finally:
-        release_lock(lock_key, lock_id)  # Liberamos el lock después de terminar la operación
+        release_lock(lock_key, lock_id) 
 
 
-#THIS IS JUST IN CASE WE NEED IT. IT RETURNS THE TOURNAMENT HISTORY
 def get_tournament_history(tournament_id):
     """
-    Recupera toda la información del torneo desde Redis.
+    Retrieves the tournament history from Redis.
+    This function is called when the tournament ends.
     """
     tournament_tree_key = f"tournament_{tournament_id}_tree"
     tournament_data = {}
 
-    # Obtener todas las rondas almacenadas en Redis
     for round_key in redis_client.hkeys(tournament_tree_key):
         round_matches = redis_client.hget(tournament_tree_key, round_key)
         tournament_data[round_key] = json.loads(round_matches) if round_matches else []
@@ -258,10 +250,11 @@ def get_tournament_history(tournament_id):
 def start_matchmaking(message):
     """
     Pairs players for the tournament and sends tasks to create games.
+    If there are less than 8 players, it creates AI players to fill the list.
+    If there are more than 8 players, it truncates the list to 8.
     """
     print(f"Comenzando emparejamiento de jugadores para el torneo {message['tournament_id']}.")
 
-    # Obtener el ID del torneo
     tournament_id = message['tournament_id']
 
     
@@ -272,45 +265,39 @@ def start_matchmaking(message):
     tournament.is_active = False
     tournament.save()
 
-    # Obtener la lista de usuarios del torneo desde Redis
     user_list = redis_client.smembers(f"tournament_{tournament_id}_users")
     print("User list:")
     print(user_list)
 
-    # Procesar la lista para extraer username y user_id
     players = []
     for user_entry in user_list:
         try:
             username, user_id = user_entry.split(": ")
             players.append({"username": username, "user_id": int(user_id)})
         except ValueError as e:
-            print(f"Error al procesar la entrada de usuario: {user_entry}. Detalles: {e}")
+            print(f"Error at appending user: {user_entry}. Details: {e}")
 
-    # Completar la lista si hay menos de 8 jugadores
     if len(players) < 8:
-        print("Jugadores insuficientes. Agregando jugadores ficticios para completar.")
-        current_id = 0  # ID inicial para los usuarios ficticios
-        for i in range(len(players) + 1, 9):  # Rellenar hasta tener 8 jugadores
+        print("Creating AI players to fill the list.")
+        current_id = 0
+        for i in range(len(players) + 1, 9):
             players.append({
                 "username": f"IA{i}",
                 "user_id": current_id
             })
-            # current_id += 1
-        print(f"Lista completada con jugadores ficticios: {players}")
 
-    # Si hay más de 8 jugadores, tomar solo los primeros 8 WARNING !! 
     if len(players) > 8:
         players = players[:8]
-        print(f"Lista truncada a los primeros 8 jugadores: {players}")
-    # Guardar los participantes en la base de datos
     
     try :
         save_participants_to_database(tournament_id, players)
     except Exception as e:
-        print(f"Error al guardar los participantes en la base de datos: {e}")
+        print(f"Error at saving participants to database: {e}")
         
 
     # THIS IS THE MATCHMAKING ALGORITHM IT SHOULD BE REPLACED BY A BETTER ONE AND IN ANOTHER FUNCTION
+    
+    random.shuffle(players) 
     pairs = []
     for i in range(0, len(players) - 1, 2):  # Tomar pares consecutivos
         left_player = players[i]
@@ -326,8 +313,6 @@ def start_matchmaking(message):
         })
 
     print(f"Emparejamiento completado. Pairs: {pairs}")
-    # Generar el árbol del torneo en Redis
-    # Formato: {round_1: [{tree_id: 1, left_player: "user1", right_player: "user2", winner: None}, ...]}
     tournament_tree_key = f"tournament_{tournament_id}_tree"
 
     first_round = [
