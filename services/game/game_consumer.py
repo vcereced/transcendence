@@ -9,6 +9,7 @@ import math
 import time
 from celery import current_app
 from django.utils.timezone import now
+import psycopg2
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "game.settings")
 django.setup()
@@ -44,7 +45,7 @@ async def discover_games():
                 running_games.add(task)
                 print(f"Game discovered: {discovered_game_id}")
         finally:
-            redis_client.aclose(close_connection_pool=True)
+            await redis_client.aclose(close_connection_pool=True)
 
 async def finish_pong_game(redis_client: redis.Redis, game: Game, game_state: GameState):
     # If there is a tie, add a point to a random player
@@ -556,8 +557,13 @@ def save_rps_ending(rps_record: RockPaperScissorsGame):
 
 @sync_to_async
 def get_unfinished_games():
-    unfinished_pong_games = list(Game.objects.filter(is_finished=False))
-    unfinished_rps_games = list(RockPaperScissorsGame.objects.filter(is_finished=False))
+    try:
+        unfinished_pong_games = list(Game.objects.filter(is_finished=False))
+        unfinished_rps_games = list(RockPaperScissorsGame.objects.filter(is_finished=False))
+    except psycopg2.OperationalError as e:
+        logger.error(f"Database connection error: {e}")
+        time.sleep(3)
+        return get_unfinished_games()
     return unfinished_pong_games, unfinished_rps_games
 
 
