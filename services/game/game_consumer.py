@@ -37,7 +37,7 @@ async def discover_games():
                 0.1
             )  # Small delay to allow the game state to be created in redis
             if discovered_rps_id:
-                task = asyncio.create_task(play_rock_paper_scissors(int(discovered_rps_id)))
+                task = asyncio.create_task(play_rps_game(int(discovered_rps_id)))
                 running_games.add(task)
                 print(f"Rock Paper Scissors discovered: {discovered_rps_id}")
             if discovered_game_id:
@@ -411,11 +411,56 @@ def determine_initial_serve(game: Game, game_state: GameState):
     return game_state
 
 
-async def play_rock_paper_scissors(rps_id: int):
+async def finish_rps_game(redis_client: redis.Redis, rps_record: RockPaperScissorsGame, winner_username: str):
+    if winner_username != "":
+        left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
+        right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
+        rps_record.winner_username = winner_username
+        rps_record.winner_id = (
+            rps_record.left_player_id
+            if winner_username == rps_record.left_player_username
+            else rps_record.right_player_id
+        )
+    else:
+        # Randomize the winner in case of a tie
+        rps_record.winner_username = random.choice(
+            [rps_record.left_player_username, rps_record.right_player_username]
+        )
+        rps_record.winner_id = (
+            rps_record.left_player_id
+            if rps_record.winner_username == rps_record.left_player_username
+            else rps_record.right_player_id
+        )
+        left_choice_data = "rock" if rps_record.winner_id == rps_record.left_player_id else "scissors"
+        right_choice_data = "rock" if rps_record.winner_id == rps_record.right_player_id else "scissors"
+        
+    rps_record.left_player_choice = str(left_choice_data)
+    rps_record.right_player_choice = str(right_choice_data)
+    rps_record.is_finished = True
+    rps_record.finished_at = now()
+    await save_rps_ending(rps_record)
+    game_data = {
+        "left_player_id": rps_record.left_player_id,
+        "left_player_username": rps_record.left_player_username,
+        "right_player_id": rps_record.right_player_id,
+        "right_player_username": rps_record.right_player_username,
+        "tournament_id": rps_record.tournament_id,
+        "tree_index": rps_record.tree_index,
+        "rock_paper_scissors_id": rps_record.id,
+        "is_local_game": rps_record.is_local_game,
+    }
+    current_app.send_task(
+        "launch_game",
+        args=[game_data],
+        queue="game_tasks",
+    )
+
+async def play_rps_game(rps_id: int):
     try:
         redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
         rps_record = await query_db_for_rps(rps_id)
 
+        winner_username = ""
         winner_username = await play_rps_round(rps_record, redis_client)
 
         while winner_username == "":
@@ -426,36 +471,10 @@ async def play_rock_paper_scissors(rps_id: int):
             await redis_client.set(f"rps:{rps_record.id}:is_finished", "0")
             winner_username = await play_rps_round(rps_record, redis_client)
 
-        rps_record.winner_username = winner_username
-        rps_record.winner_id = (
-            rps_record.left_player_id
-            if winner_username == rps_record.left_player_username
-            else rps_record.right_player_id
-        )
-        left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
-        right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
-        rps_record.left_player_choice = str(left_choice_data)
-        rps_record.right_player_choice = str(right_choice_data)
-        rps_record.is_finished = True
-        rps_record.finished_at = now()
-        await save_rps_ending(rps_record)
-        game_data = {
-            "left_player_id": rps_record.left_player_id,
-            "left_player_username": rps_record.left_player_username,
-            "right_player_id": rps_record.right_player_id,
-            "right_player_username": rps_record.right_player_username,
-            "tournament_id": rps_record.tournament_id,
-            "tree_index": rps_record.tree_index,
-            "rock_paper_scissors_id": rps_record.id,
-            "is_local_game": rps_record.is_local_game,
-        }
-        current_app.send_task(
-            "launch_game",
-            args=[game_data],
-            queue="game_tasks",
-        )
     except Exception as e:
-        logger.error(f"Error in play_rock_paper_scissors: {e}", exc_info=True)
+        logger.error(f"Error in play_rps_game: {e}", exc_info=True)
+    finally:
+        await finish_rps_game(redis_client, rps_record, winner_username)
 
 
 @sync_to_async
