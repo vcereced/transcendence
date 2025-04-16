@@ -41,14 +41,53 @@ async def discover_games():
                 running_games.add(task)
                 print(f"Rock Paper Scissors discovered: {discovered_rps_id}")
             if discovered_game_id:
-                task = asyncio.create_task(play_game(int(discovered_game_id)))
+                task = asyncio.create_task(play_pong_game(int(discovered_game_id)))
                 running_games.add(task)
                 print(f"Game discovered: {discovered_game_id}")
         except Exception as e:
             logger.error(f"Error in discover_games: {e}", exc_info=True)
 
+async def finish_pong_game(redis_client: redis.Redis, game: Game, game_state: GameState):
+    # If there is a tie, add a point to a random player
+    if game_state.left.score == game_state.right.score:
+        if random.choice([True, False]):
+            game_state.left.score += 1
+        else:
+            game_state.right.score += 1
 
-async def play_game(game_id: int):
+    game.is_finished = True
+    game.finished_at = now()
+
+    if game_state.left.score > game_state.right.score:
+        game.winner_id = game.left_player_id
+        game.winner_username = game.left_player_username
+    else:
+        game.winner_id = game.right_player_id
+        game.winner_username = game.right_player_username
+
+    game.left_player_score = game_state.left.score
+    game.right_player_score = game_state.right.score
+
+    await redis_client.set(f"game:{game.id}:is_finished", "1")
+    await redis_client.set(f"game:{game.id}:winner_username", game.winner_username)
+    await save_game_ending(game)
+
+    if game.tournament_id > 0:
+        end_game_data = {
+            "winner": game.winner_username,
+            "winner_id": game.winner_id,
+            "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
+            "loser_id": (game.left_player_id if game.winner_username == game.right_player_username else game.right_player_id),
+            "tournament_id": game.tournament_id,
+            "tree_index": game.tree_index,
+        }
+        current_app.send_task(
+            "game_end",
+            args=[end_game_data],
+            queue="matchmaking_tasks",
+        )
+
+async def play_pong_game(game_id: int):
     try:
         redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
         game = await query_db_for_game(game_id)
@@ -83,36 +122,10 @@ async def play_game(game_id: int):
                 await save_game_state(redis_client, game_id, game_state)
                 await asyncio.sleep(1 / s.FPS)
 
-            game.is_finished = True
-            game.finished_at = now()
-            if game_state.left.score == s.WINNER_SCORE:
-                game.winner_id = game.left_player_id
-                game.winner_username = game.left_player_username
-            else:
-                game.winner_id = game.right_player_id
-                game.winner_username = game.right_player_username
-            game.left_player_score = game_state.left.score
-            game.right_player_score = game_state.right.score
-            await redis_client.set(f"game:{game_id}:is_finished", "1")
-            await redis_client.set(f"game:{game_id}:winner_username", game.winner_username)
-            await save_game_ending(game)
-            
-            if game.tournament_id > 0:
-                end_game_data = {
-                    "winner": game.winner_username,
-                    "winner_id": game.winner_id,
-                    "loser": (game.left_player_username if game.winner_username == game.right_player_username else game.right_player_username),
-                    "loser_id": (game.left_player_id if game.winner_username == game.right_player_username else game.right_player_id),
-                    "tournament_id": game.tournament_id,
-                    "tree_index": game.tree_index,
-                }
-                current_app.send_task(
-                    "game_end",
-                    args=[end_game_data],
-                    queue="matchmaking_tasks",
-                )
     except Exception as e:
-        logger.error(f"Error in play_game: {e}", exc_info=True)
+        logger.error(f"Error in play_pong_game: {e}", exc_info=True)
+    finally:
+        await finish_pong_game(redis_client, game, game_state)
 
 
 @sync_to_async
