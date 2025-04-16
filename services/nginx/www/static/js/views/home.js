@@ -503,7 +503,7 @@ export async function initHome() {
     });
 
     document.getElementById("save-btn-name").addEventListener("click", () => {
-        const newUsername = document.getElementById("username").value;
+        const newUsername = document.getElementById("new-username").value;
         const email = sessionStorage.getItem("email");
         updateUsername(email, newUsername);
         closeSettingsPopup();

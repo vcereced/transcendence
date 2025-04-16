@@ -63,11 +63,8 @@ export function initNewLogin() {
     const registerButton = document.getElementById('register-btn');
     const loginButton = document.getElementById('login-btn');
     const registerResponseMessage = document.getElementById("register-response-message");
-    //const loginResponseMessage = document.getElementById("login-response-message");
     const registerDataSection = document.getElementById("register-data-container");
-    //const verifyOtpRegisterButton = document.getElementById("reg-verify-otp");
 
-    //const qrSection = document.getElementById("qr-section");
     // --- FUNCTIONS ---
 
     window.toggleForm = function toggleForm() {
@@ -123,7 +120,7 @@ export function initNewLogin() {
                 sessionStorage.setItem("action", "register");
                 sessionStorage.setItem("username", username);
                 sessionStorage.setItem("email", email);
-                //sessionStorage.setItem("password", password);
+                window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
             } else{
                 window.showPopup(data.email || data.username || data.error );}
@@ -139,7 +136,6 @@ export function initNewLogin() {
         const url = "/api/usr/login"
         const email = document.getElementById("login-email").value;
         const password = document.getElementById("login-password").value;
-        const loginResponseMessage = document.getElementById("login-response-message");
         
         if (!email || !password) {
             window.showPopup("Todos los campos son obligatorios.");
@@ -160,7 +156,7 @@ export function initNewLogin() {
                 sessionStorage.setItem("action", "login");
                 sessionStorage.setItem("email", email);
                 sessionStorage.setItem("username", data.username);
-                //sessionStorage.setItem("password", password);
+                window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
             } else {
                 window.showPopup(data.error || data.username);

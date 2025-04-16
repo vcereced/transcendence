@@ -345,11 +345,12 @@ def upload_profile_pic_view(request):
 
 	try:
 		user = CustomUser.objects.get(username=username)
-		removeOldImagen(user)
 
 		file_path = f'{image.name}'
 		if default_storage.exists(file_path):
-			return Response({"error": "La imagen ya existe."}, status=400)
+			return Response({"error": "La imagen ya existe \n cambiale el nombre."}, status=400)
+		
+		removeOldImagen(user)
 
 		file_path = default_storage.save(f'{image.name}', image)
 		user.profile_picture = "/media/" + file_path
