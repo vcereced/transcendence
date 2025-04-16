@@ -565,7 +565,7 @@ async def end_unfinished_games():
     redis_client = redis.Redis(connection_pool=redis_pool, auto_close_connection_pool=False)
     unfinished_pong_games, unfinished_rps_games = await get_unfinished_games()
     for pong_game in unfinished_pong_games:
-        pong_game_state = load_game_state(redis_client, pong_game.id)
+        pong_game_state = await load_game_state(redis_client, pong_game.id)
         if pong_game_state is None:
             pong_game_state = GameState.from_dict(
                 {
