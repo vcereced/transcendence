@@ -120,9 +120,9 @@ async def play_pong_game(game_id: int):
                 game_state.ball.y += game_state.ball.dy
                 await save_game_state(redis_client, game_id, game_state)
                 await asyncio.sleep(1 / s.FPS)
+            await finish_pong_game(redis_client, game, game_state)
     except Exception as e:
         logger.error(f"Error in play_pong_game: {e}", exc_info=True)
-    finally:
         await finish_pong_game(redis_client, game, game_state)
 
 
