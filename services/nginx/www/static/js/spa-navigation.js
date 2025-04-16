@@ -1,14 +1,7 @@
 // static/js/spa-navigation.js
 
-// Maybe this is not necessary  because the code is already in the SPA? SOLVE LATER
 import { renderHome, initHome } from './views/home.js';
-// import { renderAbout, initAbout } from './views/about.js';
-// import { renderRegister, initRegister } from './views/register.js';
-// import { renderLogin, initLogin } from './views/login.js';
 import { renderGame, initGame } from './views/game.js';
-import { renderWebsocket, initWebsocket } from './views/websocket.js';
-import { renderTournament, initTournament } from './views/tournament.js';
-import { renderTournamentRoom, initTournamentRoom } from './views/tournamentRoom.js';
 import { renderVersusWait, initVersusWait } from './views/versusWait.js';
 import { renderNewTournamentRoom, initNewTournamentRoom } from './views/newTournamentRoom.js';
 import { renderTournamentsList, initTournamentsList } from './views/tournamentsList.js';
@@ -21,14 +14,9 @@ import EventListenerManager from './utils/eventListenerManager.js';
  * Container for possible routes of the SPA. Works as a pointer
  * of functions to render and initialize each section.
 */
-
 const routes = {
     "/index": { render: renderHome, init: initHome },
-    // "/register": { render: renderRegister, init: initRegister },
-    // "/login": { render: renderLogin, init: initLogin },
     "/game": { render: renderGame, init: initGame },
-    "/websocket": { render: renderWebsocket, init: initWebsocket },
-    "/tournament": { render: renderTournament, init: initTournament },
     "/tournament/room/:id": { render: renderNewTournamentRoom, init: initNewTournamentRoom },
     "/versus-wait": { render: renderVersusWait, init: initVersusWait },
     "/tournaments-list": { render: renderTournamentsList, init: initTournamentsList },
@@ -46,7 +34,6 @@ function parseRoute(path) {
     
     const routeKeys = Object.keys(routes);
     for (const key of routeKeys) {
-        // Buscar rutas con parámetros dinámicos, como ":id"
         const paramMatch = key.match(/:([^\/]+)/);
         if (paramMatch) {
             console.log("paramMatch", paramMatch);
@@ -61,7 +48,6 @@ function parseRoute(path) {
             }
         }
     }
-    // Si no es una ruta dinámica, devolver la ruta directamente
     return { route: routes[path], params: {} };
 }
 
@@ -70,9 +56,8 @@ async function router() {
     const { route, params } = parseRoute(path);
     console.log("Ruta:", route, "Parámetros:", params);
 
-
+    //Renders the HTML content of the route
     if (route) {
-        // Renderiza e inicializa la ruta, pasando los parámetros si existen
         document.getElementById("main-content").innerHTML = await route.render(params);
         window.eventManager.removeAllEventListeners();
         console.log("Event listeners removed");
@@ -82,6 +67,5 @@ async function router() {
     }
 }
 
-// Escucha cambios en el hash y carga el contenido adecuado
 window.addEventListener("hashchange", router);
 window.addEventListener("load", router);

@@ -29,187 +29,7 @@ export function initNewTournamentRoom(tournamentId) {
     }
 
     restoreTournamentTree();
-
-    // --- VARIABLES AND CONSTANTS ---
-
-    
-    const BALL_SIZE = 20;
-    let obstacles = [];
-    let ballX, ballY;
-    let velocityX = (Math.random() - 0.5) * 8;
-    let velocityY = (Math.random() - 0.5) * 8;
-    let mouseX = 0, mouseY = 0;
-
-
-    // --- DOM ELEMENTS ---
-
-    const ball = document.createElement('div');
-    const gameScreen = document.getElementById('gameScreen');
-    let screenRect = gameScreen.getBoundingClientRect();
-    
-    // --- FUNCTIONS ---
-
-    window.createObstacles = function createObstacles(num) {
-        const obstacleSize = 40;
-        const availableWidth = window.innerWidth;
-        const availableHeight = window.innerHeight;
-        const totalAvailableArea = availableWidth * availableHeight;
-        const totalObstacleArea = num * (obstacleSize * obstacleSize);
-
-        if (totalObstacleArea > totalAvailableArea * 0.5) {
-            console.warn("No hay suficiente espacio para generar los obstáculos.");
-            return;
-        }
-
-        for (let i = 0; i < num; i++) {
-            let x, y, overlapping;
-            let attempts = 0, maxAttempts = 1000;
-
-            do {
-                x = Math.random() * (availableWidth - obstacleSize);
-                y = Math.random() * (availableHeight - obstacleSize);
-                overlapping = obstacles.some(obs =>
-                    x < obs.x + obstacleSize && x + obstacleSize > obs.x &&
-                    y < obs.y + obstacleSize && y + obstacleSize > obs.y
-                );
-                attempts++;
-            } while (
-                (overlapping ||
-                    (x + obstacleSize > screenRect.left && x < screenRect.right &&
-                        y + obstacleSize > screenRect.top && y < screenRect.bottom)) &&
-                attempts < maxAttempts
-            );
-
-            if (attempts >= maxAttempts) {
-                console.warn("No se encontraron suficientes espacios libres.");
-                break;
-            }
-
-            const obstacle = document.createElement('div');
-            obstacle.classList.add('obstacle');
-            obstacle.style.left = `${x}px`;
-            obstacle.style.top = `${y}px`;
-            document.body.appendChild(obstacle);
-            obstacles.push({ x, y, width: obstacleSize, height: obstacleSize });
-        }
-    }
-
-    window.placeBall = function placeBall() {
-        do {
-            ballX = Math.random() * window.innerWidth;
-            ballY = Math.random() * window.innerHeight;
-        } while (
-            (ballX + BALL_SIZE > screenRect.left && ballX < screenRect.right &&
-                ballY + BALL_SIZE > screenRect.top && ballY < screenRect.bottom) ||
-            obstacles.some(obs => ballX + BALL_SIZE > obs.x && ballX < obs.x + obs.width &&
-                ballY + BALL_SIZE > obs.y && ballY < obs.y + obs.height)
-        );
-        return { ballX, ballY };
-    }
-
-    window.moveBall = function moveBall() {
-        ballX += velocityX;
-        ballY += velocityY;
-
-        if (ballX <= 0 || ballX >= window.innerWidth - BALL_SIZE) velocityX = -velocityX;
-        if (ballY <= 0 || ballY >= window.innerHeight - BALL_SIZE) velocityY = -velocityY;
-
-        let dx = ballX - mouseX;
-        let dy = ballY - mouseY;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < BALL_SIZE) {
-            let angle = Math.atan2(dy, dx);
-            velocityX = Math.cos(angle) * 8;
-            velocityY = Math.sin(angle) * 8;
-        }
-
-        if (
-            ballX + BALL_SIZE > screenRect.left && ballX < screenRect.right &&
-            ballY + BALL_SIZE > screenRect.top && ballY < screenRect.bottom
-        ) {
-            if (ballX < screenRect.left || ballX > screenRect.right - BALL_SIZE) velocityX = -velocityX;
-            if (ballY < screenRect.top || ballY > screenRect.bottom - BALL_SIZE) velocityY = -velocityY;
-        }
-
-        obstacles.forEach(obs => {
-            if (
-                ballX + BALL_SIZE > obs.x && ballX < obs.x + obs.width &&
-                ballY + BALL_SIZE > obs.y && ballY < obs.y + obs.height
-            ) {
-                let hitLeft = ballX + BALL_SIZE >= obs.x && ballX < obs.x;
-                let hitRight = ballX <= obs.x + obs.width && ballX + BALL_SIZE > obs.x + obs.width;
-                let hitTop = ballY + BALL_SIZE >= obs.y && ballY < obs.y;
-                let hitBottom = ballY <= obs.y + obs.height && ballY + BALL_SIZE > obs.y + obs.height;
-
-                if ((hitLeft || hitRight) && (hitTop || hitBottom)) {
-                    velocityX = -velocityX;
-                    velocityY = -velocityY;
-                } else if (hitLeft || hitRight) {
-                    velocityX = -velocityX;
-                } else if (hitTop || hitBottom) {
-                    velocityY = -velocityY;
-                }
-            }
-        });
-        ball.style.left = ballX + 'px';
-        ball.style.top = ballY + 'px';
-
-        if (ballX + BALL_SIZE / 2 > window.innerWidth || ballY + BALL_SIZE / 2 > window.innerHeight || ballX + BALL_SIZE / 2 < 0 || ballY + BALL_SIZE / 2 < 0) {
-            placeBall();
-            requestAnimationFrame(moveBall);
-        } else {
-            requestAnimationFrame(moveBall);
-        }
-    }
-
-    window.exitGame = function exitGame() {
-        // alert('Si sales perderás tu posición en la cola de espera. ¿Estás seguro de que quieres salir?');
-        window.location.hash = '#';
-    }
-
-    window.deleteObstacles = function deleteObstacles() {
-        document.querySelectorAll('.obstacle').forEach(el => el.remove());
-        obstacles = [];
-    }
-
-    window.recreateElements = function recreateElements() {
-        deleteObstacles();
-        screenRect = gameScreen.getBoundingClientRect();
-        createObstacles(Math.floor(Math.random() * 30) + 1);
-        placeBall();
-    }
-
-    window.copyText = function copyText() {
-        const text = document.getElementById("text-to-copy").innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            const message = document.getElementById("copied-message");
-            message.style.opacity = "1";
-            setTimeout(() => {
-                message.style.opacity = "0";
-            }, 1500);
-        }).catch(err => {
-            console.error("Error al copiar: ", err);
-        });
-    }
-
-    window.toggleFullscreen = function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-    }
-
     // --- EVENT LISTENERS ---
-
-    window.eventManager.addEventListener(document, 'mousemove', (event) => {
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-    });
-
-    window.eventManager.addEventListener(window, 'resize', recreateElements);
 
     const title = document.querySelector('.site-title');
     window.eventManager.addEventListener(title, 'mouseenter', () => {
@@ -222,16 +42,11 @@ export function initNewTournamentRoom(tournamentId) {
         title.style.transform = 'translateY(0)';
     });
 
+    window.exitGame = function exitGame() {
+        window.location.hash = '#';
+    }
+
     // --- INITIALIZATION ---
-
-    ball.classList.add('ball');
-    ball.style.width = `${BALL_SIZE}px`;
-    ball.style.height = `${BALL_SIZE}px`;
-    document.body.appendChild(ball);
-
-    createObstacles(Math.floor(Math.random() * 30) + 1);
-    placeBall();
-    moveBall();
 
     return () => window.eventManager.removeAllEventListeners();
 }
@@ -277,8 +92,6 @@ function startTournamentWebSocket(tournamentId) {
             }, 1500);
         }
         if (data.type === "game_end") {
-            // update after a small delay to see the changesk
-            // window.history.back();
             setTimeout(() => {
                 update_tournament_tree(data);
             }, 500);
@@ -330,13 +143,8 @@ function updateUserList(userList) {
         userElement.textContent = name;
         userListContainer.appendChild(userElement);
     });
-    //guardar en session storage
-    sessionStorage.setItem("user_list", JSON.stringify(userList));
 
-    //GARYDD1 TO DO: MANAGE THE START TOURNAMENT BUTTON/EVENT WHEN THE USER LIST IS FULL.
-    // if (userList.length >= 8) {
-        
-    // }
+    sessionStorage.setItem("user_list", JSON.stringify(userList));
 }
 
 function sendWebSocketMessage(type, data) {
@@ -447,7 +255,6 @@ function updateChampion(winner) {
         }
 
     }
-    //Here we can save the tournament tree in the blockchain
 }
 
 /**
