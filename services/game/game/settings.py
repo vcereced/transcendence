@@ -150,6 +150,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Redis settings
+REDIS_HOST = 'redis'
+REDIS_PORT = 6379
+
 # Celery settings
 
 # Celery broker settings - connect to RabbitMQ running in the 'message-broker' container

@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 async def discover_games():
+    await end_unfinished_games()
     running_games = set()
-    redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
+    redis_client = redis.Redis(connection_pool=redis_pool, auto_close_connection_pool=False)
     while True:
         try:
             discovered_rps_id = await redis_client.lpop("rps_queue")
@@ -33,9 +34,7 @@ async def discover_games():
             if not discovered_game_id and not discovered_rps_id:
                 await asyncio.sleep(1)
                 continue
-            await asyncio.sleep(
-                0.1
-            )  # Small delay to allow the game state to be created in redis
+            await asyncio.sleep(0.1)  # To allow the game state to be created in redis
             if discovered_rps_id:
                 task = asyncio.create_task(play_rps_game(int(discovered_rps_id)))
                 running_games.add(task)
@@ -44,8 +43,8 @@ async def discover_games():
                 task = asyncio.create_task(play_pong_game(int(discovered_game_id)))
                 running_games.add(task)
                 print(f"Game discovered: {discovered_game_id}")
-        except Exception as e:
-            logger.error(f"Error in discover_games: {e}", exc_info=True)
+        finally:
+            redis_client.aclose(close_connection_pool=True)
 
 async def finish_pong_game(redis_client: redis.Redis, game: Game, game_state: GameState):
     # If there is a tie, add a point to a random player
@@ -89,7 +88,7 @@ async def finish_pong_game(redis_client: redis.Redis, game: Game, game_state: Ga
 
 async def play_pong_game(game_id: int):
     try:
-        redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
+        redis_client = redis.Redis(connection_pool=redis_pool, auto_close_connection_pool=False)
         game = await query_db_for_game(game_id)
 
         async with asyncio.TaskGroup() as tg:
@@ -121,7 +120,6 @@ async def play_pong_game(game_id: int):
                 game_state.ball.y += game_state.ball.dy
                 await save_game_state(redis_client, game_id, game_state)
                 await asyncio.sleep(1 / s.FPS)
-
     except Exception as e:
         logger.error(f"Error in play_pong_game: {e}", exc_info=True)
     finally:
@@ -170,6 +168,8 @@ async def control_paddle_by_computer(game_id, side):
             await asyncio.sleep(1 / s.FPS)
     except Exception as e:
         logger.error(f"Error in control_paddle_by_computer: {e}", exc_info=True)
+    finally:
+        await redis_client.close(close_connection_pool=False)
 
 
 def determine_target_paddle_y(last_seen_ball: Ball, side, target_paddle_y):
@@ -412,52 +412,57 @@ def determine_initial_serve(game: Game, game_state: GameState):
 
 
 async def finish_rps_game(redis_client: redis.Redis, rps_record: RockPaperScissorsGame, winner_username: str):
-    if winner_username != "":
-        left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
-        right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
-        rps_record.winner_username = winner_username
-        rps_record.winner_id = (
-            rps_record.left_player_id
-            if winner_username == rps_record.left_player_username
-            else rps_record.right_player_id
+    logger.info(f"Finishing RPS game: {rps_record.id}")
+    try:
+        if winner_username != "":
+            left_choice_data = await redis_client.get(f"rps:{rps_record.id}:left_choice")
+            right_choice_data = await redis_client.get(f"rps:{rps_record.id}:right_choice")
+            rps_record.winner_username = winner_username
+            rps_record.winner_id = (
+                rps_record.left_player_id
+                if winner_username == rps_record.left_player_username
+                else rps_record.right_player_id
+            )
+        else:
+            # Randomize the winner in case of a tie
+            rps_record.winner_username = random.choice(
+                [rps_record.left_player_username, rps_record.right_player_username]
+            )
+            rps_record.winner_id = (
+                rps_record.left_player_id
+                if rps_record.winner_username == rps_record.left_player_username
+                else rps_record.right_player_id
+            )
+            left_choice_data = "rock" if rps_record.winner_id == rps_record.left_player_id else "scissors"
+            right_choice_data = "rock" if rps_record.winner_id == rps_record.right_player_id else "scissors"
+            
+        rps_record.left_player_choice = str(left_choice_data)
+        rps_record.right_player_choice = str(right_choice_data)
+        rps_record.is_finished = True
+        rps_record.finished_at = now()
+        await save_rps_ending(rps_record)
+        game_data = {
+            "left_player_id": rps_record.left_player_id,
+            "left_player_username": rps_record.left_player_username,
+            "right_player_id": rps_record.right_player_id,
+            "right_player_username": rps_record.right_player_username,
+            "tournament_id": rps_record.tournament_id,
+            "tree_index": rps_record.tree_index,
+            "rock_paper_scissors_id": rps_record.id,
+            "is_local_game": rps_record.is_local_game,
+        }
+        current_app.send_task(
+            "launch_game",
+            args=[game_data],
+            queue="game_tasks",
         )
-    else:
-        # Randomize the winner in case of a tie
-        rps_record.winner_username = random.choice(
-            [rps_record.left_player_username, rps_record.right_player_username]
-        )
-        rps_record.winner_id = (
-            rps_record.left_player_id
-            if rps_record.winner_username == rps_record.left_player_username
-            else rps_record.right_player_id
-        )
-        left_choice_data = "rock" if rps_record.winner_id == rps_record.left_player_id else "scissors"
-        right_choice_data = "rock" if rps_record.winner_id == rps_record.right_player_id else "scissors"
-        
-    rps_record.left_player_choice = str(left_choice_data)
-    rps_record.right_player_choice = str(right_choice_data)
-    rps_record.is_finished = True
-    rps_record.finished_at = now()
-    await save_rps_ending(rps_record)
-    game_data = {
-        "left_player_id": rps_record.left_player_id,
-        "left_player_username": rps_record.left_player_username,
-        "right_player_id": rps_record.right_player_id,
-        "right_player_username": rps_record.right_player_username,
-        "tournament_id": rps_record.tournament_id,
-        "tree_index": rps_record.tree_index,
-        "rock_paper_scissors_id": rps_record.id,
-        "is_local_game": rps_record.is_local_game,
-    }
-    current_app.send_task(
-        "launch_game",
-        args=[game_data],
-        queue="game_tasks",
-    )
+        logger.info(f"RPS game finished: {rps_record.id}, winner: {rps_record.winner_username}")
+    except Exception as e:
+        logger.error(f"Error in finish_rps_game: {e}", exc_info=True)
 
 async def play_rps_game(rps_id: int):
     try:
-        redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
+        redis_client = redis.Redis(connection_pool=redis_pool, auto_close_connection_pool=False)
         rps_record = await query_db_for_rps(rps_id)
 
         winner_username = ""
@@ -549,11 +554,16 @@ def determine_winner(
 def save_rps_ending(rps_record: RockPaperScissorsGame):
     rps_record.save()
 
+@sync_to_async
+def get_unfinished_games():
+    unfinished_pong_games = list(Game.objects.filter(is_finished=False))
+    unfinished_rps_games = list(RockPaperScissorsGame.objects.filter(is_finished=False))
+    return unfinished_pong_games, unfinished_rps_games
 
 
-def end_unfinished_games(redis_client: redis.Redis):
-    unfinished_pong_games = Game.objects.filter(is_finished=False)
-    unfinished_rps_games = RockPaperScissorsGame.objects.filter(is_finished=False)
+async def end_unfinished_games():
+    redis_client = redis.Redis(connection_pool=redis_pool, auto_close_connection_pool=False)
+    unfinished_pong_games, unfinished_rps_games = await get_unfinished_games()
     for pong_game in unfinished_pong_games:
         pong_game_state = load_game_state(redis_client, pong_game.id)
         if pong_game_state is None:
@@ -568,11 +578,12 @@ def end_unfinished_games(redis_client: redis.Redis):
                     "next_side_to_collide": "",
                 }
             )
-        finish_pong_game(redis_client, pong_game, pong_game_state)
+        await finish_pong_game(redis_client, pong_game, pong_game_state)
     for rps_game in unfinished_rps_games:
-        finish_rps_game(redis_client, rps_game, "")
+        await finish_rps_game(redis_client, rps_game, "")
+    await redis_client.aclose()
         
 
 if __name__ == "__main__":
-    end_unfinished_games()   
+    redis_pool = redis.ConnectionPool(host=s.REDIS_HOST, port=s.REDIS_PORT, decode_responses=True)
     asyncio.run(discover_games())
