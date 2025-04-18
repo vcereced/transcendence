@@ -635,12 +635,15 @@ export async function initHome() {
     }
     try {
         await handleJwtToken();
-        console.log("Token is valid, starting here");
+       // console.log("Token is valid, starting here");
+      
         initLoginSocket();
     }
     catch (error) {
         console.log("Token is invalid, redirecting to login");
-        console.error(error);
+        showPopup("Token is invalid, redirecting to login");
+        window.location.hash = "#new-login"
+       // console.error(error);
     }
     await checkActiveGame(document, homeDiv);
 }
