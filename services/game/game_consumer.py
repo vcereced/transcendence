@@ -163,7 +163,7 @@ async def control_paddle_by_computer(game_id, side):
             await redis_client.set(
                 f"game:{game_id}:{side}_paddle_y", json.dumps(final_paddle_y)
             )
-            await asyncio.sleep(1 / s.FPS)
+            await asyncio.sleep(2 / s.FPS)
     except Exception as e:
         logger.error(f"Error in control_paddle_by_computer: {e}", exc_info=True)
     finally:
