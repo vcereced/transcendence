@@ -282,7 +282,7 @@ def start_matchmaking(message):
         current_id = 0
         for i in range(len(players) + 1, 9):
             players.append({
-                "username": f"IA{i}",
+                "username": "La Máquina", 
                 "user_id": current_id
             })
 

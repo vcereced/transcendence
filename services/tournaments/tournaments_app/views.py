@@ -72,13 +72,14 @@ def create_tournament(request):
             "type": "tournament_created",
             "tournamentId": tournament.id,
             "tournamentName": tournament.name,
+            "createdAt": tournament.created_at.strftime("%d %B %Y %H:%M"),
         }
         redis_client.publish('tournaments_channel', json.dumps(message))
         redis_client.set(f'tournament_{tournament.id}_player_count', 0)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     print("serializer.errors")
     print(serializer.errors)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
 
 
 @api_view(['POST'])
