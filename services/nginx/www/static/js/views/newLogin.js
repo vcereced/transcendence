@@ -23,8 +23,6 @@ function initLoginSocket() {
 
     window.login_socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        console.log("login_socket message");
-        console.log(data);
         
         if (data.type === "logged_users") {
             window.logged_users = data.logged_users;
@@ -37,7 +35,6 @@ function initLoginSocket() {
     }
     window.login_socket.onclose = function(event) {
         window.login_socket = null;
-        console.log("login_socket close");
     }
 
     window.login_socket.onerror = function(event) {
@@ -51,11 +48,6 @@ function initLoginSocket() {
 export { initLoginSocket } ;
 
 export function initNewLogin() {
-
-    // --- VARIABLES AND CONSTANTS ---
-
-    
-
 
     // --- DOM ELEMENTS ---
 
@@ -75,12 +67,9 @@ export function initNewLogin() {
         if (loginContainer.style.display === 'none') {
             loginContainer.style.display = 'block';
             registerContainer.style.display = 'none';
-           // qrSection.style.display = 'none';
         } else {
             loginContainer.style.display = 'none';
             registerContainer.style.display = 'block';
-            //registerDataSection.style.display = 'block';//data contaniner register
-            //qrSection.style.display = 'none';
         }
     }
 
@@ -101,8 +90,7 @@ export function initNewLogin() {
         const password = document.getElementById("reg-password").value;
 
         if (!username || !email || !password) {
-            window.showPopup("Todos los campos son obligatorios.");
-            //alert("Todos los campos son obligatorios.");
+            window.showPopup("Todos los campos son obligatorios");
             return;
         }
 
@@ -122,13 +110,11 @@ export function initNewLogin() {
                 sessionStorage.setItem("email", email);
                 window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
-            } else{
-                window.showPopup(data.email || data.username || data.error );}
-                //registerResponseMessage.innerText = data.email || data.username || data.error || "Error desconocido. Inténtalo de nuevo.";}
+            } else {
+                window.showPopup("Error en el registro");
+            }
         } catch (error) {
-            console.error("Error en la solicitud:", error);
-            window.showPopup("Hubo un problema con la conexion.");
-            //alert("Hubo un problema con el registro.");
+            window.showPopup("Error en el registro");
         }
     }
 
@@ -138,8 +124,7 @@ export function initNewLogin() {
         const password = document.getElementById("login-password").value;
         
         if (!email || !password) {
-            window.showPopup("Todos los campos son obligatorios.");
-            //alert("Todos los campos son obligatorios.");
+            window.showPopup("Todos los campos son obligatorios");
             return;
         }
 
@@ -159,13 +144,10 @@ export function initNewLogin() {
                 window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
             } else {
-                window.showPopup(data.error || data.username);
-                //loginResponseMessage.innerText = data.error || data.username || "Error desconocido. Inténtalo de nuevo.";
+                window.showPopup("Error en el inicio de sesión");
             }
         } catch (error) {
-            console.error("Error en la solicitud:", error);
-            window.showPopup("Hubo un problema con la conexion.");
-           // alert("Hubo un problema con el registro.");
+            window.showPopup("Error en el inicio de sesión");
         }
     }
 
@@ -189,6 +171,4 @@ export function initNewLogin() {
         window.eventManager.addEventListener(loginButton, "click", loginUser);
     }
 
-
-    // --- INITIALIZATION ---
 }
