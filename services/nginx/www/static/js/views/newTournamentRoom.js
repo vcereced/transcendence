@@ -192,11 +192,24 @@ function update_tournament_tree(data) {
         console.error(`No se encontró el partido con ID ${match_id}`);
         return;
     }
+    console.log("%cCurrent Match:", "color:blue", currentMatch);
+    console.log("%cWinner:", "color:green", winner);
+    console.log("%cLoser:", "color:red", loser);
+    console.log("%cMatch ID:", "color:purple", match_id);
 
+    let isMaquina = false;
     currentMatch.forEach((match) => {
         const players = match.querySelectorAll(".player");
         players.forEach(player => {
-            if (player.textContent === winner) {
+            if (winner == loser && isMaquina == false) {
+                player.classList.add("winner");
+                isMaquina = true;
+            }
+            else if (loser == winner && isMaquina == true) {
+                player.classList.add("loser");
+                isMaquina = false;
+            }
+            else if (player.textContent === winner) {
                 player.classList.add("winner");
             } else if (player.textContent === loser) {
                 player.classList.add("loser");
@@ -312,27 +325,33 @@ function restoreTournamentTree() {
                 
                 
                 if (treeIdStr === "7") {
+                    let isMaquina = false;
                     participants.forEach((participant) => {
                         const username = participant.username;
                         let isWinner = false;
                         let isLoser = false;
+                        let originTree = null;
                         
                         if (match.status != "pending") {
                             isWinner = username === winner.username;
                             isLoser = username === loser.username;
+                            console.log("%cisMaquina:", "color:blue", isMaquina);
                         }
                         
                         const originTreeId = Object.keys(players).find(
                             key => players[key]?.username === username
                         );
-        
-                        let originTree = null;
-        
-                       
                         if (originTreeId === "left") {
                             originTree = "5";
                         } else if (originTreeId === "right") {
                             originTree = "6";
+                        }
+                        console.log("%cisMaquina:", "color:red", isMaquina);
+
+                        if(isMaquina == true) {
+                            originTree = "6";
+                        }else if (isMaquina == false) {
+                            originTree = "5";
                         }
         
                         if (originTree) {
@@ -340,7 +359,10 @@ function restoreTournamentTree() {
                             if (playerSlot) {
                                 playerSlot.textContent = username;
                                 playerSlot.classList.remove("winner", "loser");
-                                if (isWinner) playerSlot.classList.add("winner");
+                                if (isWinner == isLoser && isMaquina == false){ 
+                                    playerSlot.classList.add("winner");
+                                    isMaquina = true;
+                                }
                                 else if (isLoser) playerSlot.classList.add("loser");
                             }
                         }
@@ -369,24 +391,35 @@ function restoreTournamentTree() {
                     
                     playerDivs.forEach(div => div.classList.remove("winner", "loser"));
         
+                    let isMaquina = false;
                     participants.forEach((participant) => {
                         const username = participant.username;
-        
                         const availableDiv = playerDivs.find(div => {
                             const classList = Array.from(div.classList);
                             return (
                                 classList.includes("player") 
                             );
                         });
-        
+                        //checkpoint
                         if (availableDiv) {
                             availableDiv.textContent = username;
-                            if (winner) {
+
+                            if ( match.status != "pending" && winner.username === loser.username && isMaquina == false ) {
+                                availableDiv.classList.add("winner");
+                                isMaquina = true;
+                                updateNextMatch(matchElement, winner.username, treeIdStr);
+                            }
+                            else if  (match.status != "pending" && winner.username === loser.username && isMaquina == true ) {
+                                availableDiv.classList.add("loser");
+                                isMaquina = false;
+                                updateNextMatch(matchElement, winner.username, treeIdStr);                                
+                            }
+                            else if (winner) {
                                 if (username === winner.username) availableDiv.classList.add("winner");
                                 else if (username === loser.username) availableDiv.classList.add("loser");
                                 updateNextMatch(matchElement, winner.username, treeIdStr);
                             }
-                            
+                             
                             const idx = playerDivs.indexOf(availableDiv);
                             if (idx > -1) playerDivs.splice(idx, 1);
                         }

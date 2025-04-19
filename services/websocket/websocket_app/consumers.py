@@ -172,7 +172,7 @@ class VersusConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
 class TournamentCounterConsumer(AsyncWebsocketConsumer):
-    """Maneja la conexión de WebSocket global para los torneos."""
+    """Handles the global WebSocket connection for tournament user count and tournament list."""
 
     async def connect(self):
         """Conecta al WebSocket global y se suscribe al canal de Redis."""
@@ -203,8 +203,15 @@ class TournamentCounterConsumer(AsyncWebsocketConsumer):
                 print(f"\033[95m {data} <- data RECEIVED!!!!! \033[0m")
                 if data["type"] == "user_count_update":
                     await self.send(json.dumps({
+                        "type": "user_count_update",
                         "tournament_id": data.get("tournament_id"),
                         "user_count": data.get("user_count")
+                    }))
+                if data["type"] == "tournament_created":
+                    await self.send(json.dumps({
+                        "type": "tournament_created",
+                        "tournament_id": data.get("tournamentId"),
+                        "tournament_name": data.get("tournamentName")
                     }))
             await asyncio.sleep(0.042)
 
