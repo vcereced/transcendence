@@ -117,7 +117,7 @@ export async function updatePicture(email, src) {
     const url = "/api/settings/updatePictureUrl";
 
     try {
-        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken();
 
         const response = await fetch(url, {
             method: "POST",
@@ -129,12 +129,13 @@ export async function updatePicture(email, src) {
 
         const data = await response.json();
         
-        if (response.ok) {
-            window.showPopup("Imagen de perfil actualizada correctamente");
+        if (!response.ok) {
+            window.showPopup("Error al actualizar la imagen de perfil");
             return;
-        } else {
-            window.showPopup(data.error);
         }
+        window.showPopup("Imagen de perfil actualizada correctamente");
+        window.closeSettingsPopup();
+
     } catch (error) {
         window.showPopup("Error al actualizar la imagen de perfil");
     }
@@ -146,7 +147,7 @@ export async function uploadImage(formData) {
     const url = "/api/settings/upload-profile-pic";
 
     try {
-        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken();
 
         const response = await fetch(url, {
             method: "POST",
@@ -155,14 +156,15 @@ export async function uploadImage(formData) {
 
         const data = await response.json();
         
-        if (response.ok) {
-            window.showPopup("Imagen de perfil actualizada correctamente");
+        if (!response.ok) {
+            window.showPopup("Error al actualizar la imagen de perfil");
             return;
-        } else {
-            window.showPopup(data.error);
         }
+        window.showPopup("Imagen de perfil actualizada correctamente");
+        window.closeSettingsPopup();
+
     } catch (error) {
-        window.showPopup(error);
+        window.showPopup("Error al actualizar la imagen de perfil");
     }
 
 }
