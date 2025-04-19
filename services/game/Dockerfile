@@ -10,6 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && apt-get update \
     && apt-get install -y netcat-openbsd
 
+RUN groupadd -g 1001 celerygroup && \
+useradd -m -u 1001 -g celerygroup -s /bin/bash celeryuser
+
+
 # Copy the codebase
 COPY . /app/
 

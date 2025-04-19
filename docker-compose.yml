@@ -117,6 +117,7 @@ services:
     env_file:
       - .env
     command: [/bin/sh, celery_entrypoint.sh]
+    user: "1001:1001" 
     networks:
       - app-network
 
@@ -168,11 +169,12 @@ services:
     volumes:
       - ./services/game:/app
     env_file :
-      - .env
+      - .env  
     networks :
       - app-network
     restart: always
     command: [/bin/sh, celery_entrypoint.sh]
+    user: "1001:1001"  # Run as non-root user for security
 
   game_asyncio:
     build:
