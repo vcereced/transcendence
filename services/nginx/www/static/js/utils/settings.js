@@ -1,20 +1,16 @@
 import { handleJwtToken } from '../views/jwtValidator.js';
 
-export async function showUsername(email){
-    
-    await handleJwtToken();
-    await fetch('/api/settings/dataUser', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email })
-    })
-    .then(response => response.json())
-    .then(data => {document.getElementById('current-username').textContent = data.username;})
-    .catch(error => {
-        window.showPopup("Error al obtener el nombre de usuario");
-    });
+function getFirstErrorMessage(response) {
+    const errorMessages = Object.values(response);
+    if (errorMessages.length > 0) {
+        const firstError = errorMessages[0];
+        if (Array.isArray(firstError)) {
+            return firstError[0];
+        } else {
+            return firstError;
+        }
+    }
+    return "Error";
 }
 
 export async function updateUsername(email, newUsername) {
@@ -34,9 +30,10 @@ export async function updateUsername(email, newUsername) {
         if (response.ok) {
             window.sessionStorage.setItem("username", newUsername);
             window.showPopup("Nombre de usuario actualizado correctamente");
+            sessionStorage.setItem("username", newUsername);
             window.closeSettingsPopup();
         } else {
-            window.showPopup("Error al actualizar el nombre de usuario");
+            window.showPopup(getFirstErrorMessage(data.error));
         }
     } catch (error) {
         window.showPopup("Error al actualizar el nombre de usuario");

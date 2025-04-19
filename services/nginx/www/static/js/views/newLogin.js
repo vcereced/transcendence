@@ -1,8 +1,5 @@
 // static/js/views/new_login.js
 
-import EventListenerManager from '../utils/eventListenerManager.js';
-import { getDataUser } from '../utils/profile.js';
-
 export async function renderNewLogin() {
     const response = await fetch('static/html/new_login.html');
     const htmlContent = await response.text();
@@ -111,11 +108,24 @@ export function initNewLogin() {
                 window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
             } else {
-                window.showPopup("Error en el registro");
+                window.showPopup(getFirstErrorMessage(data));
             }
         } catch (error) {
             window.showPopup("Error en el registro");
         }
+    }
+
+    function getFirstErrorMessage(response) {
+        const errorMessages = Object.values(response);
+        if (errorMessages.length > 0) {
+            const firstError = errorMessages[0];
+            if (Array.isArray(firstError)) {
+                return firstError[0];
+            } else {
+                return firstError;
+            }
+        }
+        return "Error";
     }
 
     async function loginUser() {
@@ -144,7 +154,7 @@ export function initNewLogin() {
                 window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
             } else {
-                window.showPopup("Error en el inicio de sesión");
+                window.showPopup(getFirstErrorMessage(data));
             }
         } catch (error) {
             window.showPopup("Error en el inicio de sesión");

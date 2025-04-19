@@ -44,23 +44,23 @@ def resend_otp_view(request):
 
 	try:
 		if not email:
-			return Response({"error": "not received username."}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"error": "Nombre de usuario no recibido"}, status=status.HTTP_400_BAD_REQUEST)
 		
 		user = CustomUser.objects.get(email=email)
 
 		if user is None:
-			return Response({"error": "user not in bbdd (resend_otp_view_view)."}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"error": "Usuario no encontrado en la base de datos"}, status=status.HTTP_400_BAD_REQUEST)
 		
 		device = EmailOTPDevice.objects.get(user=user)
 		device.generate_otp()
 		device.send_otp()
 
-		return Response({ 'message': 'OTP EMAIL reenviado otra vez' }, status=status.HTTP_200_OK)
+		return Response({ 'message': 'Mensaje OTP reenviado correctamente' }, status=status.HTTP_200_OK)
 	
 	except (CustomUser.DoesNotExist):
-		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "Usuario no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
 	except (EmailOTPDevice.DoesNotExist):
-		return Response({"error": "OTP Wrong."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "Error mandando el mensaje OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -75,20 +75,20 @@ def register_view(request):
 		device, _ = EmailOTPDevice.objects.get_or_create(user=user)
 		device.generate_otp()
 		device.send_otp()
-		return Response({ "message" : "User register OK. Go to EMAIL to confirm!!." }, status=status.HTTP_201_CREATED)
+		return Response({ "message" : "Usuario registrado. Pendiente de confirmación" }, status=status.HTTP_201_CREATED)
 	
 	elif verifyPendingUser(request.data.get("email"), request.data.get("username"), request.data.get("password")) == 'ok':
 		user = CustomUser.objects.get(email=request.data.get("email"))
 		device, _ = EmailOTPDevice.objects.get_or_create(user=user)
 		device.generate_otp()
 		device.send_otp()
-		return Response({ "message" : "User register OK. Go to EMAIL to confirm!!." }, status=status.HTTP_201_CREATED)
+		return Response({ "message" : "Usuario registrado. Pendiente de confirmación" }, status=status.HTTP_201_CREATED)
 	
 	elif verifyPendingUser(request.data.get("email"), request.data.get("username"), request.data.get("password")) == 'password wrong' and CustomUser.objects.get(email=request.data.get("email")).is_active == False:
-		return Response({ "error"	: "wrong password" }, status=status.HTTP_400_BAD_REQUEST)
+		return Response({ "error": "Contraseña incorrecta" }, status=status.HTTP_400_BAD_REQUEST)
 	
 	else:
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 @api_view(['POST'])
 def verify_email_otp_register_view(request):
@@ -98,22 +98,22 @@ def verify_email_otp_register_view(request):
 
 	try:
 		if not email or not otp_token:
-			return Response({"error": "not received email or otp."}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"error": "Email o OTP no recibidos"}, status=status.HTTP_400_BAD_REQUEST)
 		
 		user = CustomUser.objects.get(email=email)
 
 		if user is None:
-			return Response({"error": "user not in bbdd (verify_email_otp_view)."}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"error": "Usuario no encontrado en la base de datos"}, status=status.HTTP_400_BAD_REQUEST)
 		
 		if verifyEmailTOPTDevice(email, otp_token):
 			user.is_active = True
 			user.save()
-			return Response({ 'message': 'OTP EMAIL verificado con éxito',}, status=status.HTTP_200_OK)
+			return Response({ 'message': 'Email OTP verificado con éxito',}, status=status.HTTP_200_OK)
 	
 	except (CustomUser.DoesNotExist):
-		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "Usuario no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
 	except (EmailOTPDevice.DoesNotExist):
-		return Response({"error": "OTP Wrong."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "Error mandando el mensaje OTP"}, status=status.HTTP_400_BAD_REQUEST)
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -215,22 +215,20 @@ def updateName_view(request):
 	newUsername = request.data.get("newUsername")
 
 	if not email or not newUsername:
-		return Response({"error": "Faltan datos en el request"}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "Email o nuevo usuario no proporcionados"}, status=status.HTTP_400_BAD_REQUEST)
 	
-	if CustomUser.objects.filter(username=newUsername).exists():
-		return Response({"error": "El nombre de usuario ya está en uso"}, status=status.HTTP_400_BAD_REQUEST)
-
 	try:
 		user = CustomUser.objects.get(email=email)
+	
+		serializer = RegisterSerializer(user, data={"username": newUsername}, partial=True)
+		if serializer.is_valid():
+			serializer.save()
+			return Response({"message": "Nombre de usuario actualizado correctamente"}, status=status.HTTP_200_OK)
+		else:
+			return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+	except CustomUser.DoesNotExist:
+		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-		user.username = newUsername
-		user.save()
-		return Response({'message': 'username changed succesfully'}, status=status.HTTP_200_OK)
-
-	except (CustomUser.DoesNotExist):
-		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
-	except CustomError as e:
-		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 	
 @api_view(["POST"])
 def updatePassword_view(request):
@@ -243,11 +241,9 @@ def updatePassword_view(request):
     except CustomUser.DoesNotExist:
         return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Autenticar al usuario con la contraseña antigua
     if not user.check_password(old_password):
         return Response({"error": "La contraseña actual es incorrecta."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Actualizar la contraseña
     user.set_password(new_password)
     user.save()
 
@@ -269,7 +265,7 @@ def updatePictureUrl_view(request):
 	except CustomUser.DoesNotExist:
 		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-	return Response({"message": "picture_url cambiada correctamente."}, status=status.HTTP_200_OK)
+	return Response({"message": "Avatar cambiado correctamente"}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def playersList_view(request):
@@ -287,14 +283,14 @@ def dataUser_view(request):
 		elif email and not username:
 			user = CustomUser.objects.get(email=email)
 		else:
-			return Response({"error": "missing username or email"}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"error": "Email o nombre de usuario no encontrados"}, status=status.HTTP_400_BAD_REQUEST)
 
 	except CustomUser.DoesNotExist:
 		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 	else:
-		return Response({"message": "data extrated succesfully", "id": user.id, "username": user.username, "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
+		return Response({"message": "Datos de usuario extraídos correctamente", "id": user.id, "username": user.username, "picture_url": user.profile_picture}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def isFriendShip_view(request):

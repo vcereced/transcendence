@@ -23,18 +23,14 @@ export async function resendOtp() {
         const data = await response.json();
 
         if (response.ok) {
-            //document.getElementById("registerResponseMessage").innerText = data.message;
             window.showPopup(data.message);
             return true;
         } else {
-            //document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";
             window.showPopup(data.message);
             return false;
         }
     } catch (error) {
-        console.error("Error en la solicitud:", error);
-        //document.getElementById("registerResponseMessage").innerText = "Error de conexión.";
-        window.showPopup("Error de conexion");
+        window.showPopup("Error reenviando el código");
     }
 }
 
@@ -57,8 +53,6 @@ export async function verifyOtpRegister(code) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                //username: sessionStorage.getItem("username"),
-                //password: sessionStorage.getItem("password"),
                 email: sessionStorage.getItem("email"),
                 otp_token: code
             }),
@@ -69,25 +63,19 @@ export async function verifyOtpRegister(code) {
         if (response.ok && sessionStorage.getItem("action") === "login") {
             
             window.showPopup(data.message);
-           // document.getElementById("registerResponseMessage").innerText = data.message;
-            console.log("obtenemos coookies oleee")
             document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
             document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
             initLoginSocket();
-            window.showPopup("sesion iniciada correctamente");
             window.location.hash = "#";
         } else if (response.ok && sessionStorage.getItem("action") === "register") {
-           // document.getElementById("registerResponseMessage").innerText = data.message;
-            window.showPopup("registrado correctamente");
+            window.showPopup("Usuario registrado correctamente");
             window.location.hash = "#new-login";
         
         } else {
-            //document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";
             window.showPopup(data.error);
         }
     } catch (error) {
         console.error("Error en la solicitud:", error);
-       // document.getElementById("registerResponseMessage").innerText = "Error de conexión.";
         window.showPopup("Error de conexión.");
     }
 }
@@ -138,7 +126,7 @@ export function init2FA() {
         if (resendOtp()) {
             alert("Código reenviado");
             clearInterval(resendInterval);
-            startResendTimer();
+            window.startResendTimer();
         }else{
             alert("No se puede reenviar codigo");
         }

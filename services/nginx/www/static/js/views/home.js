@@ -1,5 +1,5 @@
 // static/js/views/home.js
-import { showUsername, showPicture, updateUsername, updatePassword, updatePicture, uploadImage } from '../utils/settings.js';
+import { showPicture, updateUsername, updatePassword, updatePicture, uploadImage } from '../utils/settings.js';
 import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getDataUser } from '../utils/profile.js';
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
@@ -8,6 +8,7 @@ import { initLoginSocket } from './newLogin.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
+    
     const htmlContent = await response.text();
     return htmlContent;
 }
@@ -49,6 +50,7 @@ export async function initHome() {
     const histories = document.querySelectorAll('.history');
     const profilePopup = document.getElementById('profilePopup');
     const settingsPopup = document.getElementById('settingsPopup');
+    const settingsCurrentUsername = document.getElementById("current-username");
     const homeDiv = document.getElementsByClassName('home')[0];
 
     const profileUsernameElement = document.getElementById("profile-username");
@@ -208,10 +210,11 @@ export async function initHome() {
         
     window.openSettingsPopup =  function openSettingsPopup() {
         let email = sessionStorage.getItem("email");
+        let username = sessionStorage.getItem("username");
         document.getElementById('settingsPopup').style.display = 'flex';
 
         showPicture(email);
-        showUsername(email);
+        settingsCurrentUsername.innerText = username;
     }
 
     window.closeSettingsPopup = function closeSettingsPopup() {
