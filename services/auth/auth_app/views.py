@@ -27,13 +27,13 @@ def logout_view(request):
 	refresh_token = request.COOKIES.get('refreshToken')
 
 	if not refresh_token:
-		return Response({'error': 'No refresh token in cookies'}, status=400)
+		return Response({'error': 'Token de renovación no encontrado'}, status=400)
 
 	try:
 		token = RefreshToken(refresh_token)
 		token.blacklist()
 
-		return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+		return Response({'message': 'Sesión cerrada correctamente'}, status=status.HTTP_200_OK)
 	except Exception as e:
 		return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -82,7 +82,7 @@ def register_view(request):
 		device, _ = EmailOTPDevice.objects.get_or_create(user=user)
 		device.generate_otp()
 		device.send_otp()
-		return Response({ "message" : "Usuario registrado. Pendiente de confirmación" }, status=status.HTTP_201_CREATED)
+		return Response({ "message" : "Usuario registrado correctamente" }, status=status.HTTP_201_CREATED)
 	
 	elif verifyPendingUser(request.data.get("email"), request.data.get("username"), request.data.get("password")) == 'password wrong' and CustomUser.objects.get(email=request.data.get("email")).is_active == False:
 		return Response({ "error": "Contraseña incorrecta" }, status=status.HTTP_400_BAD_REQUEST)

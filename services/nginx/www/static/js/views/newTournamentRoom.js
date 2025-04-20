@@ -157,7 +157,7 @@ function sendWebSocketMessage(type, data) {
 }
 
 function start_tournament(data) {
-    showPopup("Torneo Iniciado! prepárate para jugar!", 4000);
+    window.showPopup("Torneo Iniciado! prepárate para jugar!", 4000);
     
     
     const parsedTournamentTree = {};

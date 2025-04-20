@@ -12,8 +12,7 @@ export async function isFriend(username1, username2) {
         return data.message === "Are friends";
 
     } catch (error) {
-        window.showPopup("Error to check are friends" + error);
-        console.error("Error:", error);
+        window.showPopup("Error comprobando la amistad");
     }
 }
 export async function addFriend(username1, username2) {
@@ -25,10 +24,8 @@ export async function addFriend(username1, username2) {
         await handleJwtToken();
         const response = await fetch(url + action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
         const data = await response.json();
-        window.showPopup("now you are friends");
     } catch (error) {
-        window.showPopup("Error to add friends" + error);
-        console.error("Error:", error);
+        window.showPopup("Error añadiendo amigo");
     }
 }
 
@@ -41,12 +38,9 @@ export async function removeFriend(username1, username2) {
         await handleJwtToken();
         const response = await fetch(url + action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username1, username2 })});
         const data = await response.json();
-        window.showPopup("not being friends anymore");
-
     } catch (error) {
        
-        window.showPopup("Error to remove friends" + error);
-        console.error("Error:", error);
+        window.showPopup("Error eliminando amigo");
     }
 }
 
@@ -81,12 +75,11 @@ export async function getDataUser(username) {
         const response = await fetch(url, {method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username })});
         const data = await response.json();
             
-        if (response.ok) {
-            return data;
-        } else {
-            window.showPopup(data.error || "Error to obtein data from User.");}
+        if (!response.ok) {
+            window.showPopup("Error obteniendo datos del usuario");
+        return data;
+    }
     } catch (error) {
-        window.showPopup("Error en la solicitud." + error);
-        console.error("Error:", error);
+        window.showPopup("Error obteniendo datos del usuario");
     }
 }

@@ -616,9 +616,7 @@ export async function initHome() {
         await checkActiveGame(document, homeDiv);
     }
     catch (error) {
-        console.log("Token is invalid, redirecting to login");
-        showPopup("Token is invalid, redirecting to login");
+        showPopup("Sesión expirada, por favor vuelve a iniciar sesión");
         window.location.hash = "#new-login"
-       // console.error(error);
     }
 }

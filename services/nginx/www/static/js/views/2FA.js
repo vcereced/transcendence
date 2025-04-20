@@ -65,7 +65,7 @@ export async function verifyOtpRegister(code) {
             initLoginSocket();
             window.location.hash = "#";
         } else if (response.ok && sessionStorage.getItem("action") === "register") {
-            window.showPopup("Usuario registrado correctamente");
+            window.showPopup(data.message);
             window.location.hash = "#new-login";
         
         } else {

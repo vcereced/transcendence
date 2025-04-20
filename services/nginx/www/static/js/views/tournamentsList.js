@@ -45,14 +45,14 @@ export function initTournamentsList() {
                 });
     
                 if (response.ok) {
-                    showPopup("Torneo creado exitosamente!", 2000);
+                    window.showPopup("Torneo creado exitosamente!", 2000);
                 } else {
                     const errorData = await response.json();
                     console.warn("Error creating tournament:", errorData);
-                    showPopup("Error al crear el torneo, intenta con otro nombre.", 2000);
+                    window.showPopup("Error al crear el torneo, intenta con otro nombre.", 2000);
                 }
             } catch (error) {
-                showPopup("Error de conexión. Inténtelo más tarde", 2000);
+                window.showPopup("Error de conexión. Inténtelo más tarde", 2000);
             }
         }
     }
@@ -68,7 +68,7 @@ export function initTournamentsList() {
             ]);
 
             if (!tournamentResponse.ok || !playerCountsResponse.ok) {
-                showPopup("Error al cargar los torneos, inténtalo más tarde", 3000);
+                window.showPopup("Error al cargar los torneos, inténtalo más tarde", 3000);
                 return;
             }
 
@@ -99,7 +99,7 @@ export function initTournamentsList() {
                 global_socket = startGlobalWebSocket();
             }
         } catch (error) {
-            showPopup("Error de conexión. Inténtelo más tarde", 2000);
+            window.showPopup("Error de conexión. Inténtelo más tarde", 2000);
         }
     }
 
@@ -136,18 +136,18 @@ export function initTournamentsList() {
             });
 
             if (response.ok) {
-                showPopup(`Te has unido al torneo ${tournamentName}`, 3000);
+                window.showPopup(`Te has unido al torneo ${tournamentName}`, 3000);
                 sessionStorage.setItem("tournamentName", tournamentName);
                 console.log("%ctournamentName settled", "color:blue", tournamentName);
                 setTimeout(() => {
                     location.hash = `tournament/room/${tournamentId}`;
                 }, 700);
             } else {
-                showPopup(`Error al unirse al torneo ${tournamentName}`, 3000);
+                window.showPopup(`Error al unirse al torneo ${tournamentName}`, 3000);
             }
         } catch (error) {
             console.error("Error al unirse al torneo:", error);
-            showPopup("Error de conexión.No se pudo unir al torneo", 3000);
+            window.showPopup("Error de conexión.No se pudo unir al torneo", 3000);
         }
     }
 
@@ -155,7 +155,7 @@ export function initTournamentsList() {
         handleJwtToken().then(() => {
             const ws = new WebSocket(`wss://${window.location.host}/ws/global_tournament_counter/`);
             if (!ws) {
-                showPopup("Error de conexión, inténtelo más tarde", 2000);
+                window.showPopup("Error de conexión, inténtelo más tarde", 2000);
                 return;
             }
             console.log("WebSocket global connection opened");
@@ -192,9 +192,9 @@ export function initTournamentsList() {
                 }
             };
 
-            ws.onclose = () => showPopup("Hasta pronto!", 5000);
+            ws.onclose = () => window.showPopup("Hasta pronto!", 5000);
             ws.onerror = (error) => {
-                showPopup("Error de conexión, inténtelo más tarde", 2000);
+                window.showPopup("Error de conexión, inténtelo más tarde", 2000);
             };
             return ws;
         });

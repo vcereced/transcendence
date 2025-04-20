@@ -76,8 +76,6 @@ export async function handleJwtToken() {
     
     if (response === "Token has expired or invalid") {
         await renovateToken();
-        // console.log("Token renovated, trying again conexion...");
-        window.showPopup("Token JWT renovated");
     } else if (response === "Token not available") {
         throw new Error("handleJwtToken: token not available");
     }
