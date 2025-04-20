@@ -27,7 +27,7 @@ def logout_view(request):
 	refresh_token = request.COOKIES.get('refreshToken')
 
 	if not refresh_token:
-		return Response({'error': 'No refresh token in cookies'}, status=400)
+		return Response({'error': 'No refresh token in cookies'}, status=404)
 
 	try:
 		token = RefreshToken(refresh_token)
@@ -35,7 +35,7 @@ def logout_view(request):
 
 		return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 	except Exception as e:
-		return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": str(e)}, status=400)
 
 @api_view(['POST'])
 def resend_otp_view(request):
@@ -225,7 +225,7 @@ def updateName_view(request):
 
 		user.username = newUsername
 		user.save()
-		return Response({'message': 'username changed succesfully'}, status=status.HTTP_200_OK)
+		return Response({'message': 'username changed succesfully', 'username': user.username}, status=status.HTTP_200_OK)
 
 	except (CustomUser.DoesNotExist):
 		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)

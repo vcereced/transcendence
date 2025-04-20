@@ -5,6 +5,7 @@ import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
 import { handleJwtToken } from './jwtValidator.js';
 import { initLoginSocket } from './newLogin.js';
+import { getCookieValue } from '../utils/jwtUtils.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
@@ -115,9 +116,13 @@ export async function initHome() {
                 window.login_socket.close();
                 document.cookie = "accessToken=0; Max-Age=0; path=/";
                 document.cookie = "refreshToken=0; Max-Age=0; path=/";
-                sessionStorage.removeItem("action");
-                sessionStorage.removeItem("username");
-                sessionStorage.removeItem("email");
+
+                document.cookie = "action=0; Max-Age=0; path=/";
+                document.cookie = "username=0; Max-Age=0; path=/";
+                document.cookie = "email=0; Max-Age=0; path=/";
+                //sessionStorage.removeItem("action");
+                //sessionStorage.removeItem("username");
+                //sessionStorage.removeItem("email");
 
                 window.showPopup("deslogeo correctamente!");
             } else {
@@ -185,7 +190,8 @@ export async function initHome() {
     
     window.openProfilePopup = async function openProfilePopup(username) {
         
-        const currentUsername = sessionStorage.getItem('username');
+        //const currentUsername = sessionStorage.getItem('username');
+        const currentUsername = getCookieValue("username");
         var btn = document.getElementById("add-friend-btn");
         
         const data = await getDataUser(username);
@@ -210,7 +216,9 @@ export async function initHome() {
     }
         
     window.openSettingsPopup =  function openSettingsPopup() {
-        let email = sessionStorage.getItem("email");
+        //let email = sessionStorage.getItem("email");
+        let email = getCookieValue("email");
+
         document.getElementById('settingsPopup').style.display = 'flex';
 
         showPicture(email);
@@ -273,7 +281,8 @@ export async function initHome() {
 
 
     window.toggleFriendStatus = async function toggleFriendStatus() {
-        const currentUsername = sessionStorage.getItem('username');
+        //const currentUsername = sessionStorage.getItem('username');
+        const currentUsername = getCookieValue("username");
         const username = document.getElementById("profile-info-username").textContent.trim();
         
         var btn = document.getElementById("add-friend-btn");
@@ -481,13 +490,16 @@ export async function initHome() {
 
         if (isDefault) {
 
-            let email = sessionStorage.getItem("email");
+            //let email = sessionStorage.getItem("email");
+            let email = getCookieValue("email");
             updatePicture(email, src);
 
         }else {
 
             const fileInput = document.getElementById("upload-profile-pic");
-            const username = sessionStorage.getItem("username");
+            //const username = sessionStorage.getItem("username");
+            const username = getCookieValue("username");
+
             const file = fileInput.files[0]; // Obtener el archivo seleccionado
             const formData = new FormData();
             
@@ -504,7 +516,8 @@ export async function initHome() {
 
     document.getElementById("save-btn-name").addEventListener("click", () => {
         const newUsername = document.getElementById("new-username").value;
-        const email = sessionStorage.getItem("email");
+        //const email = sessionStorage.getItem("email");
+        const email = getCookieValue("email");
         updateUsername(email, newUsername);
         closeSettingsPopup();
     });
@@ -513,8 +526,9 @@ export async function initHome() {
         const oldPass = document.getElementById("old-password").value;
         const newPass1 = document.getElementById("new-password1").value;
         const newPass2 = document.getElementById("new-password2").value;
-        const email = sessionStorage.getItem("email");
-        
+        //const email = sessionStorage.getItem("email");
+        const email = getCookieValue("email");
+
         updatePassword(email, oldPass, newPass1, newPass2);
         closeSettingsPopup();
     });

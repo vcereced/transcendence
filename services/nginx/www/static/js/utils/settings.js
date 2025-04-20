@@ -33,14 +33,17 @@ export async function updateUsername(email, newUsername) {
 
         const data = await response.json();
         if (response.ok) {
-            window.sessionStorage.setItem("username", newUsername);
+            document.cookie = `username=${encodeURIComponent(newUsername)}; path=/;`;
+            //window.sessionStorage.setItem("username", newUsername);
             window.showPopup("usuario cambiado correctamente");
             window.closeSettingsPopup();
         } else {
-            alert(data.error || "Error al actualizar el nombre de usuario");
+            window.showPopup(data.error);
+            //alert(data.error || "Error al actualizar el nombre de usuario");
         }
     } catch (error) {
-        alert("Error en la solicitud");
+        window.showPopup(data.error);
+       // alert("Error en la solicitud");
         console.error("Error:", error);
     }
 }

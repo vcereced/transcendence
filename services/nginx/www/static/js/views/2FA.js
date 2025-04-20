@@ -2,6 +2,8 @@
 
 import EventListenerManager from '../utils/eventListenerManager.js';
 import { initLoginSocket } from './newLogin.js';
+import { getCookieValue } from '../utils/jwtUtils.js';
+
 export async function render2FA() {
     const response = await fetch('static/html/2FA.html');
     const htmlContent = await response.text();
@@ -14,9 +16,13 @@ export async function resendOtp() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                username: sessionStorage.getItem("username"),
-                password: sessionStorage.getItem("password"),
-                email: sessionStorage.getItem("email"),
+                username: getCookieValue("username"),
+                email : getCookieValue("email"),
+                password : getCookieValue("password"),
+
+                //username: sessionStorage.getItem("username"),
+                //password: sessionStorage.getItem("password"),
+                //email: sessionStorage.getItem("email"),
             }),
         });
 
@@ -45,9 +51,9 @@ export async function verifyOtpRegister(code) {
     
 
     try {
-       if (sessionStorage.getItem("action") === "register"){
+       if (getCookieValue("action") === "register"){
             url = "verify_email_otp_register";
-        } else if (sessionStorage.getItem("action") === "login"){
+        } else if (getCookieValue("action") === "login"){
             url = "verify_email_otp_login";
         } else {
             throw new Error("session Storage action not setted register/login");
@@ -59,14 +65,14 @@ export async function verifyOtpRegister(code) {
             body: JSON.stringify({
                 //username: sessionStorage.getItem("username"),
                 //password: sessionStorage.getItem("password"),
-                email: sessionStorage.getItem("email"),
+                email: getCookieValue("email"),
                 otp_token: code
             }),
         });
 
         const data = await response.json();
 
-        if (response.ok && sessionStorage.getItem("action") === "login") {
+        if (response.ok && getCookieValue("action") === "login") {
             
             window.showPopup(data.message);
            // document.getElementById("registerResponseMessage").innerText = data.message;
@@ -76,7 +82,7 @@ export async function verifyOtpRegister(code) {
             initLoginSocket();
             window.showPopup("sesion iniciada correctamente");
             window.location.hash = "#";
-        } else if (response.ok && sessionStorage.getItem("action") === "register") {
+        } else if (response.ok && getCookieValue("action") === "register") {
            // document.getElementById("registerResponseMessage").innerText = data.message;
             window.showPopup("registrado correctamente");
             window.location.hash = "#new-login";
@@ -105,7 +111,7 @@ export function init2FA() {
     const timerElement = document.getElementById("timer");
     const secondsElement = document.getElementById("seconds");
 
-    const username = sessionStorage.getItem("username");
+    const username =  getCookieValue("username");
     if (username) {
         document.getElementById("username").textContent = `@${username}`;
     }
