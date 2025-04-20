@@ -19,7 +19,7 @@ from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendin
 
 from rest_framework import generics
 
-SECRET_KEY = os.getenv("JWT_SECRET")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 @api_view(['GET'])
 def logout_view(request):

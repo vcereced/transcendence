@@ -341,6 +341,7 @@ function restoreTournamentTree() {
                         const originTreeId = Object.keys(players).find(
                             key => players[key]?.username === username
                         );
+
                         if (originTreeId === "left") {
                             originTree = "5";
                         } else if (originTreeId === "right") {
@@ -348,22 +349,26 @@ function restoreTournamentTree() {
                         }
                         console.log("%cisMaquina:", "color:red", isMaquina);
 
-                        if(isMaquina == true) {
-                            originTree = "6";
-                        }else if (isMaquina == false) {
-                            originTree = "5";
-                        }
+                        if (isWinner && isLoser) {
+                            
+                            if(isMaquina == true) {
+                                originTree = "6";
+                            }else if (isMaquina == false) {
+                                originTree = "5";
+                            }
+                        }   
         
                         if (originTree) {
                             const playerSlot = document.querySelector(`.player[data-player="winner-${originTree}"]`);
                             if (playerSlot) {
                                 playerSlot.textContent = username;
                                 playerSlot.classList.remove("winner", "loser");
-                                if (isWinner == isLoser && isMaquina == false){ 
+                                if (isWinner == isLoser && isMaquina == false && isLoser == true) { 
                                     playerSlot.classList.add("winner");
                                     isMaquina = true;
                                 }
                                 else if (isLoser) playerSlot.classList.add("loser");
+                                else if (isWinner) playerSlot.classList.add("winner");
                             }
                         }
                         

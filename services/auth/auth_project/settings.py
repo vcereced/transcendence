@@ -22,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 #SECRET_KEY = 'django-insecure-2eme7nqb@3a29lukn=)#7#_4g#e)oe*(#7&b-=tr*8_=iqaxkq'
-SECRET_KEY = os.getenv("JWT_SECRET")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', 'nginx', '127.0.0.1', 'auth_service', '*']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -47,16 +47,13 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
 ]
 
-#DESARROLLOO DESCOMENTAR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
-EMAIL_PORT = 587  # Puerto para conexión TLS (más seguro)
-EMAIL_USE_TLS = True  # Usar TLS para seguridad
-EMAIL_HOST_USER = 'davferjavvic@gmail.com'  # Tu dirección de correo de Gmail
-EMAIL_HOST_PASSWORD = 'llni inqn poqx wmat'  # La contraseña de aplicación generada 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Dirección que se usará para enviar los correos
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND") 
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER") 
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  
 
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
@@ -65,7 +62,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -101,11 +97,11 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=50),  # Duración del token
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=1),     # Duración del token de refresco
-    'ROTATE_REFRESH_TOKENS': True,                  # Renueva el refresh token al utilizarlo
-    'BLACKLIST_AFTER_ROTATION': True,               # Evitar que se reutilicen tokens de refresco rotados
-    'AUTH_HEADER_TYPES': ('Bearer',),               # El tipo de encabezado esperado
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=50),  
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=1),    
+    'ROTATE_REFRESH_TOKENS': True,                  
+    'BLACKLIST_AFTER_ROTATION': True,               
+    'AUTH_HEADER_TYPES': ('Bearer',),               
 
 }
 
