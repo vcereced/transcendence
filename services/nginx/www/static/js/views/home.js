@@ -1,5 +1,5 @@
 // static/js/views/home.js
-import { showUsername, showPicture, updateUsername, updatePassword, updatePicture, uploadImage } from '../utils/settings.js';
+import { showPicture, updateUsername, updatePassword, updatePicture, uploadImage } from '../utils/settings.js';
 import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getDataUser } from '../utils/profile.js';
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
@@ -8,6 +8,7 @@ import { initLoginSocket } from './newLogin.js';
 
 export async function renderHome() {
     const response = await fetch('static/html/home.html');
+    
     const htmlContent = await response.text();
     return htmlContent;
 }
@@ -49,6 +50,7 @@ export async function initHome() {
     const histories = document.querySelectorAll('.history');
     const profilePopup = document.getElementById('profilePopup');
     const settingsPopup = document.getElementById('settingsPopup');
+    const settingsCurrentUsername = document.getElementById("current-username");
     const homeDiv = document.getElementsByClassName('home')[0];
 
     const profileUsernameElement = document.getElementById("profile-username");
@@ -119,15 +121,13 @@ export async function initHome() {
                 sessionStorage.removeItem("username");
                 sessionStorage.removeItem("email");
 
-                window.showPopup("deslogeo correctamente!");
+                window.showPopup("Sesión cerrada correctamente");
             } else {
-                return response.json().then(data => {
-                    window.showPopup("Error al desloguear: " + (data.error));
-                });
+                window.showPopup("Error al cerrar sesión");
             }
         })
         .catch(err => {
-            window.showPopup("Error al desloguear en catch: " + err.message);
+            window.showPopup("Error al cerrar sesión");
         })
         .finally(() => {
             window.location.hash = "#new-login";
@@ -140,14 +140,13 @@ export async function initHome() {
             await handleJwtToken();
             const response = await fetch("/api/settings/playersList");
             if (!response.ok) {
-                throw new Error("Error al obtener la lista de jugadores");
+                window.showPopup("Error al descargar la lista de jugadores");
+                return;
             }
             players = await response.json();
-            console.log("Lista de jugadores descargada:", players);
             return players;
         } catch (error) {
-            console.error("Error en downloadPlayerList:", error);
-            alert("Error en downloadPlayerList: " + error)
+            window.showPopup("Error al descargar la lista de jugadores");
         }
     }
 
@@ -211,65 +210,62 @@ export async function initHome() {
         
     window.openSettingsPopup =  function openSettingsPopup() {
         let email = sessionStorage.getItem("email");
+        let username = sessionStorage.getItem("username");
         document.getElementById('settingsPopup').style.display = 'flex';
 
         showPicture(email);
-        showUsername(email);
+        settingsCurrentUsername.innerText = username;
     }
 
-        window.closeSettingsPopup = function closeSettingsPopup() {
-            settingsPopup.style.display = 'none';
-        }
+    window.closeSettingsPopup = function closeSettingsPopup() {
+        settingsPopup.style.display = 'none';
+    }
+    
+    window.toggleSettingsFields = function toggleSettingsFields() {
+        let selectedOption = document.getElementById("settings-option").value;
+        let fields = ["profile-pic-field", "username-field", "password-field"];
         
-        window.toggleSettingsFields = function toggleSettingsFields() {
-            let selectedOption = document.getElementById("settings-option").value;
-            let fields = ["profile-pic-field", "username-field", "password-field"];
-            
-            fields.forEach(field => {
-                document.getElementById(field).style.display = "none";
-            });
-            
-            if (selectedOption !== "none") {
-                document.getElementById(selectedOption + "-field").style.display = "block";
+        fields.forEach(field => {
+            document.getElementById(field).style.display = "none";
+        });
+        
+        if (selectedOption !== "none") {
+            document.getElementById(selectedOption + "-field").style.display = "block";
+        }
+    }
+    
+    window.createLocalGame = function createLocalGame(type) {
+        checkActiveGame(document, homeDiv);
+        fetch('/api/game/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ "type": type })
+        })
+        .then(response => {
+            if (!response.ok) {
+                window.showPopup("Error al crear el juego");
+                return;
             }
-        }
+            window.location.hash = "#rock-paper-scissors";
+        })
+        .catch(error => {
+            window.showPopup("Error al crear el juego");
+        });
+    }
+    
+    //--DONE BY GARYDD1---
+    window.checkOnlineStatus = function checkOnlineStatus(userId) {
         
-        window.createLocalGame = function createLocalGame(type) {
-            checkActiveGame(document, homeDiv);
-            // Check active games, if active, show popup explaining and redirect
-            // Make POST call to /api/game/create/ with type of game to be created (player, computer)
-            fetch('/api/game/create/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ "type": type })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    console.error(response);
-                    return;
-                }
-                window.location.hash = "#rock-paper-scissors";
-            })
-            .catch(error => {
-                console.error(error);
-            });
-            
-            // If success, show popup of redirecting to created game
-        }
-        
-        //--DONE BY GARYDD1---
-        window.checkOnlineStatus = function checkOnlineStatus(userId) {
-            
-            userId = String(userId);
+        userId = String(userId);
 
-            if (window.logged_users.includes(userId)) {
-                return true;
-            } else {
-                return false; 
-            }
+        if (window.logged_users.includes(userId)) {
+            return true;
+        } else {
+            return false; 
         }
+    }
 
 
     window.toggleFriendStatus = async function toggleFriendStatus() {
@@ -298,7 +294,7 @@ export async function initHome() {
             const userData = await userResponse.json();
 
             if (!userData) {
-                console.error("User data not found");
+                window.showPopup("Error al obtener los datos del usuario");
                 return;
             }
 
@@ -310,10 +306,9 @@ export async function initHome() {
             const statsData = await statsResponse.json();
 
             if (!statsData) {
-                console.error("Game data not found");
+                window.showPopup("Error al obtener las estadísticas del juego");
                 return;
             }
-            console.log("Game statistics data:", statsData);
 
             // Step 2.5: Get tournament statistics using user_id
             const tournamentResponse = await fetch(`/api/tournament/user/${user_id}/tournament-stats`);
@@ -322,17 +317,15 @@ export async function initHome() {
                 console.error("Tournament data not found");
                 return;
             }
-            console.log("Tournament statistics data:", tournamentData);
 
             // Step 3: Get game history using the same user_id
             const historyResponse = await fetch(`/api/game/history/${user_id}/`);
             const historyData = await historyResponse.json();
 
             if (!historyData) {
-                console.error("Game history not found");
+                window.showPopup("Error al obtener el historial de juegos");
                 return;
             }
-            console.log("Game history data:", historyData);
 
 
             // Populate elements with game data
@@ -344,7 +337,6 @@ export async function initHome() {
             profileRpsGamesWonElement.innerText = statsData.online_rps_matches_won || 0;
 
             // Populate elements with game history
-
             profileTournamentHistoryElement.innerHTML = "";
             profileOnlineHistoryElement.innerHTML = "";
             profileLocalHistoryElement.innerHTML = "";
@@ -391,7 +383,7 @@ export async function initHome() {
             }
 
         } catch (error) {
-            console.error('Error fetching data:', error);
+            window.showPopup("Error al obtener los datos del usuario");
         }
     }
 
@@ -454,23 +446,15 @@ export async function initHome() {
 
     
     document.getElementById("upload-profile-pic").addEventListener("change", function(event) {
-        const file = event.target.files[0]; // Obtiene el archivo seleccionado
+        const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Cambia la imagen de previsualización con la imagen seleccionada
                 document.getElementById("current-profile-pic").src = e.target.result;
             };
-            reader.readAsDataURL(file); // Convierte la imagen seleccionada en una URL de datos
+            reader.readAsDataURL(file);
         }
     });
-
-    // document.getElementById("save-btn-images").addEventListener("click", async () => {
-    //     const src = document.getElementById("current-profile-pic").src;
-    //     let email = sessionStorage.getItem("email");
-    //     updatePicture(email, src);
-    //     window.closeSettingsPopup();
-    // });
 
     document.getElementById("save-btn-images-host").addEventListener("click", async () => {
         
@@ -480,33 +464,28 @@ export async function initHome() {
         const isDefault = allowedNames.some(name => src.endsWith(name));
 
         if (isDefault) {
-
             let email = sessionStorage.getItem("email");
             updatePicture(email, src);
-
-        }else {
-
+        } else {
             const fileInput = document.getElementById("upload-profile-pic");
             const username = sessionStorage.getItem("username");
-            const file = fileInput.files[0]; // Obtener el archivo seleccionado
+            const file = fileInput.files[0];
             const formData = new FormData();
             
             if (!file) {
                 window.showPopup("Por favor, selecciona una imagen.");
                 return;
             }
-            formData.append("profile_pic", file); // 'profile_pic' es el nombre del campo en el backend
+            formData.append("profile_pic", file);
             formData.append("username", username);
             uploadImage(formData);
         }
-        closeSettingsPopup();
     });
 
     document.getElementById("save-btn-name").addEventListener("click", () => {
         const newUsername = document.getElementById("new-username").value;
         const email = sessionStorage.getItem("email");
         updateUsername(email, newUsername);
-        closeSettingsPopup();
     });
 
     document.getElementById("save-btn-password").addEventListener("click", () => {
@@ -514,9 +493,7 @@ export async function initHome() {
         const newPass1 = document.getElementById("new-password1").value;
         const newPass2 = document.getElementById("new-password2").value;
         const email = sessionStorage.getItem("email");
-        
         updatePassword(email, oldPass, newPass1, newPass2);
-        closeSettingsPopup();
     });
 
 
@@ -588,18 +565,18 @@ export async function initHome() {
 
     window.eventManager.addEventListener(document.getElementById('profilePopup'), 'click', function (event) {
         if (!event.target.closest('.profile-container')) {
-            closeProfilePopup();
+            window.closeProfilePopup();
         }
     });
 
     window.eventManager.addEventListener(document.getElementById('settingsPopup'), 'click', function (event) {
         if (!event.target.closest('.settings-container')) {
-            closeSettingsPopup();
+            window.closeSettingsPopup();
         }
     });
 
     document.getElementById('add-friend-btn').addEventListener('click', function(event) {
-        window.toggleFriendStatus(); // Llamar a la función con el username
+        window.toggleFriendStatus();
     });
 
     
@@ -635,9 +612,8 @@ export async function initHome() {
     }
     try {
         await handleJwtToken();
-       // console.log("Token is valid, starting here");
-      
         initLoginSocket();
+        await checkActiveGame(document, homeDiv);
     }
     catch (error) {
         console.log("Token is invalid, redirecting to login");
@@ -645,5 +621,4 @@ export async function initHome() {
         window.location.hash = "#new-login"
        // console.error(error);
     }
-    await checkActiveGame(document, homeDiv);
 }

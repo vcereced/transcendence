@@ -3,7 +3,8 @@ export async function checkActiveGame(document, reconnectingPopupParent) {
     try {
         const response = await fetch('/api/game/active/');
         if (!response.ok) {
-            console.error('Error checking active game. Response not ok:', response);
+            window.showPopup("Error al comprobar si hay una partida activa");
+            return;
         }
         const data = await response.json();
         let redirectHash;
@@ -12,7 +13,6 @@ export async function checkActiveGame(document, reconnectingPopupParent) {
         } else if (data.has_active_pong_game) {
             redirectHash = '#game';
         } else {
-            console.log('No active game');
             return;
         }
         reconnectingPopupParent.appendChild(buildReconnectingPopup(document));
@@ -21,7 +21,7 @@ export async function checkActiveGame(document, reconnectingPopupParent) {
         }, 2000);
 
     } catch (error) {
-        console.error('Error checking active game. Error in fetch:', error);
+        window.showPopup("Error al comprobar si hay una partida activa");
     }
 }
 

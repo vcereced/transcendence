@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import CustomUser, Friendship
 
-# Register your models here.
+admin.register([
+	CustomUser,
+	Friendship,
+])

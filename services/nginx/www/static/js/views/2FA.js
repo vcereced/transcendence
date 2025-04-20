@@ -1,6 +1,5 @@
 // static/js/views/2FA.js
 
-import EventListenerManager from '../utils/eventListenerManager.js';
 import { initLoginSocket } from './newLogin.js';
 export async function render2FA() {
     const response = await fetch('static/html/2FA.html');
@@ -23,18 +22,14 @@ export async function resendOtp() {
         const data = await response.json();
 
         if (response.ok) {
-            //document.getElementById("registerResponseMessage").innerText = data.message;
             window.showPopup(data.message);
             return true;
         } else {
-            //document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";
             window.showPopup(data.message);
             return false;
         }
     } catch (error) {
-        console.error("Error en la solicitud:", error);
-        //document.getElementById("registerResponseMessage").innerText = "Error de conexión.";
-        window.showPopup("Error de conexion");
+        window.showPopup("Error reenviando el código");
     }
 }
 
@@ -57,8 +52,6 @@ export async function verifyOtpRegister(code) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                //username: sessionStorage.getItem("username"),
-                //password: sessionStorage.getItem("password"),
                 email: sessionStorage.getItem("email"),
                 otp_token: code
             }),
@@ -67,27 +60,19 @@ export async function verifyOtpRegister(code) {
         const data = await response.json();
 
         if (response.ok && sessionStorage.getItem("action") === "login") {
-            
-            window.showPopup(data.message);
-           // document.getElementById("registerResponseMessage").innerText = data.message;
-            console.log("obtenemos coookies oleee")
             document.cookie = `accessToken=${data.access}; path=/; secure; SameSite=Lax`;
             document.cookie = `refreshToken=${data.refresh}; path=/; secure; SameSite=Lax`;
             initLoginSocket();
-            window.showPopup("sesion iniciada correctamente");
             window.location.hash = "#";
         } else if (response.ok && sessionStorage.getItem("action") === "register") {
-           // document.getElementById("registerResponseMessage").innerText = data.message;
-            window.showPopup("registrado correctamente");
+            window.showPopup("Usuario registrado correctamente");
             window.location.hash = "#new-login";
         
         } else {
-            //document.getElementById("registerResponseMessage").innerText = data.error || "Error desconocido";
             window.showPopup(data.error);
         }
     } catch (error) {
         console.error("Error en la solicitud:", error);
-       // document.getElementById("registerResponseMessage").innerText = "Error de conexión.";
         window.showPopup("Error de conexión.");
     }
 }
@@ -113,6 +98,7 @@ export function init2FA() {
     // --- DOM ELEMENTS ---
 
     const title = document.querySelector('.site-title');
+    const codeContainer = document.getElementById("code-container");
 
     // --- FUNCTIONS ---
 
@@ -136,33 +122,14 @@ export function init2FA() {
     
     window.resendCode = function resendCode() {
         if (resendOtp()) {
-            alert("Código reenviado");
+            window.showPopup("Código reenviado");
             clearInterval(resendInterval);
-            startResendTimer();
+            window.startResendTimer();
         }else{
-            alert("No se puede reenviar codigo");
+            window.showPopup("Error reenviando el código");
         }
     }
-
-    const codeContainer = document.getElementById("code-container");
-    codeContainer.addEventListener("paste", (e) => {
-        e.preventDefault();
-        const inputs = document.querySelectorAll(".code-input");
-        // Elimina espacios y obtiene el texto pegado
-        const pastedData = e.clipboardData.getData("text").replace(/\s+/g, '');
-        // Comienza desde el input activo o, si no hay, desde el primero
-        let startIndex = Array.from(inputs).indexOf(document.activeElement);
-        if (startIndex === -1) startIndex = 0;
-        // Distribuye los caracteres desde startIndex hasta el final disponible
-        for (let i = 0; i < pastedData.length && startIndex < inputs.length; i++, startIndex++) {
-            inputs[startIndex].value = pastedData[i];
-            inputs[startIndex].style.background = "#16a085";
-        }
-        // Coloca el foco en el último input modificado
-        if (startIndex > 0 && startIndex <= inputs.length) {
-            inputs[startIndex - 1].focus();
-        }
-    });
+    
 
     window.handleInput = function handleInput(input, index) {
         const inputs = document.querySelectorAll(".code-input");
@@ -198,7 +165,7 @@ export function init2FA() {
     };
     
     
-    window.verifyCode = async function verifyCode() { // ← Agregar async aquí
+    window.verifyCode = async function verifyCode() {
         const code = Array.from(document.querySelectorAll(".code-input"))
                           .map(input => input.value)
                           .join("");
@@ -207,7 +174,6 @@ export function init2FA() {
             verifyOtpRegister(code);
         } else {
             window.showPopup("Por favor, ingresa los 6 dígitos del código.");
-           //alert("Por favor, ingresa los 6 dígitos del código.");
         }
     };
         
@@ -231,6 +197,25 @@ export function init2FA() {
     window.eventManager.addEventListener(title, 'mouseleave', () => {
         title.classList.remove('glitch');
         title.style.transform = 'translateY(0)';
+    });
+
+    window.eventManager.addEventListener(codeContainer, "paste", (e) => {
+        e.preventDefault();
+        const inputs = document.querySelectorAll(".code-input");
+        // Elimina espacios y obtiene el texto pegado
+        const pastedData = e.clipboardData.getData("text").replace(/\s+/g, '');
+        // Comienza desde el input activo o, si no hay, desde el primero
+        let startIndex = Array.from(inputs).indexOf(document.activeElement);
+        if (startIndex === -1) startIndex = 0;
+        // Distribuye los caracteres desde startIndex hasta el final disponible
+        for (let i = 0; i < pastedData.length && startIndex < inputs.length; i++, startIndex++) {
+            inputs[startIndex].value = pastedData[i];
+            inputs[startIndex].style.background = "#16a085";
+        }
+        // Coloca el foco en el último input modificado
+        if (startIndex > 0 && startIndex <= inputs.length) {
+            inputs[startIndex - 1].focus();
+        }
     });
 
 
