@@ -145,14 +145,10 @@ def login_api_view(request):
 def verify_email_otp_login_view(request):
 
 	email = request.data.get('email')
-	#password = request.data.get('password')
 	otp_token = request.data.get('otp_token')
 
 	try:
 		user = CustomUser.objects.get(email=email, is_active = True)
-
-		#if not user.check_password(password):
-		#	return Response({"error": "password wrong."}, status=status.HTTP_400_BAD_REQUEST)
 		
 		if verifyEmailTOPTDevice(email, otp_token):
 
@@ -160,15 +156,15 @@ def verify_email_otp_login_view(request):
 			refresh['username'] = user.username
 
 			return Response({
-				'message': 'OTP EMAIL LOGED',
+				'message': 'OTP verificado con éxito',
 				'refresh': str(refresh),
 				'access': str(refresh.access_token)
 			}, status=status.HTTP_200_OK)
 
 	except (CustomUser.DoesNotExist):
-		return Response({"error": "User no exist."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "Usuario no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
 	except (EmailOTPDevice.DoesNotExist):
-		return Response({"error": "OTP WRONG."}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": "El mensaje OTP es incorrecto"}, status=status.HTTP_400_BAD_REQUEST)
 	except CustomError as e:
 		return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
