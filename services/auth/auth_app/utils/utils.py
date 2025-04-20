@@ -5,10 +5,10 @@ from django.core.files.storage import default_storage
 
 def verifyEmailTOPTDevice(email, otp_token):
 
-	device = EmailOTPDevice.objects.get(email=email, otp_token=otp_token)# if not error throw exception .DoesNotExist
+	device = EmailOTPDevice.objects.get(email=email, otp_token=otp_token)
 	
 	if device.valid_until < now():
-		raise CustomError("otp email expired")
+		raise CustomError("El mensaje OTP ha expirado")
 	else:
 		return True
 
@@ -17,11 +17,11 @@ def verifyUser(email, password):
 	user = CustomUser.objects.filter(email=email).first()  # Buscar el usuario directamente
 
 	if user is None:
-		return "wrong email"
+		return "Email incorrecto"
 	elif not user.check_password(password):
-		return "password wrong"
+		return "Contraseña incorrecta"
 	elif user.is_active == False:
-		return "user pending to validate"
+		return "Usuario pendiente de verificación"
 	else:
 		return "ok"
 
@@ -30,9 +30,9 @@ def verifyPendingUser(email, username, password):
 	user = CustomUser.objects.filter(email=email, username= username).first()  # Buscar el usuario directamente
 
 	if user is None:
-		return "wrong user"
+		return "Usuario incorrecto"
 	elif not user.check_password(password):
-		return "password wrong"
+		return "Contraseña incorrecta"
 	elif user.is_active == False:
 		return 'ok'
 	else:

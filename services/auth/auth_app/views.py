@@ -129,16 +129,13 @@ def login_api_view(request):
 	else:
 		user = CustomUser.objects.get(email=email)
 
-	#refreshToken = RefreshToken.for_user(user)
-	#refreshToken['email'] = user.email
-
 	device = EmailOTPDevice.objects.get(user=user)
 	device.generate_otp()
 	device.send_otp()
 
 	return Response({
 		'username': user.username, 
-		'message': 'introduce el otp enviado al e-mail.'
+		'message': 'Introduce el mensaje OTP enviado al email.'
 	}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
