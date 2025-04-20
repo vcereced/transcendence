@@ -1,4 +1,5 @@
 import { handleJwtToken } from '../views/jwtValidator.js';
+import { getCookieValue } from '../utils/jwtUtils.js';
 
 export async function isFriend(username1, username2) {
         
@@ -63,6 +64,12 @@ export async function handleButtonFriend(username1, username2) {
 
 export function goToPlayerProfile(username) {
 
+    window.openProfilePopup(username);
+}
+
+window.goToMyPlayerProfile = function goToMyPlayerProfile() {
+
+    const username = getCookieValue("username");
     window.openProfilePopup(username);
 }
 

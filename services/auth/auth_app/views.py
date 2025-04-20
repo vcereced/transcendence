@@ -35,7 +35,7 @@ def logout_view(request):
 
 		return Response({'message': 'Sesión cerrada correctamente'}, status=status.HTTP_200_OK)
 	except Exception as e:
-		return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({"error": str(e)}, status=400)
 
 @api_view(['POST'])
 def resend_otp_view(request):
@@ -216,7 +216,7 @@ def updateName_view(request):
 		serializer = RegisterSerializer(user, data={"username": newUsername}, partial=True)
 		if serializer.is_valid():
 			serializer.save()
-			return Response({"message": "Nombre de usuario actualizado correctamente"}, status=status.HTTP_200_OK)
+			return Response({"message": "Nombre de usuario actualizado correctamente", 'username': user.username}, status=status.HTTP_200_OK)
 		else:
 			return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 	except CustomUser.DoesNotExist:
