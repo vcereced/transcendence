@@ -84,8 +84,8 @@ export async function getDataUser(username) {
             
         if (!response.ok) {
             window.showPopup("Error obteniendo datos del usuario");
+        }
         return data;
-    }
     } catch (error) {
         window.showPopup("Error obteniendo datos del usuario");
     }
