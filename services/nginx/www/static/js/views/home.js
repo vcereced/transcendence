@@ -216,7 +216,7 @@ export async function initHome() {
     }
         
     window.openSettingsPopup =  function openSettingsPopup() {
-        //let email = sessionStorage.getItem("email");
+        let username = getCookieValue("username");
         let email = getCookieValue("email");
 
         document.getElementById('settingsPopup').style.display = 'flex';
