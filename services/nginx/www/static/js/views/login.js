@@ -5,7 +5,7 @@ import { getDataUser } from '../utils/profile.js';
 import { getCookieValue } from '../utils/jwtUtils.js';
 
 
-export async function renderNewLogin() {
+export async function renderLogin() {
     const response = await fetch('static/html/new_login.html');
     const htmlContent = await response.text();
     return htmlContent;
@@ -49,7 +49,7 @@ function initLoginSocket() {
 
 export { initLoginSocket } ;
 
-export function initNewLogin() {
+export function initLogin() {
 
     // --- DOM ELEMENTS ---
 
