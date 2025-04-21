@@ -2,6 +2,7 @@
 
 import { handleJwtToken } from './jwtValidator.js';
 import { hasAccessToken } from '../utils/auth_management.js';
+import { getCookieValue } from '../utils/jwtUtils.js';
 
 export async function renderVersusWait() {
     const response = await fetch('static/html/versus_wait.html');
@@ -24,8 +25,8 @@ export function initVersusWait() {
 
     // --- VARIABLES AND CONSTANTS ---
 
-    let userId = window.sessionStorage.getItem('userId');
-    let username = window.sessionStorage.getItem('username');
+    const userId = parseInt(getCookieValue('userId'));
+    const username = getCookieValue('username');
 
     const BALL_SIZE = 20;
     let obstacles = [];
@@ -218,15 +219,9 @@ export function initVersusWait() {
 
     versus_socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        userId = parseInt(window.sessionStorage.getItem('userId'));
-        username = window.sessionStorage.getItem('username');
-        if (data.type === "connected") {
-            window.sessionStorage.setItem('userId', data.user_id);
-            window.sessionStorage.setItem('username', data.username);
-        }
         if (data.type === "match_found" && data.ids.includes(userId)) {
             opponentUsername.textContent = data.usernames[0] === username ? data.usernames[1] : data.usernames[0];
-            matchmakingStatus.textContent = "Match Found! Starting game";
+            matchmakingStatus.textContent = "Oponente encontrado! Iniciando partida";
             setTimeout(() => {
                 window.location.hash = "#rock-paper-scissors";
                 versus_socket.close();
@@ -236,7 +231,9 @@ export function initVersusWait() {
     };
 
     versus_socket.onerror = (error) => {
+        window.showPopup("Error de conexión. Reintentando...", 2000);
         setTimeout(() => {
+            versus_socket.close();
             versus_socket = new WebSocket(`wss://${window.location.host}/ws/versus/`);
         }, 2000);
     };
@@ -249,7 +246,6 @@ export function initVersusWait() {
 
 
     // --- POST INITIALIZATION ---
-
 
     playerUsername.textContent = username;
     ball.classList.add('ball');
