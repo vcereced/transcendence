@@ -28,8 +28,8 @@ export async function updateUsername(email, newUsername) {
 
         const data = await response.json();
         if (response.ok) {
+            document.cookie = `username=${encodeURIComponent(newUsername)}; path=/;`;
             window.showPopup("Nombre de usuario actualizado correctamente");
-            sessionStorage.setItem("username", newUsername);
             window.closeSettingsPopup();
         } else {
             window.showPopup(getFirstErrorMessage(data.error));

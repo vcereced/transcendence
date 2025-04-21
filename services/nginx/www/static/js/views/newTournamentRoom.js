@@ -15,7 +15,8 @@ export function initNewTournamentRoom(tournamentId) {
         room_socket = startTournamentWebSocket(tournamentId);
     }
     const startButton = document.getElementById("start-tournament-btn");
-    let tournamentName = sessionStorage.getItem("tournamentName") 
+    let tournamentName = sessionStorage.getItem("tournamentName");
+
     if (startButton) {
         startButton.addEventListener("click", () => {
             if (startButton.disabled) return;
