@@ -30,7 +30,6 @@ export async function updateUsername(email, newUsername) {
         if (response.ok) {
             document.cookie = `username=${encodeURIComponent(newUsername)}; path=/;`;
             window.showPopup("Nombre de usuario actualizado correctamente");
-            window.closeSettingsPopup();
         } else {
             window.showPopup(getFirstErrorMessage(data.error));
         }

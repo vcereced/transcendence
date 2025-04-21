@@ -499,6 +499,8 @@ export async function initHome() {
         //const email = sessionStorage.getItem("email");
         const email = getCookieValue("email");
         updateUsername(email, newUsername);
+        window.closeSettingsPopup();
+        window.logout();
     });
 
     document.getElementById("save-btn-password").addEventListener("click", () => {
