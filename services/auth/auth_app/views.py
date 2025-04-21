@@ -134,7 +134,8 @@ def login_api_view(request):
 	device.send_otp()
 
 	return Response({
-		'username': user.username, 
+		'username': user.username,
+		'userId': user.id,
 		'message': 'Introduce el mensaje OTP enviado al email.'
 	}, status=status.HTTP_200_OK)
 

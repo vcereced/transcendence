@@ -6,7 +6,7 @@ import { getCookieValue } from '../utils/jwtUtils.js';
 
 
 export async function renderLogin() {
-    const response = await fetch('static/html/new_login.html');
+    const response = await fetch('static/html/login.html');
     const htmlContent = await response.text();
     return htmlContent;
 }
@@ -156,6 +156,7 @@ export function initLogin() {
                 document.cookie = "action=login; path=/";
                 document.cookie = `username=${encodeURIComponent(data.username)}; path=/`;
                 document.cookie = `email=${encodeURIComponent(email)}; path=/`;
+                document.cookie = `userId=${encodeURIComponent(data.userId)}; path=/`;
                 window.showPopup("Introduce el código recibido por correo");
                 window.location.hash = "#2FA";
             } else {
