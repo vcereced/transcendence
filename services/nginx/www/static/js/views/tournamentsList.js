@@ -17,9 +17,8 @@ export function initTournamentsList() {
     
     const gameLists = document.querySelectorAll('.game-list');
     const title = document.querySelector('.site-title');
-    const availableContainer = document.getElementById('available-games');
+    let availableContainer = document.getElementById('available-games');
     
-
     // --- FUNCTIONS ---
 
     /**
@@ -76,7 +75,6 @@ export function initTournamentsList() {
             const playerCounts = await playerCountsResponse.json();
 
             tournaments.forEach(tournament => {
-                console.log("Tournament data:", tournament);
                 const gameItem = createGameItem({
                 
                     id: tournament.id,
@@ -138,7 +136,6 @@ export function initTournamentsList() {
             if (response.ok) {
                 window.showPopup(`Te has unido al torneo ${tournamentName}`, 3000);
                 sessionStorage.setItem("tournamentName", tournamentName);
-                console.log("%ctournamentName settled", "color:blue", tournamentName);
                 setTimeout(() => {
                     location.hash = `tournament/room/${tournamentId}`;
                 }, 700);
@@ -174,7 +171,6 @@ export function initTournamentsList() {
                     
                 }
                 else if (data.type == "tournament_created") {
-                    console.log("%ccreting new tournament", "color:blue", data);
                     const newTournament = {
                         id: data.tournament_id,
                         name: data.tournament_name,
@@ -189,7 +185,8 @@ export function initTournamentsList() {
                         button.disabled = true;
                         await joinTournament(newTournament.id, newTournament.name);
                     });
-                    availableContainer.appendChild(gameItem);
+                    let listContainer = document.getElementById('available-games');
+                    listContainer.appendChild(gameItem);
                 }
             };
 
