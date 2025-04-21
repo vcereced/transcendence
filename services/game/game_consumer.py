@@ -32,7 +32,6 @@ async def discover_games():
         discovered_rps_id = await redis_client.lpop("rps_queue")
         discovered_game_id = await redis_client.lpop("game_queue")
         if not discovered_game_id and not discovered_rps_id:
-            await asyncio.sleep(1)
             continue
         await asyncio.sleep(0.1)  # To allow the game state to be created in redis
         if discovered_rps_id:

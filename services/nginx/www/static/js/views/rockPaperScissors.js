@@ -124,8 +124,9 @@ export async function initRockPaperScissors() {
             freezeChoice(data.right_player_choice, 'right');
         } else if (data.type === 'error') {
             rpsSocket.close();
+            window.showPopup("Error de conexión", 2000);
             setTimeout(() => {
-                rpsSocket = new WebSocket(`wss://${window.location.host}/ws/game/rock-paper-scissors/`);
+                window.location.hash = "#";
             }, 1000);
         }
 
