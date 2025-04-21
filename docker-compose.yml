@@ -203,7 +203,19 @@ services:
     networks:
       - app-network
 
-
+  blockchain:
+    build:
+      context: ./services/blockchain
+    container_name: blockchain
+    volumes:
+      - ./services/blockchain:/app
+    ports:
+      - "8016:8006"  #Admin console
+    command: [/bin/sh, drf_entrypoint.sh]
+    env_file:
+      - .env
+    networks:
+      - app-network
 
   # tournament:
   #   build:
