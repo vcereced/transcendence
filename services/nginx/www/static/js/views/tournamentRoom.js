@@ -10,19 +10,34 @@ export async function renderTournamentRoom() {
 
 let room_socket = null;
 let isHistoryBack = false;
-export function initTournamentRoom(tournamentId) {
+export async function initTournamentRoom(tournamentId) {
     if (room_socket === null) {
         room_socket = startTournamentWebSocket(tournamentId);
     }
-    const startButton = document.getElementById("start-tournament-btn");
+    let startButton = document.getElementById("start-tournament-btn");
     let tournamentName = sessionStorage.getItem("tournamentName");
 
     if (startButton) {
         startButton.addEventListener("click", () => {
-            if (startButton.disabled) return;
+            if (startButton.disabled) {
+                console.log("%cButton DOM object:", "color: red", startButton);
+                //hide the button
+                return;   
+            }
             startButton.disabled = true;
             sendWebSocketMessage("start_tournament", { tournament_id: tournamentId.id });
+            startButton.style.display = "none";
         });
+        //check if the tournament is started asking the server
+        const isActive = await fetch(`/api/tournament/${tournamentId.id}/name`);
+        if (isActive.ok) {
+            const data = await isActive.json();
+            if (data.is_active == false) {
+                startButton.style.display = "none"
+            }    
+        } else {
+            showPopup("Error de Conexión", 2000);
+        }
     }
     if (tournamentName) {
         const tournamentNameElement = document.getElementById("text-to-copy");
@@ -87,6 +102,10 @@ function startTournamentWebSocket(tournamentId) {
             updateUserList(data.user_list);
         }
         if (data.type === "start_tournament") {
+            let startButton = document.getElementById("start-tournament-btn");
+            if (startButton) {
+                startButton.style.display = "none";
+            }
             start_tournament(data);
             setTimeout(() => {
                 window.location.hash = '#rock-paper-scissors'; 
@@ -98,23 +117,15 @@ function startTournamentWebSocket(tournamentId) {
             }, 500);
         }
         if (data.type === "new_round") {
-                //check if my user is in the new round so i can be redirected to the game
-                console.log("%cNew round data:", "color: blue", data);
-                const roundId = Number(data.round_id) - 1;
-                console.log("%cMy ROUND STARTING:", "color: red", roundId);
-                console.log("%cROUND IS:", "color: green", data.new_round);
                 const myUser = data.username;
                 //check if myUser is in data.new_round
                 if  (checkNewRound(data.new_round, myUser)) {
-                    console.log("%cMy user is in the new round:", "color: green", myUser);
                     setTimeout(() => {
                         window.location.hash = '#rock-paper-scissors';
                     }
                     , 4000);
                 }
         }
-        //HERE WE CAN ADD MORE CONDITIONS TO UPDATE THE TOURNAMENT TREE
-        //OR TO START THE TOURNAMENT.
     };
 
     room_socket.onclose = function (event) {
@@ -150,7 +161,6 @@ function updateUserList(userList) {
 
 function sendWebSocketMessage(type, data) {
     if (room_socket && room_socket.readyState === WebSocket.OPEN) {
-        console.log("Enviando mensaje WebSocket:", { type, ...data });
         room_socket.send(JSON.stringify({ type, ...data }));
     } else {
         console.error("WebSocket no está conectado.");
@@ -160,13 +170,10 @@ function sendWebSocketMessage(type, data) {
 function start_tournament(data) {
     window.showPopup("Torneo Iniciado! prepárate para jugar!", 4000);
     
-    
     const parsedTournamentTree = {};
     for (const key in data.tournament_tree) {
         parsedTournamentTree[key] = JSON.parse(data.tournament_tree[key]);
     }
-
-    console.log("Árbol del torneo:", parsedTournamentTree);
 
     sessionStorage.setItem("tournament_tree", JSON.stringify(data.tournament_tree));
 
@@ -186,18 +193,11 @@ function start_tournament(data) {
 function update_tournament_tree(data) {
 
     const { match_id, winner, loser } = data;
-    console.log("Updating tournament tree:", data);
-
     const currentMatch = document.querySelectorAll(`.match[data-match="${match_id}"]`);
     if (!currentMatch) {
         console.error(`No se encontró el partido con ID ${match_id}`);
         return;
     }
-    console.log("%cCurrent Match:", "color:blue", currentMatch);
-    console.log("%cWinner:", "color:green", winner);
-    console.log("%cLoser:", "color:red", loser);
-    console.log("%cMatch ID:", "color:purple", match_id);
-
     let isMaquina = false;
     currentMatch.forEach((match) => {
         const players = match.querySelectorAll(".player");
@@ -224,7 +224,6 @@ function update_tournament_tree(data) {
         updateNextMatch(nextMatch, winner, match_id);
     }
 
-   
     if (isFinalMatch(match_id)) {
         updateChampion(winner);
     }
@@ -241,7 +240,6 @@ function getNextMatch(currentMatchId) {
     return document.querySelector(`.match[data-match="${nextMatchId}"]`);
 }
 
-
 function updateNextMatch(nextMatch, winner, currentMatchId) {
     const targetPlayer = document.querySelector(`.player[data-player="winner-${currentMatchId}"]`);
     if (targetPlayer) {
@@ -256,7 +254,6 @@ function isFinalMatch(matchId) {
 }
 
 function updateChampion(winner) {
-    console.log("El campeón es:", winner);
     const champion = document.querySelector(".champion .player");
     const trophyIcon = document.querySelector('.new-tournament-room .screen .icon');
     if (champion) {
@@ -287,7 +284,6 @@ window.addEventListener('hashchange', function(event) {
 
 function closeWebSocket() {
     if (room_socket) {
-        console.log('Cerrando WebSocket de sala de torneo...');
         room_socket.close();  
         room_socket = null;  
     }
@@ -295,7 +291,6 @@ function closeWebSocket() {
 
 function clearTournamentTree() {
     sessionStorage.removeItem('tournament_tree');  // Borra el árbol del torneo guardado en sessionStorage
-    console.log('Datos del torneo eliminados de sessionStorage');
 }
 
 
@@ -314,8 +309,7 @@ function restoreTournamentTree() {
         for (const key in rawTree) {
             parsedTournamentTree[key] = JSON.parse(rawTree[key]);
         }
-        
-        console.log("Restaurando árbol desde localStorage:", parsedTournamentTree);
+
         for (const roundKey in parsedTournamentTree) {
             const roundMatches = parsedTournamentTree[roundKey];
         
@@ -336,7 +330,6 @@ function restoreTournamentTree() {
                         if (match.status != "pending") {
                             isWinner = username === winner.username;
                             isLoser = username === loser.username;
-                            console.log("%cisMaquina:", "color:blue", isMaquina);
                         }
                         
                         const originTreeId = Object.keys(players).find(
@@ -348,7 +341,6 @@ function restoreTournamentTree() {
                         } else if (originTreeId === "right") {
                             originTree = "6";
                         }
-                        console.log("%cisMaquina:", "color:red", isMaquina);
 
                         if (isWinner && isLoser) {
                             
@@ -406,7 +398,7 @@ function restoreTournamentTree() {
                                 classList.includes("player") 
                             );
                         });
-                        //checkpoint
+
                         if (availableDiv) {
                             availableDiv.textContent = username;
 
@@ -424,8 +416,7 @@ function restoreTournamentTree() {
                                 if (username === winner.username) availableDiv.classList.add("winner");
                                 else if (username === loser.username) availableDiv.classList.add("loser");
                                 updateNextMatch(matchElement, winner.username, treeIdStr);
-                            }
-                             
+                            }                           
                             const idx = playerDivs.indexOf(availableDiv);
                             if (idx > -1) playerDivs.splice(idx, 1);
                         }
@@ -433,6 +424,5 @@ function restoreTournamentTree() {
                 });
             });
         }
-        
     }
 }

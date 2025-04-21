@@ -36,9 +36,9 @@ class EmailOTPDevice(Device):
         print("ENVIANDO al email: ", self.user.email, "el token: ", self.otp_token)
 
         send_mail(
-            'OTP sended by PONG',
+            'OTP sent by PONG',
             f'Tu código de autenticación es: {self.otp_token} ',
-            'victorcerecedagonzalez@gmail.com',
+            'davferjavvic@gmail.com',
             [self.user.email],
             fail_silently=False,
         )
