@@ -122,6 +122,7 @@ export async function initHome() {
                 document.cookie = "action=0; Max-Age=0; path=/";
                 document.cookie = "username=0; Max-Age=0; path=/";
                 document.cookie = "email=0; Max-Age=0; path=/";
+                document.cookie = "userId=0; Max-Age=0; path=/";
                 //sessionStorage.removeItem("action");
                 //sessionStorage.removeItem("username");
                 //sessionStorage.removeItem("email");
