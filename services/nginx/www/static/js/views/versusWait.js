@@ -15,7 +15,7 @@ export function initVersusWait() {
 
     if (!hasAccessToken()) {
         window.sessionStorage.setItem("afterLoginRedirect", "#game");
-        window.location.hash = "#new-login"
+        window.location.hash = "#login"
         return;
     }
     handleJwtToken();

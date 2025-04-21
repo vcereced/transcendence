@@ -16,7 +16,7 @@ export async function initRockPaperScissors() {
 
     if (!hasAccessToken()) {
         window.sessionStorage.setItem("afterLoginRedirect", "#rock-paper-scissors");
-        window.location.hash = "#new-login"
+        window.location.hash = "#login"
         return;
     }
     handleJwtToken();

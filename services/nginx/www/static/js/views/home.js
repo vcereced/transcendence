@@ -4,7 +4,7 @@ import { addFriend, removeFriend, handleButtonFriend, goToPlayerProfile, getData
 import { checkActiveGame } from '../utils/autoReconnect.js';
 import { hasAccessToken } from '../utils/auth_management.js';
 import { handleJwtToken } from './jwtValidator.js';
-import { initLoginSocket } from './newLogin.js';
+import { initLoginSocket } from './login.js';
 import { getCookieValue } from '../utils/jwtUtils.js';
 
 export async function renderHome() {
@@ -135,7 +135,7 @@ export async function initHome() {
             window.showPopup("Error al cerrar sesión");
         })
         .finally(() => {
-            window.location.hash = "#new-login";
+            window.location.hash = "#login";
         });
     };
     
@@ -623,7 +623,7 @@ export async function initHome() {
 
     if (!hasAccessToken()) {
         window.sessionStorage.setItem("afterLoginRedirect", "#");
-        window.location.hash = "#new-login"
+        window.location.hash = "#login"
     }
     try {
         await handleJwtToken();
@@ -632,6 +632,6 @@ export async function initHome() {
     }
     catch (error) {
         showPopup("Sesión expirada, por favor vuelve a iniciar sesión");
-        window.location.hash = "#new-login"
+        window.location.hash = "#login"
     }
 }

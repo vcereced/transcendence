@@ -1,6 +1,6 @@
 // static/js/views/2FA.js
 
-import { initLoginSocket } from './newLogin.js';
+import { initLoginSocket } from './login.js';
 import { getCookieValue } from '../utils/jwtUtils.js';
 
 export async function render2FA() {
@@ -77,7 +77,7 @@ export async function verifyOtpRegister(code) {
             window.location.hash = "#";
         } else if (response.ok && getCookieValue("action") === "register") {
             window.showPopup(data.message);
-            window.location.hash = "#new-login";
+            window.location.hash = "#login";
         
         } else {
             window.showPopup(data.error);
