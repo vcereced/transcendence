@@ -1,16 +1,16 @@
-// static/js/views/new_tournament_room.js
+// static/js/views/tournamentRoom.js
 
 import EventListenerManager from '../utils/eventListenerManager.js';
 
-export async function renderNewTournamentRoom() {
-    const response = await fetch('static/html/new_tournament_room.html');
+export async function renderTournamentRoom() {
+    const response = await fetch('static/html/tournament_room.html');
     const htmlContent = await response.text();
     return htmlContent;
 }
 
 let room_socket = null;
 let isHistoryBack = false;
-export function initNewTournamentRoom(tournamentId) {
+export function initTournamentRoom(tournamentId) {
     if (room_socket === null) {
         room_socket = startTournamentWebSocket(tournamentId);
     }

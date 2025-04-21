@@ -174,6 +174,7 @@ export function initTournamentsList() {
                     
                 }
                 else if (data.type == "tournament_created") {
+                    console.log("%ccreting new tournament", "color:blue", data);
                     const newTournament = {
                         id: data.tournament_id,
                         name: data.tournament_name,
