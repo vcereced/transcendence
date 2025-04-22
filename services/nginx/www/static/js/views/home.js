@@ -335,16 +335,19 @@ export async function initHome() {
             profileLocalHistoryElement.innerHTML = "";
 
             if (historyData.tournament_matches && Object.keys(historyData.tournament_matches).length > 0) {
-                Object.entries(historyData.tournament_matches).forEach(([tournamentId, tournamentMatches]) => {
+                for (const [tournamentId, tournamentMatches] of Object.entries(historyData.tournament_matches)) {
+                    const response = await fetch(`/api/tournament/${tournamentId}/name`);
+                    const tournamentName = await response.text();
+                    const tournamentData = JSON.parse(tournamentName);
                     const tournamentElement = document.createElement('div');
-                    tournamentElement.innerHTML = `<h3 style="text-align: center;">Torneo ${tournamentId}</h3>`;
+                    tournamentElement.innerHTML = `<h3 style="text-align: center;">"${tournamentData.name}"</h3>`;
                     tournamentMatches.forEach(match => {
                         const matchElement = document.createElement('div');
                         matchElement.innerHTML = buildSingleMatchHistory(match);
                         tournamentElement.appendChild(matchElement);
                     });
                     profileTournamentHistoryElement.appendChild(tournamentElement);
-                });
+                }
             } else {
                 const noTournamentElement = document.createElement('div');
                 noTournamentElement.innerHTML = `<h3 style="text-align: center;">No hay partidos de torneo</h3>`;
