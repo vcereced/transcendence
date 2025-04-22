@@ -151,7 +151,7 @@ export async function initGame() {
         }
     }
 
-    window.showPopup = function showPopup(message) {
+    window.showPopupPong = function showPopupPong(message) {
         popup.textContent = message;
         popup.style.display = "block";
         popupShown = true;
@@ -179,10 +179,10 @@ export async function initGame() {
             drawEverything();
 
             if (data.game_state.start_countdown !== 0) {
-                showPopup(`Comenzando en ${startCountdown}`);
+                window.showPopupPong(`Comenzando en ${startCountdown}`);
             }
             if (data.game_state.is_finished && !popupShown) {
-                showPopup(`${data.game_state.winner_username} gana!`);
+                window.showPopupPong(`${data.game_state.winner_username} gana!`);
                 setTimeout(() => {
                     if (tournamentId > 0) {
                         window.location.hash = `#tournament/room/${tournamentId}`;

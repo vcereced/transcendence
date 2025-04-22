@@ -51,7 +51,7 @@ export async function initRockPaperScissors() {
         }
     }
 
-    window.showPopup = function showPopup(message) {
+    window.showPopupRPS = function showPopupRPS(message) {
         popup.textContent = message;
         popup.style.display = "block";
         popupShown = true;
@@ -94,10 +94,10 @@ export async function initRockPaperScissors() {
 
             if (data.game_state.is_finished && !popupShown) {
                 if (data.game_state.winner_username !== "") {
-                    showPopup(`${data.game_state.winner_username} gana!`);
+                    window.showPopupRPS(`${data.game_state.winner_username} gana!`);
                     setTimeout(() => { window.location.hash = "#game" }, 2000);
                 } else {
-                    showPopup("Empate!");
+                    window.showPopupRPS("Empate!");
                 }
             } else if (!data.game_state.is_finished && popupShown) {
                 hidePopup();
@@ -117,7 +117,7 @@ export async function initRockPaperScissors() {
             freezeChoice(data.right_player_choice, 'right');
         } else if (data.type === 'error') {
             rpsSocket.close();
-            window.showPopup("Error de conexión", 2000);
+            window.showPopupRPS("Error de conexión", 2000);
             setTimeout(() => {
                 window.location.hash = "#";
             }, 1000);
