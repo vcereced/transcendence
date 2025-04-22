@@ -78,7 +78,7 @@ export async function getDataUser(username) {
     const url = "/api/settings/dataUser";
     
     try {
-        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken();
         const response = await fetch(url, {method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username })});
         const data = await response.json();
             

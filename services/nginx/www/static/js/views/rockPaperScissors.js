@@ -1,8 +1,5 @@
-// static/js/views/rock_paper_scissors.js
 import { handleJwtToken } from './jwtValidator.js';
-import { deleteCookie, hasAccessToken } from '../utils/auth_management.js';
-
-import EventListenerManager from '../utils/eventListenerManager.js';
+import { hasAccessToken } from '../utils/auth_management.js';
 
 export async function renderRockPaperScissors() {
     const response = await fetch('static/html/rock_paper_scissors.html');
@@ -87,10 +84,6 @@ export async function initRockPaperScissors() {
 
     // --- EVENT LISTENERS ---
 
-    rpsSocket.onopen = function (event) {
-        console.log("Conectado al WebSocket.");
-    };
-
     rpsSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
         if (data.type === 'game_state_update') {
@@ -131,13 +124,6 @@ export async function initRockPaperScissors() {
         }
 
     };
-
-    rpsSocket.onclose = function (event) {
-        console.log("Desconectado del WebSocket.");
-    };
-
-    rpsSocket.onerror = function (event) {}
-
 
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');

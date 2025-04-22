@@ -1,6 +1,5 @@
 // static/js/views/tournaments_list.js
 
-import EventListenerManager from '../utils/eventListenerManager.js';
 import { handleJwtToken } from './jwtValidator.js';
 
 export async function renderTournamentsList() {
@@ -161,10 +160,8 @@ export function initTournamentsList() {
                 window.showPopup("Error de conexión, inténtelo más tarde", 2000);
                 return;
             }
-            console.log("WebSocket global connection opened");
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                console.log("Globar Tournament WebSocket message:", data);
                 const tournament = document.querySelector(`#tournament-${data.tournament_id}`);
                 
                 if (data.type == "user_count_update") {
@@ -197,7 +194,6 @@ export function initTournamentsList() {
                     listContainer.appendChild(gameItem);
                     
                     let notournament = document.getElementById('no-tournaments').style.display = 'none';
-                    console.log("No tournaments found:", notournament);
                     
                 }
             };

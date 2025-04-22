@@ -1,7 +1,3 @@
-// static/js/views/tournamentRoom.js
-
-import EventListenerManager from '../utils/eventListenerManager.js';
-
 export async function renderTournamentRoom() {
     const response = await fetch('static/html/tournament_room.html');
     const htmlContent = await response.text();
@@ -9,7 +5,6 @@ export async function renderTournamentRoom() {
 }
 
 let room_socket = null;
-let isHistoryBack = false;
 export async function initTournamentRoom(tournamentId) {
     if (room_socket === null) {
         room_socket = startTournamentWebSocket(tournamentId);
@@ -20,8 +15,6 @@ export async function initTournamentRoom(tournamentId) {
     if (startButton) {
         startButton.addEventListener("click", () => {
             if (startButton.disabled) {
-                console.log("%cButton DOM object:", "color: red", startButton);
-                //hide the button
                 return;   
             }
             startButton.disabled = true;
@@ -87,16 +80,10 @@ function checkNewRound(new_round, myUser) {
 }
 
 function startTournamentWebSocket(tournamentId) {
-    console.log('tournamentId>', tournamentId.id);
     const room_socket = new WebSocket(`wss://${window.location.host}/ws/room/${tournamentId.id}/`);
-
-    room_socket.onopen = () => {
-        console.log(`Conexión WebSocket para el torneo ${tournamentId.id} abierta`);
-    };
 
     room_socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        console.log("Mensaje WebSocket del torneo:", data);
         
         if (data.type === "user_list" ) {
             updateUserList(data.user_list);
@@ -118,7 +105,6 @@ function startTournamentWebSocket(tournamentId) {
         }
         if (data.type === "new_round") {
                 const myUser = data.username;
-                //check if myUser is in data.new_round
                 if  (checkNewRound(data.new_round, myUser)) {
                     setTimeout(() => {
                         window.location.hash = '#rock-paper-scissors';
@@ -128,14 +114,6 @@ function startTournamentWebSocket(tournamentId) {
         }
     };
 
-    room_socket.onclose = function (event) {
-        console.log(`Conexión WebSocket para el torneo ${tournamentId.id} cerrada`, event);
-    };
-
-    room_socket.onerror = function (error) {
-        console.error(`Error en WebSocket para el torneo ${tournamentId.id}:`, error);
-    };
-
     return room_socket;
 }
 
@@ -143,7 +121,6 @@ function updateUserList(userList) {
     const userListContainer = document.getElementById("user-list");
 
     if (!userListContainer) {
-        console.error("Elemento de lista de usuarios no encontrado");
         return;
     }
 
@@ -162,8 +139,6 @@ function updateUserList(userList) {
 function sendWebSocketMessage(type, data) {
     if (room_socket && room_socket.readyState === WebSocket.OPEN) {
         room_socket.send(JSON.stringify({ type, ...data }));
-    } else {
-        console.error("WebSocket no está conectado.");
     }
 }
 
@@ -195,7 +170,6 @@ function update_tournament_tree(data) {
     const { match_id, winner, loser } = data;
     const currentMatch = document.querySelectorAll(`.match[data-match="${match_id}"]`);
     if (!currentMatch) {
-        console.error(`No se encontró el partido con ID ${match_id}`);
         return;
     }
     let isMaquina = false;
@@ -244,8 +218,6 @@ function updateNextMatch(nextMatch, winner, currentMatchId) {
     const targetPlayer = document.querySelector(`.player[data-player="winner-${currentMatchId}"]`);
     if (targetPlayer) {
         targetPlayer.textContent = winner;  
-    } else {
-        console.error(`No se encontró un jugador con data-player="winner-${currentMatchId}" en el siguiente partido.`);
     }
 }
 
@@ -274,8 +246,6 @@ function updateChampion(winner) {
  * If not, it closes the WebSocket connection and clears the tournament tree.
  */
 window.addEventListener('hashchange', function(event) {
-    // Verificar si la URL contiene '#tournament' o '#game'
-    console.log('URL:', window.location.hash);
     if (!window.location.hash.includes('tournament/room') && !window.location.hash.includes('game') && !window.location.hash.includes('rock-paper-scissors')) {
         closeWebSocket();
         clearTournamentTree(); 
@@ -290,7 +260,7 @@ function closeWebSocket() {
 }
 
 function clearTournamentTree() {
-    sessionStorage.removeItem('tournament_tree');  // Borra el árbol del torneo guardado en sessionStorage
+    sessionStorage.removeItem('tournament_tree');
 }
 
 

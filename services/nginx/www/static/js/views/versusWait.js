@@ -56,7 +56,6 @@ export function initVersusWait() {
         const totalAvailableArea = availableWidth * availableHeight;
         const totalObstacleArea = num * (obstacleSize * obstacleSize);
 
-        // Si no hay suficiente espacio, no crear obstáculos
         if (totalObstacleArea > totalAvailableArea * 0.5) {
             console.warn("No hay suficiente espacio para generar los obstáculos.");
             return;
@@ -64,7 +63,7 @@ export function initVersusWait() {
 
         for (let i = 0; i < num; i++) {
             let x, y, overlapping;
-            let attempts = 0, maxAttempts = 1000; // Evitar bucles infinitos
+            let attempts = 0, maxAttempts = 1000;
 
             do {
                 x = Math.random() * (availableWidth - obstacleSize);
@@ -143,14 +142,11 @@ export function initVersusWait() {
                 let hitBottom = ballY <= obs.y + obs.height && ballY + BALL_SIZE > obs.y + obs.height;
 
                 if ((hitLeft || hitRight) && (hitTop || hitBottom)) {
-                    // Rebote de esquina: invertir ambos componentes
                     velocityX = -velocityX;
                     velocityY = -velocityY;
                 } else if (hitLeft || hitRight) {
-                    // Rebote lateral: solo invertir X
                     velocityX = -velocityX;
                 } else if (hitTop || hitBottom) {
-                    // Rebote superior/inferior: solo invertir Y
                     velocityY = -velocityY;
                 }
             }
