@@ -288,36 +288,36 @@ def dataUser_view(request):
 
 @api_view(['POST'])
 def isFriendShip_view(request):
-	username1 = request.data.get("username1")
-	username2 = request.data.get("username2")
-							  
-	if not username1 or not username2:
-		return Response({"error": "missing a username"}, status=status.HTTP_400_BAD_REQUEST)
+	id1 = int(request.data.get("id1"))
+	id2 = int(request.data.get("id2"))
+				  
+	if not id1 or not id2:
+		return Response({"error": "missing a id"}, status=status.HTTP_400_BAD_REQUEST)
 	
-	if Friendship.are_friends(username1, username2):
+	if Friendship.are_friends(id1, id2):
 		return Response({"message": "Are friends"}, status=status.HTTP_200_OK)
 	else:
 		return Response({"message": "Are not friends"}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def friendShip_view(request, action):
-	username1 = request.data.get('username1')
-	username2 = request.data.get('username2')
+	id1 = request.data.get('id1')
+	id2 = request.data.get('id2')
 
-	if not username1 or not username2:
-		return Response({"error": "Missing username1 or username2"}, status=400)
+	if not id1 or not id2:
+		return Response({"error": "Missing id1 or id2"}, status=400)
 
 	if action == 'add':
 		# Añadir amigos
-		if not Friendship.are_friends(username1, username2):
-			Friendship.add_friend(username1, username2)
+		if not Friendship.are_friends(id1, id2):
+			Friendship.add_friend(id1, id2)
 			return Response({"message": "Son amigos"}, status=200)
 		else:
 			return Response({"error": "They are already friends or the usernames are the same"}, status=200)
     
 	elif action == 'remove':
 		# Eliminar amigos
-		if Friendship.remove_friend(username1, username2):
+		if Friendship.remove_friend(id1, id2):
 			return Response({"message": "Ya no son amigos"}, status=200)
 		else:
 			return Response({"error": "They are not friends or no valid relationship exists"}, status=200)

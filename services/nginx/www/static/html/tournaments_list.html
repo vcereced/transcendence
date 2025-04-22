@@ -9,7 +9,7 @@
         <div class="others">
             <form id="create-tournament-form">
                 <input type="text" class="buscar-sala" id="tournament-name" placeholder="Crea tu propio torneo aqui!" required
-                style="width: 100%; padding: 0.7rem; margin-top: 1rem;">
+                style="width: 200%; padding: 0.7rem; margin-top: 1rem;">
                 <button type="submit" hidden></button>
             </form>
 
@@ -18,7 +18,9 @@
         </div>
         <div class="game-list-container">
             <div class="section-title">Salas Disponibles</div>
-            <div class="game-list" id="available-games">
+            <div class="game-list" id="available-games"></div>
+            <div id="no-tournaments" class="no-tournaments-msg" style="display: none; text-align:center; margin-top: 1rem;">
+                No hay torneos disponibles
             </div>
         </div>
     </div>
