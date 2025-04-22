@@ -93,6 +93,13 @@ export function initTournamentsList() {
                 availableContainer.appendChild(gameItem);
             });
 
+            if (tournaments.length === 0) {
+                document.getElementById('no-tournaments').style.display = 'block';
+            } else {
+                document.getElementById('no-tournaments').style.display = 'none';
+            }
+            
+
             if (global_socket === null) {
                 global_socket = startGlobalWebSocket();
             }
@@ -142,8 +149,7 @@ export function initTournamentsList() {
             } else {
                 window.showPopup(`Error al unirse al torneo ${tournamentName}`, 3000);
             }
-        } catch (error) {
-            console.error("Error al unirse al torneo:", error);
+        } catch (error) {;
             window.showPopup("Error de conexión.No se pudo unir al torneo", 3000);
         }
     }
@@ -185,8 +191,14 @@ export function initTournamentsList() {
                         button.disabled = true;
                         await joinTournament(newTournament.id, newTournament.name);
                     });
+                    gameItem.classList.add('animate-in');
+
                     let listContainer = document.getElementById('available-games');
                     listContainer.appendChild(gameItem);
+                    
+                    let notournament = document.getElementById('no-tournaments').style.display = 'none';
+                    console.log("No tournaments found:", notournament);
+                    
                 }
             };
 
