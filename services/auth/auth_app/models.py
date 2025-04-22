@@ -61,22 +61,22 @@ class Friendship(models.Model):
         return (user_a, user_b) if user_a.id < user_b.id else (user_b, user_a)
 
     @staticmethod
-    def are_friends(username_a: str, username_b: str):
+    def are_friends(user_id_a: int, user_id_b: int):
         try:
-            user_a = CustomUser.objects.get(username=username_a)
-            user_b = CustomUser.objects.get(username=username_b)
+            user_a = CustomUser.objects.get(id=user_id_a)
+            user_b = CustomUser.objects.get(id=user_id_b)
         except CustomUser.DoesNotExist:
             return False
         user1, user2 = Friendship._ordered_users(user_a, user_b)
         return Friendship.objects.filter(user1=user1, user2=user2).exists()
 
     @staticmethod
-    def add_friend(username_a: str, username_b: str):
-        if username_a == username_b:
+    def add_friend(user_id_a: int, user_id_b: int):
+        if user_id_a == user_id_b:
             return False
         try:
-            user_a = CustomUser.objects.get(username=username_a)
-            user_b = CustomUser.objects.get(username=username_b)
+            user_a = CustomUser.objects.get(id=user_id_a)
+            user_b = CustomUser.objects.get(id=user_id_b)
         except CustomUser.DoesNotExist:
             return False
         user1, user2 = Friendship._ordered_users(user_a, user_b)
@@ -86,10 +86,10 @@ class Friendship(models.Model):
         return False
 
     @staticmethod
-    def remove_friend(username_a: str, username_b: str):
+    def remove_friend(user_id_a: int, user_id_b: int):
         try:
-            user_a = CustomUser.objects.get(username=username_a)
-            user_b = CustomUser.objects.get(username=username_b)
+            user_a = CustomUser.objects.get(id=user_id_a)
+            user_b = CustomUser.objects.get(id=user_id_b)
         except CustomUser.DoesNotExist:
             return False
         user1, user2 = Friendship._ordered_users(user_a, user_b)
