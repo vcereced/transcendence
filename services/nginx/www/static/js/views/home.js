@@ -190,21 +190,20 @@ export async function initHome() {
     
     window.openProfilePopup = async function openProfilePopup(username) {
         
-        //const currentUsername = sessionStorage.getItem('username');
-        const currentUsername = getCookieValue("username");
+        const currentUserId = getCookieValue("userId");
         var btn = document.getElementById("add-friend-btn");
         
         const data = await getDataUser(username);
     
-        const userId = data.id;
+        const otherUserId = data.id;
         document.getElementById("profile-image-img").src = data.picture_url;
         document.getElementById("profile-info-username").innerHTML = data.username;
-        updateStatus(userId);
+        updateStatus(currentUserId);
     
-        if (username == currentUsername) { //hide the button MAKE FRIEND
+        if (otherUserId == currentUserId) { //hide the button MAKE FRIEND
             btn.style.display = "None";
         }else {
-            handleButtonFriend(username, currentUsername);
+            handleButtonFriend(otherUserId, currentUserId);
             btn.style.display = "Block";
         }
         window.populateProfilePopup(username);
@@ -218,6 +217,7 @@ export async function initHome() {
     window.openSettingsPopup =  function openSettingsPopup() {
         //let email = sessionStorage.getItem("email");
         let email = getCookieValue("email");
+        let username = getCookieValue("username");
 
         document.getElementById('settingsPopup').style.display = 'flex';
 
@@ -278,18 +278,21 @@ export async function initHome() {
 
     window.toggleFriendStatus = async function toggleFriendStatus() {
         //const currentUsername = sessionStorage.getItem('username');
-        const currentUsername = getCookieValue("username");
-        const username = document.getElementById("profile-info-username").textContent.trim();
-        
+        //const currentUsername = getCookieValue("username");
+        const currentUserId = getCookieValue("userId");
+        const otherUsername = document.getElementById("profile-info-username").textContent.trim();
+        const data = await getDataUser(otherUsername);
+    
+        const otherUserId = data.id;
         var btn = document.getElementById("add-friend-btn");
 
         if (btn.innerHTML === "Añadir Amigo"/* & !friends*/ ) {
-            await addFriend(currentUsername, username);
+            await addFriend(currentUserId, otherUserId);
             btn.innerHTML = "Amigo";
             btn.style.backgroundColor = "var(--primary-color)";
             btn.style.color = "white";
         } else if (btn.innerHTML === "Amigo" /*& friends*/ ) {
-            await removeFriend(currentUsername, username)
+            await removeFriend(currentUserId, otherUserId)
             btn.innerHTML = "Añadir Amigo";
             btn.style.backgroundColor = "#f5f5f5";
             btn.style.color = "#333";
@@ -495,13 +498,14 @@ export async function initHome() {
         }
     });
 
-    document.getElementById("save-btn-name").addEventListener("click", () => {
+    document.getElementById("save-btn-name").addEventListener("click", async () => {
         const newUsername = document.getElementById("new-username").value;
-        //const email = sessionStorage.getItem("email");
         const email = getCookieValue("email");
-        updateUsername(email, newUsername);
-        window.closeSettingsPopup();
-        window.logout();
+        if (await updateUsername(email, newUsername)) {
+            console.log("BOOOOOOOOOOOOOOOOOOOOOM");
+            window.closeSettingsPopup();
+            window.logout();
+        }
     });
 
     document.getElementById("save-btn-password").addEventListener("click", () => {
