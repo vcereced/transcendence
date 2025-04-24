@@ -10,7 +10,7 @@ export async function isFriend(id1, id2) {
         const response = await fetch(url, {method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id1, id2 })});    
         const data = await response.json();
             
-        return data.message === "Are friends";
+        return data.message === "Son amigos";
 
     } catch (error) {
         window.showPopup("Error comprobando la amistad");

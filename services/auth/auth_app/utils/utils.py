@@ -1,7 +1,10 @@
 from django.utils.timezone import now
-from .utilsToptDevice import CustomError  # Importa tu modelo personalizado
 from auth_app.models import EmailOTPDevice, CustomUser
 from django.core.files.storage import default_storage
+
+class CustomError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
 
 def verifyEmailTOPTDevice(email, otp_token):
 

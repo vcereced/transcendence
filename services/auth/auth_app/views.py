@@ -1,23 +1,15 @@
-from django.http import HttpResponse
-from django.shortcuts import render
-import json
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from . serializers import RegisterSerializer, UserSerializer
+from rest_framework import generics
 from rest_framework import status
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework.response import Response
+from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser, removeOldImagen, CustomError
+from . serializers import RegisterSerializer, UserSerializer
+from .models import CustomUser, EmailOTPDevice, Friendship  # Importa tu modelo personalizado
 from django.core.files.storage import default_storage
-from django.http import JsonResponse
 import jwt
 import os
-from .models import CustomUser, EmailOTPDevice, Friendship  # Importa tu modelo personalizado
-from auth_app.utils.utilsToptDevice import genTOPTDevice, activateTOPTDevice, verifyTOPTDevice, CustomError
-from auth_app.utils.utils import verifyEmailTOPTDevice, verifyUser, verifyPendingUser, removeOldImagen
-
-from rest_framework import generics
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
@@ -295,9 +287,9 @@ def isFriendShip_view(request):
 		return Response({"error": "missing a id"}, status=status.HTTP_400_BAD_REQUEST)
 	
 	if Friendship.are_friends(id1, id2):
-		return Response({"message": "Are friends"}, status=status.HTTP_200_OK)
+		return Response({"message": "Son amigos"}, status=status.HTTP_200_OK)
 	else:
-		return Response({"message": "Are not friends"}, status=status.HTTP_200_OK)
+		return Response({"message": "No son amigos"}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def friendShip_view(request, action):
@@ -313,14 +305,14 @@ def friendShip_view(request, action):
 			Friendship.add_friend(id1, id2)
 			return Response({"message": "Son amigos"}, status=200)
 		else:
-			return Response({"error": "They are already friends or the usernames are the same"}, status=200)
+			return Response({"error": "Ya eran amigos"}, status=200)
     
 	elif action == 'remove':
 		# Eliminar amigos
 		if Friendship.remove_friend(id1, id2):
 			return Response({"message": "Ya no son amigos"}, status=200)
 		else:
-			return Response({"error": "They are not friends or no valid relationship exists"}, status=200)
+			return Response({"error": "No eran amigos de antes"}, status=200)
 	
 	return Response({"error": "Invalid action"}, status=400)
 
@@ -331,7 +323,7 @@ def upload_profile_pic_view(request):
 	username = request.POST.get('username')
 
 	if not image or not username:
-		return Response({"error": "image or username"}, status=400)
+		return Response({"error": "imagen o username"}, status=400)
 
 	try:
 		user = CustomUser.objects.get(username=username)

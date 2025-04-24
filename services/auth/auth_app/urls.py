@@ -15,7 +15,6 @@ urlpatterns = [
     path('playersList', views.playersList_view, name='playersList'),
     path('isFriendShip', views.isFriendShip_view, name='isFriendShip'),
     path('friendShip/<str:action>', views.friendShip_view, name='friendShip'),
-
     path('updatePictureUrl', views.updatePictureUrl_view, name='updatePictureUrl'),
     path('updateName', views.updateName_view, name='updateName'),
     path('updatePassword', views.updatePassword_view, name='updatePassword'),

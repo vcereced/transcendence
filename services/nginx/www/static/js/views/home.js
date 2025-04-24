@@ -215,7 +215,7 @@ export async function initHome() {
     }
         
     window.openSettingsPopup =  function openSettingsPopup() {
-        let username = getCookieValue("username");
+    
         let email = getCookieValue("email");
         let username = getCookieValue("username");
 
