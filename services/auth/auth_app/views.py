@@ -241,12 +241,18 @@ def updatePictureUrl_view(request):
 	email = request.data.get("email")
 	src = request.data.get("src")
 
+	print("DEBUG updatePictureUrl_view before== ", src)
 	try:
 		user = CustomUser.objects.get(email=email)
 
 		removeOldImagen(user)
 
-		user.profile_picture = src
+		if src and '/media' in src:
+			src = src.split('/media', 1)[-1]
+		else:
+			return Response({"error": "La URL no es válida o no contiene '/media'."}, status=status.HTTP_400_BAD_REQUEST)
+
+		user.profile_picture = f"/media{src}"
 		user.save()
 	except CustomUser.DoesNotExist:
 		return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)

@@ -11,7 +11,7 @@ class CustomUser(AbstractUser):
     
     email = models.EmailField(unique=True, error_messages={
         'unique': "Ya existe un usuario con este email"})
-    profile_picture = models.CharField(max_length=255, null=True, blank=True, default="/media/default0.gif")
+    profile_picture = models.CharField(max_length=255, default="/media/default1.gif")
     username = models.CharField(("username"), max_length=20, unique=True, error_messages={
         'unique': "Ya existe un usuario con este nombre",
         'blank': "El nombre de usuario no puede estar vacío",

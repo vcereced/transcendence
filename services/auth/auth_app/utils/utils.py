@@ -43,8 +43,7 @@ def verifyPendingUser(email, username, password):
 	
 def removeOldImagen(user):
 
-	defaultName = ["default0.gif", "default1.gif", "default2.gif", "default3.gif", "default4.gif"]
-
+	defaultName = ["default1.gif", "default2.gif", "default3.gif", "default4.gif"]
 	if user.profile_picture and user.profile_picture not in defaultName:
 		old_path = user.profile_picture.replace("/media/", "")
 
