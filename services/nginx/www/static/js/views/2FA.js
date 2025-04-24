@@ -1,5 +1,3 @@
-// static/js/views/2FA.js
-
 import { initLoginSocket } from './login.js';
 import { getCookieValue } from '../utils/jwtUtils.js';
 
@@ -18,10 +16,6 @@ export async function resendOtp() {
                 username: getCookieValue("username"),
                 email : getCookieValue("email"),
                 password : getCookieValue("password"),
-
-                //username: sessionStorage.getItem("username"),
-                //password: sessionStorage.getItem("password"),
-                //email: sessionStorage.getItem("email"),
             }),
         });
 
@@ -43,8 +37,6 @@ export async function verifyOtpRegister(code) {
     
     let url = null;
 
-    
-
     try {
        if (getCookieValue("action") === "register"){
             url = "verify_email_otp_register";
@@ -58,8 +50,6 @@ export async function verifyOtpRegister(code) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                //username: sessionStorage.getItem("username"),
-                //password: sessionStorage.getItem("password"),
                 email: getCookieValue("email"),
                 otp_token: code
             }),
@@ -145,7 +135,6 @@ export function init2FA() {
         const inputs = document.querySelectorAll(".code-input");
         input.style.background = input.value ? "#16a085" : "#222";
 
-        // Si el campo está lleno, mover al siguiente campo
         if (input.value.length === 1 && index < 5) {
             inputs[index + 1].focus();
         }
@@ -155,17 +144,16 @@ export function init2FA() {
         const inputs = document.querySelectorAll(".code-input");
         
         if (event.key === "Backspace" || event.key === "Delete") {
-            // Borra el valor actual y, si existe un campo anterior, mueve el foco allí
             input.value = "";
             input.style.background = "#222";
             event.preventDefault();
             if (index > 0) {
                 inputs[index - 1].focus();
-                inputs[index - 1].select(); // Selecciona el contenido para sobrescribirlo
+                inputs[index - 1].select();
             }
         } else if (event.key === "ArrowLeft" && index > 0) {
             inputs[index - 1].focus();
-            inputs[index - 1].select(); // Selecciona para que al escribir se sobrescriba
+            inputs[index - 1].select();
             event.preventDefault();
         } else if (event.key === "ArrowRight" && index < inputs.length - 1) {
             inputs[index + 1].focus();
@@ -212,17 +200,13 @@ export function init2FA() {
     window.eventManager.addEventListener(codeContainer, "paste", (e) => {
         e.preventDefault();
         const inputs = document.querySelectorAll(".code-input");
-        // Elimina espacios y obtiene el texto pegado
         const pastedData = e.clipboardData.getData("text").replace(/\s+/g, '');
-        // Comienza desde el input activo o, si no hay, desde el primero
         let startIndex = Array.from(inputs).indexOf(document.activeElement);
         if (startIndex === -1) startIndex = 0;
-        // Distribuye los caracteres desde startIndex hasta el final disponible
         for (let i = 0; i < pastedData.length && startIndex < inputs.length; i++, startIndex++) {
             inputs[startIndex].value = pastedData[i];
             inputs[startIndex].style.background = "#16a085";
         }
-        // Coloca el foco en el último input modificado
         if (startIndex > 0 && startIndex <= inputs.length) {
             inputs[startIndex - 1].focus();
         }

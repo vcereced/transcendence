@@ -56,7 +56,7 @@ export async function updatePassword(email, oldPass, newPass1, newPass2) {
     const url = "/api/settings/updatePassword";
     
     try {
-        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken();
 
         const response = await fetch(url, {
             method: "POST",
@@ -89,7 +89,7 @@ export async function showPicture(email) {
     
     try {
 
-        await handleJwtToken(); // Asegura que el token JWT esté actualizado
+        await handleJwtToken();
         const response = await fetch(url, {
             method: "POST",
             headers: {

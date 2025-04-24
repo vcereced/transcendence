@@ -1,9 +1,3 @@
-// static/js/views/new_login.js
-
-import EventListenerManager from '../utils/eventListenerManager.js';
-import { getDataUser } from '../utils/profile.js';
-import { getCookieValue } from '../utils/jwtUtils.js';
-
 
 export async function renderLogin() {
     const response = await fetch('static/html/login.html');
@@ -41,8 +35,6 @@ function initLoginSocket() {
 
     window.login_socket.onerror = function(event) {
         window.login_socket = null;
-        console.log("login_socket error");
-        console.log(event);
     }
 }
 
@@ -56,8 +48,6 @@ export function initLogin() {
     const title = document.querySelector('.site-title');
     const registerButton = document.getElementById('register-btn');
     const loginButton = document.getElementById('login-btn');
-    //const registerResponseMessage = document.getElementById("register-response-message");
-    //const registerDataSection = document.getElementById("register-data-container");
 
     // --- FUNCTIONS ---
 

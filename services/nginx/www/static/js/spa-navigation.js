@@ -1,5 +1,3 @@
-// static/js/spa-navigation.js
-
 import { renderHome, initHome } from './views/home.js';
 import { renderGame, initGame } from './views/game.js';
 import { renderVersusWait, initVersusWait } from './views/versusWait.js';
@@ -35,15 +33,12 @@ function parseRoute(path) {
     for (const key of routeKeys) {
         const paramMatch = key.match(/:([^\/]+)/);
         if (paramMatch) {
-            console.log("paramMatch", paramMatch);
             const paramKey = paramMatch[1];
             const basePath = key.split("/:")[0]; 
 
             if (path.startsWith(basePath)) {            
                 const paramValue = path.slice(basePath.length + 1);
                 return { route: routes[key], params: { [paramKey]: paramValue } };
-            } else {
-                console.log("No match for path:", path);
             }
         }
     }
@@ -53,13 +48,10 @@ function parseRoute(path) {
 async function router() {
     const path = location.hash.slice(1) || "/index";
     const { route, params } = parseRoute(path);
-    console.log("Ruta:", route, "Parámetros:", params);
 
-    //Renders the HTML content of the route
     if (route) {
         document.getElementById("main-content").innerHTML = await route.render(params);
         window.eventManager.removeAllEventListeners();
-        console.log("Event listeners removed");
         route.init(params);
     } else {
         document.getElementById("main-content").innerHTML = "<h2>404</h2><p>NOT FOUND</p>";
