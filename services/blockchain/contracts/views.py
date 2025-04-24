@@ -3,6 +3,10 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import os
 from web3 import Web3
+import logging
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 sepolia_node_url = "https://sepolia.infura.io/v3/e9bce358a6aa4324bc1f53e803b54662"
 
@@ -12,49 +16,41 @@ web3 = Web3(Web3.HTTPProvider(sepolia_node_url))
 contract_abi = None
 try:
     abi_file_path = "./contracts/TournamentRegistry.json"
-    print(f"Intentando abrir archivo ABI en: {abi_file_path}")
     with open(abi_file_path, 'r') as f:
         contract_abi = json.load(f)
-    print("ABI cargada exitosamente.")
 except FileNotFoundError:
-    print("Error: El archivo TournamentRegistry.json no se encontró.")
-    print("working directory:", os.getcwd())
     contract_abi = None
 except json.JSONDecodeError:
-    print("Error: El archivo TournamentRegistry.json contiene JSON inválido.")
     contract_abi = None
 
 contract_address = os.getenv("CONTRACT_ADDRESS")
 
 private_key = os.getenv("SEPOLIA_PRIVATE_KEY")
 if not private_key:
-    print("Advertencia: La clave privada de Sepolia no se ha configurado como variable de entorno.")
-else:
-    print("Clave privada de Sepolia leída del entorno.")
+    logger.error("Advertencia: La clave privada de Sepolia no se ha configurado como variable de entorno.")
+
 
 contract = None
 if contract_abi and web3.is_connected() and contract_address:
     try:
-        print(f"Intentando inicializar contrato con dirección: {contract_address} y ABI...")
         contract = web3.eth.contract(address=contract_address, abi=contract_abi)
-        print("Contrato inicializado exitosamente.")
     except Exception as e:
-        print(f"Error al inicializar el contrato: {e}")
+        logger.error(f"Error al inicializar el contrato: {e}")
 else:
-    print("No se pudo inicializar el contrato debido a problemas con web3:", web3.is_connected(), ", ABI:", contract_abi is not None, ", dirección:", contract_address is not None)
+    logger.error("No se pudo inicializar el contrato debido a problemas con web3:", web3.is_connected(), ", ABI:", contract_abi is not None, ", dirección:", contract_address is not None)
 
 @csrf_exempt
 def register_tournament_api(request):
 
     if request.method == 'POST':
         if not contract:
-            print("Error: No se pudo inicializar el contrato dentro de la vista!!.")
+            logger.error("Error: No se pudo inicializar el contrato dentro de la vista!!.")
             return JsonResponse({'error': 'No se pudo inicializar el contratowwe'}, status=500)
         if not web3.is_connected():
-            print("Error: No se está conectado a la red Sepolia dentro de la vista!!.")
+            logger.error("Error: No se está conectado a la red Sepolia dentro de la vista!!.")
             return JsonResponse({'error': 'No se está conectado a la red Sepolia'}, status=500)
         if not private_key:
-            print("Error: Clave privada no configurada dentro de la vista!!.")
+            logger.error("Error: Clave privada no configurada dentro de la vista!!.")
             return JsonResponse({'error': 'Clave privada no configurada'}, status=500)
 
         try:
@@ -87,13 +83,13 @@ def register_tournament_api(request):
             return JsonResponse({'status': 'success', 'transaction_hash': transaction_hash.hex()})
 
         except json.JSONDecodeError:
-            print("Error: Datos JSON inválidos en la solicitud.")
+            logger.error("Error: Datos JSON inválidos en la solicitud.")
             return JsonResponse({'error': 'Datos JSON inválidos'}, status=400)
         except Exception as e:
-            print(f"Error al registrar el torneo dentro de la vista: {e}")
+            logger.error(f"Error al registrar el torneo dentro de la vista: {e}")
             return JsonResponse({'error': str(e)}, status=500)
     else:
-        print("Error: Método no permitido para /register.")
+        logger.error("Error: Método no permitido para /register.")
         return JsonResponse({'error': 'Método no permitido'}, status=405)
     
 
@@ -110,7 +106,7 @@ def get_tournament_details(request, tournament_id):
         }
         return JsonResponse(tournament_data)
     except Exception as e:
-        print(f"Error al obtener los detalles del torneo {tournament_id}: {e}")
+        logger.error(f"Error al obtener los detalles del torneo {tournament_id}: {e}")
         return JsonResponse({'error': str(e)}, status=500)
     
 def get_tournaments_ids(request):
@@ -119,5 +115,5 @@ def get_tournaments_ids(request):
         ids = contract.functions.getAllTournamentIds().call()
         return JsonResponse({'tournament_ids': ids})
     except Exception as e:
-        print(f"Error al obtener los IDs de los torneos: {e}")
+        logger.error(f"Error al obtener los IDs de los torneos: {e}")
         return JsonResponse({'error': str(e)}, status=500)

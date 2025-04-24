@@ -8,6 +8,11 @@ from .redis_manager import RedisManager
 from celery import current_app
 import requests
 
+import logging
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
+
 
 # =========================================
 #           EXTERNAL METHODS AND MACROS
@@ -30,7 +35,7 @@ async def extract_user_info(self):
                     self.username = payload.get("username")
                     self.user_id = payload.get("user_id")
                 except jwt.DecodeError as e:
-                    print(f"Error decoding token: {e}")
+                    logger.error(f"JWT Decode Error: {e}")
                 break
 
 
@@ -44,9 +49,9 @@ class LoginConsumer(AsyncWebsocketConsumer):
 
         self.redis_manager = RedisManager()
         await self.redis_manager.add_to_set(LOGGED_USERS_SET_KEY, self.user_id)
-        print(f"User {self.username} connected with ID {self.user_id}")
+        
         logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET_KEY)
-        print(f"Logged users qty: {len(logged_users)}")
+        
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -64,7 +69,7 @@ class LoginConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
 
     async def disconnect(self, close_code):
-        print(f"User {self.username} disconnected with ID {self.user_id}")
+        
         await self.redis_manager.remove_from_set(LOGGED_USERS_SET_KEY, self.user_id)
         logged_users = await self.redis_manager.get_set_members(LOGGED_USERS_SET_KEY)
         await self.channel_layer.group_send(
@@ -100,7 +105,7 @@ class VersusConsumer(AsyncWebsocketConsumer):
         if response.status_code == 200:
             return response.json()["username"]
         else:
-            print(f"Error fetching username: {response.status_code}")
+            
             return None
         
     async def find_opponent(self):
@@ -157,7 +162,7 @@ class VersusConsumer(AsyncWebsocketConsumer):
         try:
             await self.redis_manager.remove_from_set(IN_QUEUE_USER_IDS_SET_KEY, self.user_id)
         except ValueError:
-            print(f"User {self.username} not in the queue")
+            logger.error(f"User {self.user_id} not found in the queue.")
         
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -354,7 +359,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
             else :
                 return False
         else:
-            print(f"Error fetching username: {response.status_code}")
+            
             return None
 
     async def receive(self, text_data):

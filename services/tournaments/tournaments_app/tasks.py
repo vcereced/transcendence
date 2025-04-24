@@ -82,7 +82,7 @@ def save_participants_to_database(tournament_id, players):
     This function is called when the tournament is created."""
     tournament = Tournament.objects.get(id=tournament_id)
     for player in players:
-        print(f"Guardando participante: {player['username']}")
+        
         participant, created = Participant.objects.get_or_create(
             user_id=player["user_id"],
             username=player["username"]
@@ -109,18 +109,18 @@ def register_tournament_on_blockchain(tournament_id, tournament_name, winner_use
         "winner": winner_username,
         "treeHash": generate_tournament_tree_hash(tree_hash)
     }
-    print(f"Enviando datos del torneo finalizado a la blockchain API: {payload}")
+    
     try:
         response = requests.post(blockchain_api_url, headers=headers, json=payload)
         response.raise_for_status()
         blockchain_response = response.json()
-        print(f"Respuesta de la API de blockchain: {blockchain_response}")
+        
         return blockchain_response
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API de blockchain: {e}")
+        
         return None
     except json.JSONDecodeError:
-        print("Error al decodificar la respuesta JSON de la API de blockchain.")
+        
         return None
 
 
@@ -135,7 +135,7 @@ def save_tournament_to_databases(tournament_id, tournament_tree, winner=None):
         try:
             winner_participant = Participant.objects.get(user_id=winner["id"], username=winner["username"])
         except Participant.DoesNotExist:
-            print(f"El participante {winner} no existe en la base de datos.")
+            
             return
         tournament.champion = winner_participant
         tournament.is_active = False     
@@ -300,7 +300,7 @@ def start_matchmaking(message):
             username, user_id = user_entry.split(": ")
             players.append({"username": username, "user_id": int(user_id)})
         except ValueError as e:
-            print(f"Error at appending user: {user_entry}. Details: {e}")
+            
 
     if len(players) < 8:
         current_id = 0
@@ -316,7 +316,7 @@ def start_matchmaking(message):
     try :
         save_participants_to_database(tournament_id, players)
     except Exception as e:
-        print(f"Error at saving participants to database: {e}")
+        
         
   
     random.shuffle(players) 

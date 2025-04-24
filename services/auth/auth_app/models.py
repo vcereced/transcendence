@@ -33,8 +33,6 @@ class EmailOTPDevice(Device):
         self.save()
 
     def send_otp(self):
-        print("ENVIANDO al email: ", self.user.email, "el token: ", self.otp_token)
-
         send_mail(
             'OTP sent by PONG',
             f'Tu código de autenticación es: {self.otp_token} ',

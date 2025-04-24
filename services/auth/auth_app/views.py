@@ -241,7 +241,7 @@ def updatePictureUrl_view(request):
 	email = request.data.get("email")
 	src = request.data.get("src")
 
-	print("DEBUG updatePictureUrl_view before== ", src)
+	
 	try:
 		user = CustomUser.objects.get(email=email)
 

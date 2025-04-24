@@ -63,8 +63,8 @@ def list_tournaments(request):
 
 @api_view(['POST'])
 def create_tournament(request):
-    print("entering create_tournament")
-    print(request.data)
+    
+    
     serializer = TournamentSerializer(data=request.data)
     if serializer.is_valid():
         tournament = serializer.save()
@@ -77,8 +77,8 @@ def create_tournament(request):
         redis_client.publish('tournaments_channel', json.dumps(message))
         redis_client.set(f'tournament_{tournament.id}_player_count', 0)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    print("serializer.errors")
-    print(serializer.errors)
+    
+    
     return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
 
 
