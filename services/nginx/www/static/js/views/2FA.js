@@ -83,7 +83,6 @@ export async function verifyOtpRegister(code) {
             window.showPopup(data.error);
         }
     } catch (error) {
-        console.error("Error en la solicitud:", error);
         window.showPopup("Error de conexión.");
     }
 }

@@ -326,7 +326,7 @@ export async function initHome() {
             const tournamentResponse = await fetch(`/api/tournament/user/${user_id}/tournament-stats`);
             const tournamentData = await tournamentResponse.json();
             if (!tournamentData) {
-                console.error("Tournament data not found");
+                window.showPopup("Tournament data not found");
                 return;
             }
 
