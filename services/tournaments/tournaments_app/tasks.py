@@ -7,6 +7,8 @@ from .models import Tournament, Participant
 import redis
 import json
 import random
+import requests
+import hashlib
 
 redis_client = redis.Redis(
     host=settings.REDIS_HOST,
@@ -91,7 +93,41 @@ def save_participants_to_database(tournament_id, players):
         tournament.participants.add(participant)
     tournament.save()
 
-def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
+def generate_tournament_tree_hash(tournament_history):
+    """
+    Generates a SHA-256 hash of the tournament tree history.
+    """
+    tournament_tree_json = json.dumps(tournament_history, sort_keys=True).encode('utf-8')
+    return hashlib.sha256(tournament_tree_json).hexdigest()
+
+def register_tournament_on_blockchain(tournament_id, tournament_name, winner_username, tree_hash):
+    """
+    Registers the final tournament data on the blockchain via the API.
+    """
+    blockchain_api_url = 'http://blockchain:8006/register'
+    headers = {'Content-Type': 'application/json'}
+    payload = {
+        "id": tournament_id,
+        "name": tournament_name,
+        "winner": winner_username,
+        "treeHash": generate_tournament_tree_hash(tree_hash)
+    }
+    print(f"Enviando datos del torneo finalizado a la blockchain API: {payload}")
+    try:
+        response = requests.post(blockchain_api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        blockchain_response = response.json()
+        print(f"Respuesta de la API de blockchain: {blockchain_response}")
+        return blockchain_response
+    except requests.exceptions.RequestException as e:
+        print(f"Error al comunicarse con la API de blockchain: {e}")
+        return None
+    except json.JSONDecodeError:
+        print("Error al decodificar la respuesta JSON de la API de blockchain.")
+        return None
+
+
+def save_tournament_to_databases(tournament_id, tournament_tree, winner=None):
     """Saves the tournament final tree in the database.
     This function is called when the tournament is finished.
     """
@@ -106,6 +142,12 @@ def save_tournament_to_database(tournament_id, tournament_tree, winner=None):
             return
         tournament.champion = winner_participant
         tournament.is_active = False
+        register_tournament_on_blockchain(
+            tournament_id,
+            tournament.name,
+            winner_participant.username,
+            tournament_tree
+        )
         print(f"FINALIZANDO TORNEO {tournament_id} CON CAMPEÓN: {winner_participant.username}")
     tournament.save()
     print(f"Árbol del torneo {tournament_id} guardado en la base de datos.")
@@ -138,7 +180,7 @@ def start_next_round(tournament_id, round_id, winners):
 
     if len(winners) == 1:
         print(f"🏆 ¡Torneo {tournament_id} finalizado! Campeón: {winners[0]}")
-        save_tournament_to_database(tournament_id, get_tournament_history(tournament_id), winner=winners[0])
+        save_tournament_to_databases(tournament_id, get_tournament_history(tournament_id), winner=winners[0])
         return  
 
     
