@@ -57,16 +57,16 @@ class PlayerConsumer(AsyncWebsocketConsumer):
     async def find_out_game(self):
         self.extract_user_data()
         if not self.user_data or not self.user_data.get("user_id"):
-            await self.send_error_and_close("Invalid user data")
+            await self.send_error_and_close("Datos de usuario inválidos")
             return False
 
         try:
             await self.query_db_for_game()
         except models.Game.DoesNotExist:
-            await self.send_error_and_close("User not registered in any game")
+            await self.send_error_and_close("Usuario no registrado en ningún juego")
             return False
         except models.Game.MultipleObjectsReturned:
-            await self.send_error_and_close("User registered in multiple games")
+            await self.send_error_and_close("Usuario registrado en múltiples juegos")
             return False
 
         return True
@@ -122,7 +122,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         )
 
     async def send_error_and_close(self, error_message):
-        await self.send(text_data=json.dumps({"error": error_message}))
+        await self.send(text_data=json.dumps({"type": "error", "message": error_message}))
         await self.close()
 
     async def load_game_state(self, redis_client: redis.Redis):
@@ -310,16 +310,16 @@ class RockPaperScissorsConsumer(AsyncWebsocketConsumer):
     async def find_out_game(self):
         self.extract_user_data()
         if not self.user_data or not self.user_data.get("user_id"):
-            await self.send_error_and_close("Invalid user data")
+            await self.send_error_and_close("Datos de usuario inválidos")
             return False
 
         try:
             self.game = await self.query_db_for_game()
         except models.RockPaperScissorsGame.DoesNotExist:
-            await self.send_error_and_close("User not registered in any game")
+            await self.send_error_and_close("Usuario no registrado en ningún juego")
             return False
         except models.RockPaperScissorsGame.MultipleObjectsReturned:
-            await self.send_error_and_close("User registered in multiple games")
+            await self.send_error_and_close("Usuario registrado en múltiples juegos")
             return False
 
         return True

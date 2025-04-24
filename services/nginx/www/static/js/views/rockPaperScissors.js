@@ -117,13 +117,17 @@ export async function initRockPaperScissors() {
             freezeChoice(data.right_player_choice, 'right');
         } else if (data.type === 'error') {
             rpsSocket.close();
-            window.showPopupRPS("Error de conexión", 2000);
-            setTimeout(() => {
-                window.location.hash = "#";
-            }, 1000);
+            window.showPopup("Error: " + data.message, 2000);
+            window.location.hash = "#";
         }
 
     };
+
+    rpsSocket.onerror = function (event) {
+        rpsSocket.close();
+        window.showPopup("Error de conexión", 2000);
+        window.location.hash = "#";
+    }
 
     window.eventManager.addEventListener(title, 'mouseenter', () => {
         title.classList.add('glitch');
