@@ -58,7 +58,6 @@ async function loadBlockchainTournaments() {
 }
 
 function renderTournamentItem(tournament) {
-    // Generamos el HTML con las mismas clases que en la lista de torneos activos
     return `
         <div class="game-item">
             <div class="game-info">
@@ -68,6 +67,6 @@ function renderTournamentItem(tournament) {
                 <div class="game-meta">Hash: ${tournament.treeHash}</div>
                 <div class="game-meta">Fecha de registro: ${new Date(tournament.registeredAt * 1000).toLocaleString('es-ES')}</div>
             </div>
-            <button class="btn" disabled>Ver árbol</button> </div>
+            </div>
     `;
 }

@@ -1,6 +1,6 @@
 /* static/css/history_blockchain.css */
 
-.tournaments-list {
+.blockchain-list {
     margin: 0;
     padding: 0;
     background-color: var(--background-color);
@@ -15,7 +15,7 @@
     user-select: none;
 }
 
-.tournaments-list .container {
+.blockchain-list .container {
     width: 85%;
     max-width: 1200px;
     padding: 20px;
@@ -26,11 +26,11 @@
     box-shadow: 0 0 20px var(--shadow-color);
 }
 
-.tournaments-list .game-list-container {
+.blockchain-list .game-list-container {
     margin-top: 20px;
 }
 
-.tournaments-list .section-title {
+.blockchain-list .section-title {
     font-size: 1.5em;
     color: var(--primary-color);
     margin-bottom: 15px; /* Aumentar un poco el margen inferior */
@@ -38,7 +38,7 @@
     text-align: center; /* Centrar el título */
 }
 
-.tournaments-list .game-list {
+.blockchain-list .game-list {
     display: grid; /* Usar grid para una disposición más flexible de los items */
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Ajustar el ancho mínimo */
     gap: 15px;
@@ -47,37 +47,39 @@
     overflow: hidden; /* Asegurar que los bordes redondeados se mantengan */
 }
 
-.tournaments-list .game-item {
+.blockchain-list .game-item {
     background: #333;
     padding: 20px;
     border-radius: 16px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease-in-out;
     transform: translateY(0);
+    
 }
 
-.tournaments-list .game-item:hover {
+.blockchain-list .game-item:hover {
     box-shadow: 0 10px 30px rgba(26, 188, 156, 0.3);
 }
 
-.tournaments-list .game-info {
+.blockchain-list .game-info {
     margin-bottom: 15px; 
 }
 
-.tournaments-list .game-name {
+.blockchain-list .game-name {
     font-weight: bold;
     font-size: 18px;
     color: var(--primary-color);
     margin-bottom: 5px;
 }
 
-.tournaments-list .game-meta {
+.blockchain-list .game-meta {
     font-size: 13px;
     color: var(--muted-color);
     margin-bottom: 8px;
+    overflow-x: hidden;
 }
 
-.tournaments-list .site-title {
+.blockchain-list .site-title {
     position: absolute;
     top: 20px;
     left: 20px;
@@ -86,7 +88,7 @@
     transition: transform 0.3s ease;
 }
 
-.tournaments-list .icon-container {
+.blockchain-list .icon-container {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -94,7 +96,7 @@
     align-items: center;
 }
 
-.tournaments-list .icon-container i {
+.blockchain-list .icon-container i {
     font-size: 1.5rem;
     color: var(--primary-color);
     cursor: pointer;
@@ -102,7 +104,7 @@
     transition: text-shadow 0.3s;
 }
 
-.tournaments-list .icon-container i:hover {
+.blockchain-list .icon-container i:hover {
     text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
 }
 
