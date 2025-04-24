@@ -211,6 +211,7 @@ export async function initHome() {
     window.openSettingsPopup =  function openSettingsPopup() {
     
         let email = getCookieValue("email");
+        let username = getCookieValue("username");
 
         document.getElementById('settingsPopup').style.display = 'flex';
 
@@ -454,7 +455,7 @@ export async function initHome() {
     document.getElementById("save-btn-images-host").addEventListener("click", async () => {
         
         const src = document.getElementById("current-profile-pic").src;
-        const allowedNames = ["default0.gif", "default1.gif", "default2.gif", "default3.gif", "default4.gif"];
+        const allowedNames = ["default5.gif", "default1.gif", "default2.gif", "default3.gif", "default4.gif"];
 
         const isDefault = allowedNames.some(name => src.endsWith(name));
 
