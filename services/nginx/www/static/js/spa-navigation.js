@@ -8,6 +8,7 @@ import { renderTournamentsList, initTournamentsList } from './views/tournamentsL
 import { renderNewLogin, initNewLogin } from './views/newLogin.js';
 import { renderRockPaperScissors, initRockPaperScissors } from './views/rockPaperScissors.js';
 import { render2FA, init2FA } from './views/2FA.js';
+import { renderHistoryBlockchain, initHistoryBlockchain } from './views/blockchain.js';
 import EventListenerManager from './utils/eventListenerManager.js';
 
 /**
@@ -24,6 +25,7 @@ const routes = {
     "/new-login": { render: renderNewLogin, init: initNewLogin },
     "/rock-paper-scissors": { render: renderRockPaperScissors, init: initRockPaperScissors },
     "/2FA": { render: render2FA, init: init2FA },
+    "/blockchain-history": { render: renderHistoryBlockchain, init: initHistoryBlockchain },
 };
 
 window.eventManager = new EventListenerManager();

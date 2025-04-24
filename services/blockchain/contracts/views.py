@@ -3,18 +3,11 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import os
 from web3 import Web3
-# from dotenv import load_dotenv
 
-# # Cargar variables de entorno desde un archivo .env (si lo tienes)
-# load_dotenv()
-
-# Tu endpoint de Infura para Sepolia (asegúrate de que sea el correcto)
-#print in RED:
-print("\033[91m" + "INICIANDOOOOOO BLOCKCHAIN!!!!!!!!!!!!!!!!!!!!!!!!!!dd!!!!s!!!!!!!!!!!asd!!!!" + "\033[0m")
 sepolia_node_url = "https://sepolia.infura.io/v3/e9bce358a6aa4324bc1f53e803b54662"
-print(f"Intentando conectar a: {sepolia_node_url}")
+
 web3 = Web3(Web3.HTTPProvider(sepolia_node_url))
-print(f"¿Conectado a web3? {web3.is_connected()}")
+
 
 contract_abi = None
 try:
@@ -32,7 +25,6 @@ except json.JSONDecodeError:
     contract_abi = None
 
 contract_address = os.getenv("CONTRACT_ADDRESS")
-print(f"CONTRACT_ADDRESS (leído del entorno): {contract_address}")
 
 private_key = os.getenv("SEPOLIA_PRIVATE_KEY")
 if not private_key:
@@ -53,7 +45,7 @@ else:
 
 @csrf_exempt
 def register_tournament_api(request):
-    print("Función register_tournament_api llamada.")
+
     if request.method == 'POST':
         if not contract:
             print("Error: No se pudo inicializar el contrato dentro de la vista!!.")
@@ -72,36 +64,25 @@ def register_tournament_api(request):
             winner = data.get('winner')
             tree_hash = data.get('treeHash')
 
-            # Validar que todos los campos necesarios estén presentes
             if not all([tournament_id, tournament_name, winner, tree_hash]):
                 return JsonResponse({'error': 'Faltan datos en la solicitud'}, status=400)
 
-            # Obtener la cuenta desde la clave privada
             account = web3.eth.account.from_key(private_key)
-            print(f"Cuenta obtenida: {account.address}")
-
-            # Construir la transacción para llamar a la función registerTournament
             nonce = web3.eth.get_transaction_count(account.address)
-            print(f"Nonce para la cuenta {account.address}: {nonce}")
             transaction = contract.functions.registerTournament(
                 tournament_id,
                 tournament_name,
                 winner,
                 tree_hash
             ).build_transaction({
-                'gas': 600000,  # Estimar el gas necesario (puede necesitar ajuste)
+                'gas': 600000,  
                 'gasPrice': web3.eth.gas_price,
                 'nonce': nonce,
             })
-            print("Transacción construida.")
 
-            # Firmar la transacción
             signed_transaction = account.sign_transaction(transaction)
-            print("Transacción firmada.")
 
-            # Enviar la transacción
             transaction_hash = web3.eth.send_raw_transaction(signed_transaction.raw_transaction)
-            print(f"Transacción enviada. Hash: {transaction_hash.hex()}")
 
             return JsonResponse({'status': 'success', 'transaction_hash': transaction_hash.hex()})
 
@@ -114,3 +95,29 @@ def register_tournament_api(request):
     else:
         print("Error: Método no permitido para /register.")
         return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+
+def get_tournament_details(request, tournament_id):
+    try:
+        tournament = contract.functions.getTournament(tournament_id).call()
+
+        tournament_data = {
+            'id': tournament[0],
+            'name': tournament[1],
+            'winner': tournament[2],
+            'treeHash': tournament[3],
+            'registeredAt': tournament[4],
+        }
+        return JsonResponse(tournament_data)
+    except Exception as e:
+        print(f"Error al obtener los detalles del torneo {tournament_id}: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+    
+def get_tournaments_ids(request):
+    try:
+
+        ids = contract.functions.getAllTournamentIds().call()
+        return JsonResponse({'tournament_ids': ids})
+    except Exception as e:
+        print(f"Error al obtener los IDs de los torneos: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
