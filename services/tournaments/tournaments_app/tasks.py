@@ -11,6 +11,10 @@ import requests
 import hashlib
 import uuid
 import time
+import logging
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 redis_client = redis.Redis(
     host=settings.REDIS_HOST,
@@ -300,7 +304,7 @@ def start_matchmaking(message):
             username, user_id = user_entry.split(": ")
             players.append({"username": username, "user_id": int(user_id)})
         except ValueError as e:
-            
+            logger.error(f"Error parsing user entry: {user_entry}. Error: {e}")
 
     if len(players) < 8:
         current_id = 0
@@ -316,7 +320,7 @@ def start_matchmaking(message):
     try :
         save_participants_to_database(tournament_id, players)
     except Exception as e:
-        
+        logger.error(f"Error saving participants to database: {e}")
         
   
     random.shuffle(players) 
