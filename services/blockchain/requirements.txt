@@ -5,4 +5,4 @@ redis==4.6.0
 celery==5.4.0
 psycopg2>=2.9.10
 gunicorn
-requests
+web3

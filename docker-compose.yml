@@ -26,9 +26,6 @@ services:
     image: rabbitmq:4-management-alpine
     container_name: message-broker
     platform: linux/x86_64
-    ports:
-        - 5672:5672
-        - 15672:15672
     environment:
       - RABBITMQ_LOGS=-error
     networks:
@@ -39,9 +36,6 @@ services:
     build:
       context: ./services/auth
     container_name: auth
-    ports:
-      - "8011:8001"
-      - "1025:1025"
     volumes:
       - ./services/auth:/app
       - shared_volumen:/media/ 
@@ -68,8 +62,6 @@ services:
     container_name: websocket
     volumes:
       - ./services/websocket:/app  
-    ports:
-      - "8012:8002"  
     environment:
       - REDIS_HOST=redis
     env_file:
@@ -85,8 +77,6 @@ services:
     container_name: tournaments
     volumes:
       - ./services/tournaments:/app
-    ports:
-      - "8013:8003"
     command: [/bin/sh, drf_entrypoint.sh]
     env_file:
       - .env
@@ -139,8 +129,6 @@ services:
     env_file:
       - .env
     command: [/bin/sh, drf_entrypoint.sh]
-    ports:
-      - "8014:8004"
     networks:
       - app-network
 
@@ -150,8 +138,6 @@ services:
     container_name: game_daphne
     volumes:
       - ./services/game:/app  
-    ports:
-      - "8015:8005"  # Exponer el puerto para WebSocket
     environment:
       - REDIS_HOST=redis
     depends_on:
@@ -198,6 +184,18 @@ services:
       - .env
     volumes:
       - game_db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  blockchain:
+    build:
+      context: ./services/blockchain
+    container_name: blockchain
+    volumes:
+      - ./services/blockchain:/app
+    command: [/bin/sh, drf_entrypoint.sh]
+    env_file:
+      - .env
     networks:
       - app-network
 

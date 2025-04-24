@@ -223,9 +223,19 @@ export async function initGame() {
             canvas.setAttribute('width', fieldWidth);
 
             gameLoop();
+        } else if (data.type === 'error') {
+            pongSocket.close();
+            window.showPopup("Error: " + data.message, 2000);
+            window.location.hash = "#";
         }
 
     };
+
+    pongSocket.onerror = function (event) {
+        pongSocket.close();
+        window.showPopup("Error de conexión", 2000);
+        window.location.hash = "#";
+    }
 
     window.eventManager.addEventListener(document, 'keydown', (event) => {
         if (event.key === 'w') {
