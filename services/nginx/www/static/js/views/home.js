@@ -103,8 +103,8 @@ export async function initHome() {
         players = downloadPlayerList();
     }
 
-    window.logout = function logout() {
-
+    window.logout = async function logout() {
+        await handleJwtToken();
         const url = "/api/usr/logout";
         fetch( url, {
             method: "GET",
@@ -237,6 +237,7 @@ export async function initHome() {
     }
     
     window.createLocalGame = function createLocalGame(type) {
+        handleJwtToken();
         checkActiveGame(document, homeDiv);
         fetch('/api/game/create/', {
             method: 'POST',
@@ -292,6 +293,7 @@ export async function initHome() {
 
     window.populateProfilePopup = async function populateProfilePopup(username) {
         try {
+            await handleJwtToken();
             const userResponse = await fetch(`/api/usr/user/${username}`);
             const userData = await userResponse.json();
 

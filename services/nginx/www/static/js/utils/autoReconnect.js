@@ -1,6 +1,9 @@
+import { handleJwtToken } from "../views/jwtValidator.js";
+
 export async function checkActiveGame(document, reconnectingPopupParent) {
     // fetch to server to check if a pong or rps game is active and redirect to the correct route
     try {
+        handleJwtToken();
         const response = await fetch('/api/game/active/');
         if (!response.ok) {
             window.showPopup("Error al comprobar si hay una partida activa");

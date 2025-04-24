@@ -1,3 +1,5 @@
+import { handleJwtToken } from "./jwtValidator.js";
+
 export async function renderTournamentRoom() {
     const response = await fetch('static/html/tournament_room.html');
     const htmlContent = await response.text();
@@ -22,6 +24,7 @@ export async function initTournamentRoom(tournamentId) {
             startButton.style.display = "none";
         });
         //check if the tournament is started asking the server
+        await handleJwtToken();
         const isActive = await fetch(`/api/tournament/${tournamentId.id}/name`);
         if (isActive.ok) {
             const data = await isActive.json();
