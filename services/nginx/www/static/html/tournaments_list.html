@@ -1,3 +1,4 @@
+
 <div class="tournaments-list">
     <h1 class="site-title" onclick="location.hash = ''">TheAnswerIsPong</h1>
     <div class="icon-container">
@@ -8,12 +9,9 @@
     <div class="container">
         <div class="others">
             <form id="create-tournament-form">
-                <input type="text" class="buscar-sala" id="tournament-name" placeholder="Crea tu propio torneo aqui!" required
-                style="width: 200%; padding: 0.7rem; margin-top: 1rem;">
+                <input type="text" class="buscar-sala" id="tournament-name" placeholder="Escribe el nombre de tu torneo y presiona enter" required>
                 <button type="submit" hidden></button>
             </form>
-
-       
         </div>
         <div class="game-list-container">
             <div class="section-title">Salas Disponibles</div>
@@ -21,6 +19,11 @@
             <div id="no-tournaments" class="no-tournaments-msg" style="display: none; text-align:center; margin-top: 1rem;">
                 No hay torneos disponibles
             </div>
+        </div>
+        <div class="blockchain-history-btn-fixed-container">
+            <button class="blockchain-history-btn-fixed" onclick="location.hash = 'blockchain-history'">
+                Historial Blockchain
+            </button>
         </div>
     </div>
 </div>

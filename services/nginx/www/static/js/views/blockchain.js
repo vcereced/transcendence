@@ -67,6 +67,7 @@ function renderTournamentItem(tournament) {
                 <div class="game-meta">Hash: ${tournament.treeHash}</div>
                 <div class="game-meta">Fecha de registro: ${new Date(tournament.registeredAt * 1000).toLocaleString('es-ES')}</div>
             </div>
+            <!-- <button class="btn" >Finalizado</button> -->
             </div>
     `;
 }

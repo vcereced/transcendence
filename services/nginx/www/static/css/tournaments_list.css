@@ -1,3 +1,4 @@
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -59,7 +60,7 @@
     user-select: none;
 }
 
-.tournaments-list .container {
+/* .tournaments-list .container {
     width: 85%;
     max-width: 1200px;
     padding: 20px;
@@ -68,7 +69,7 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     margin: 100px auto;
     box-shadow: 0 0 20px var(--shadow-color);
-}
+} */
 
 .tournaments-list .game-list-container {
     margin-top: 20px;
@@ -183,11 +184,31 @@
 
 .tournaments-list .buscar-sala {
     padding: 0.7rem;
-    margin: 1rem;
+    margin: 0.5rem;
     color: var(--text-color);
     background: var(--btn-bg-color);
     border: 2px solid var(--btn-border-color);
     border-radius: 5px;
+    width: 200%;
+}
+
+/* .tournaments-list .others {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+} */
+
+.tournaments-list .container {
+    width: 85%;
+    max-width: 1200px;
+    padding: 20px;
+    background: var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    margin: 100px auto;
+    box-shadow: 0 0 20px var(--shadow-color);
+    position: relative; /* Asegúrate de que el contenedor siga siendo relativo */
 }
 
 .tournaments-list .others {
@@ -197,6 +218,39 @@
     margin-top: 1rem;
 }
 
+/* Ocultamos el botón de su posición original en .others */
+.tournaments-list .others .blockchain-history-btn {
+    display: none;
+}
+
+/* Estilos para el contenedor del botón fijo (esquina superior derecha) */
+.blockchain-history-btn-fixed-container {
+    position: absolute;
+    top: 15px; /* Reducimos un poco la distancia desde la parte superior */
+    right: 15px; /* Reducimos un poco la distancia desde la derecha */
+    z-index: 1000;
+}
+
+.blockchain-history-btn-fixed {
+    display: inline-block;
+    padding: 8px 8px; /* Reducimos aún más el padding */
+    background-color: var(--btn-bg-color);
+    color: var(--text-color);
+    text-align: center;
+    border: 1px solid var(--btn-border-color);
+    border-radius: 10px; /* Reducimos aún más el radio del borde */
+    cursor: pointer;
+    font-size: 14px; /* Reducimos aún más el tamaño de la fuente */
+    transition: background-color 0.3s, transform 0.2s;
+    width: auto;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.blockchain-history-btn-fixed:hover {
+    background-color: var(--btn-hover-color);
+    transform: scale(1.05);
+}
 .tournaments-list .title-container {
     color: var(--primary-color);
     text-shadow: 0 0 5px var(--primary-color);
