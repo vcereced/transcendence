@@ -8,9 +8,6 @@ services:
       - "8443:443"
       - "8000:80"
     volumes:
-      - ./services/nginx/www:/usr/share/nginx/html  
-      - ./services/nginx/conf/jwt_validation.lua:/etc/nginx/lua/jwt_validation.lua              
-      - ./services/nginx/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
       - shared_volumen:/media/
     depends_on:
       - auth
@@ -37,7 +34,6 @@ services:
       context: ./services/auth
     container_name: auth
     volumes:
-      - ./services/auth:/app
       - shared_volumen:/media/ 
     env_file:
       - .env
@@ -60,8 +56,6 @@ services:
     build:
       context: ./services/websocket  
     container_name: websocket
-    volumes:
-      - ./services/websocket:/app  
     environment:
       - REDIS_HOST=redis
     env_file:
@@ -75,8 +69,6 @@ services:
     build:
       context: ./services/tournaments
     container_name: tournaments
-    volumes:
-      - ./services/tournaments:/app
     command: [/bin/sh, drf_entrypoint.sh]
     env_file:
       - .env
@@ -102,8 +94,6 @@ services:
     depends_on:
       - tournaments
       - message-broker
-    volumes:
-      - ./services/tournaments:/app
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@message-broker:5672//
     env_file:
@@ -124,8 +114,6 @@ services:
     build:
       context: ./services/game
     container_name: game_drf
-    volumes:
-      - ./services/game:/app
     env_file:
       - .env
     command: [/bin/sh, drf_entrypoint.sh]
@@ -136,8 +124,6 @@ services:
     build:
       context: ./services/game
     container_name: game_daphne
-    volumes:
-      - ./services/game:/app  
     environment:
       - REDIS_HOST=redis
     depends_on:
@@ -152,8 +138,6 @@ services:
     build:
         context: ./services/game
     container_name: game_celery
-    volumes:
-      - ./services/game:/app
     env_file :
       - .env  
     networks :
@@ -166,8 +150,6 @@ services:
     build:
         context: ./services/game
     container_name: game_asyncio
-    volumes:
-      - ./services/game:/app
     env_file :
       - .env
     networks :
@@ -191,8 +173,6 @@ services:
     build:
       context: ./services/blockchain
     container_name: blockchain
-    volumes:
-      - ./services/blockchain:/app
     command: [/bin/sh, drf_entrypoint.sh]
     env_file:
       - .env

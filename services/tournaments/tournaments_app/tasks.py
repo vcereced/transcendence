@@ -118,7 +118,7 @@ def register_tournament_on_blockchain(tournament_id, tournament_name, winner_use
         response = requests.post(blockchain_api_url, headers=headers, json=payload)
         response.raise_for_status()
         blockchain_response = response.json()
-        
+        print(f"Blockchain response: {blockchain_response}")
         return blockchain_response
     except requests.exceptions.RequestException as e:
         

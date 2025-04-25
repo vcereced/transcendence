@@ -14,4 +14,7 @@ while ! psql -h game_db -U $POSTGRES_USER -d game_db -c "SELECT 1" > /dev/null 2
 done
 echo "PostgreSQL is available."
 
+echo "Waiting for migrations to be applied..."
+sleep 5
+
 exec python game_consumer.py
