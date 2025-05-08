@@ -20,8 +20,8 @@
 
 ## &#x2728; What is transcendence?
 Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarrollo de 3 personas. Se trata de competitive multiplayer version of Pong.
-- Victor Cereceda
-- David Garizado Toro
+- Victor Cereceda [Github](https://github.com/vcereced)
+- David Garizado Toro [Github](https://github.com/garydd1)
 - Fernando Gómez - [Github](https://github.com/fer5899)
 
 ## Requirements
@@ -30,9 +30,6 @@ Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarro
 - Prohibido usar librerías que resuelvan funciones completas.
 - La web debe ser una SPA, sin errores visibles y compatible con Google Chrome actualizado.
 - Todo debe correr con un solo comando usando Docker.
-
-- Game
-- Devops
 
 ## User Management
 - Registro, login seguros y manejo de duplicados 
@@ -57,73 +54,34 @@ Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarro
 - Simular el comportamiento humano siendo capaz de ganar partidas.
 
 ## Devops
+- Backend en microservicios modulares, mantenibles y escalables.
+- Comunicacion usando REST APIs mediantes brokers.
 
-## 🕹 Features
+## &#x1F6E0; Diagrama
 
-
-
-## &#x1F6E0; Algorithm
-
-Schema of global logic without decision tree:
-
-<img width="1083" alt="Screen Shot 2024-03-07 at 12 54 56 PM" src="https://github.com/vcereced/minishell/assets/120835200/0076cd0f-1913-4aa1-a34c-54b25db59522">
-
-Parsing logic:
-
-<img width="400" alt="Screen Shot 2024-03-07 at 12 37 29 PM" src="https://github.com/vcereced/minishell/assets/120835200/fdb78bb0-cb6e-4428-9776-2d240cf6616b">
-
-Planner logic:
-
-<img width="600" alt="Screen Shot 2024-03-07 at 12 43 30 PM" src="https://github.com/vcereced/minishell/assets/120835200/b62fdc1d-f211-43c0-86b7-5a7a82cf0023">
-
-Program logic:
-
-<img width="600" alt="Screen Shot 2024-03-07 at 12 50 09 PM" src="https://github.com/vcereced/minishell/assets/120835200/ba77b088-cf5f-4ad0-9adf-05fbe4215a28">
-
+Schema of global logic:
+https://drive.google.com/file/d/1Llc0r4MQEMciNO2diklEgxHzNlYJo6Po/view?usp=sharing
 
 ## &#x1F4BB; Usage
 
-`make` to compile.
+`make` to build and start containers.
 
-`make clean` remove .o files.
+`make stop` to stop all containers.
 
-`make fclean` remove .o files and .a files and executable.
+`make fclean` to stop, delete containers and remove volumens.
+
+`make re` to fclean and make again.
 
 ## &#x1F4D6; Examples
 
-Execute this command in the terminal.
+Execute this command in the terminal to deploy the web-app.
 
 ```bash
-./minishell
+make
 ```
 
-Let's try some promps like in a shell:
+Let's try in the browser:
 
-```bash
-echo "hello world" && cat
-```
+`https://localhost:8443`
 
-Output should be:
-```bash
-hello world
-```
-
-
-
-
-# Transcendence
-
-Proyecto final del Common Core de 42.
-
-Grupo formado por:
-- David Garizado Toro
-- Fernando Gómez - [Github](https://github.com/fer5899) - [LinkedIn](https://www.linkedin.com/in/delavarga/)
-
-- Victor Cereceda
-
-
-
-#Links:
-
-Diagrams: https://drive.google.com/file/d/1Llc0r4MQEMciNO2diklEgxHzNlYJo6Po/view?usp=sharing
 
