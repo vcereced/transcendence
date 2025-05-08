@@ -64,6 +64,32 @@ https://drive.google.com/file/d/1Llc0r4MQEMciNO2diklEgxHzNlYJo6Po/view?usp=shari
 
 ## &#x1F4BB; Usage
 
+First of all create a .env archivo con lo siguiente:
+```
+#Enviroment Variables NEEDED for the project
+
+
+    #Django settings
+DJANGO_SECRET_KEY=xxx
+POSTGRES_PASSWORD=xxx
+POSTGRES_USER=xxx
+
+
+    #Email settings
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=xxx
+EMAIL_HOST_PASSWORD=xxx
+
+    #Blockchain settings
+BLOCKCHAIN_API_URL=https://sepolia.infura.io/v3/e9bce358a6aa4324bc1f53e803b54662
+CONTRACT_ADDRESS=0x57E80978382A9B373f3401ABDEf8FaDE9fd9faf7
+
+SEPOLIA_PRIVATE_KEY=f87905e9b4ba658e30e5c9d0e04354fa7ee650f8defec2fc51894e8c3a290f8d
+```
+
 `make` to build and start containers.
 
 `make stop` to stop all containers.
