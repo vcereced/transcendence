@@ -25,6 +25,10 @@ Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarro
 - Fernando Gómez - [Github](https://github.com/fer5899)
   
 
+https://github.com/user-attachments/assets/b8a86d5c-5efd-4703-9082-53c508d4c178
+
+
+
 ## Requirements
 - Frontend vanilla JS.
 - Backend Django Framework with PostgreSQL.
