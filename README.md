@@ -23,11 +23,8 @@ Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarro
 - Victor Cereceda [Github](https://github.com/vcereced)
 - David Garizado Toro [Github](https://github.com/garydd1)
 - Fernando Gómez - [Github](https://github.com/fer5899)
-  
 
-https://github.com/user-attachments/assets/b8a86d5c-5efd-4703-9082-53c508d4c178
-
-
+https://github.com/user-attachments/assets/1e830472-92b7-48c1-8d8a-aa5731472875
 
 ## Requirements
 - Frontend vanilla JS.
@@ -73,12 +70,10 @@ First of all create a .env archivo con lo siguiente:
 ```
 #Enviroment Variables NEEDED for the project
 
-
     #Django settings
 DJANGO_SECRET_KEY=xxx
 POSTGRES_PASSWORD=xxx
 POSTGRES_USER=xxx
-
 
     #Email settings
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
