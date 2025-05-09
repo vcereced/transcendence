@@ -19,7 +19,7 @@
 </p>
 
 ## &#x2728; What is transcendence?
-Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarrollo de 3 personas. Se trata de competitive multiplayer version of Pong.
+Design, organize, and develop a full-stack project as a team of 3 developers. It’s a competitive multiplayer version of Pong.
 - Victor Cereceda [Github](https://github.com/vcereced)
 - David Garizado Toro [Github](https://github.com/garydd1)
 - Fernando Gómez - [Github](https://github.com/fer5899)
@@ -27,46 +27,49 @@ Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarro
 https://github.com/user-attachments/assets/1e830472-92b7-48c1-8d8a-aa5731472875
 
 ## Requirements
-- Frontend vanilla JS.
-- Backend Django Framework with PostgreSQL.
-- Prohibido usar librerías que resuelvan funciones completas.
-- La web debe ser una SPA, sin errores visibles y compatible con Google Chrome actualizado.
-- Todo debe correr con un solo comando usando Docker.
+- Frontend in vanilla JS
+- Backend using Django with PostgreSQL
+- No libraries that solve entire features allowed
+- Must be a single-page application (SPA)
+- Must run smoothly on up-to-date Google Chrome
+- Entire project should launch with a single Docker command
 
 ## User Management
-- Registro, login seguros y manejo de duplicados 
-- Edición de perfil y subida de avatar (con opción por defecto).
-- Sistema de amigos con estado en línea.
-- Perfil con estadísticas (victorias/derrotas) y historial de partidas 1v1.
+- Secure registration, login, and duplicate handling
+- Profile editing and avatar upload (with default option)
+- Friend system with online status
+- Profile page showing stats (wins/losses) and match history (1v1)
 
 ## Cybersecurity
-- Contraseñas hasheadas.
-- Protección contra SQLi/XSS.
-- HTTPS obligatorio y wss en Websockets.
-- 2FA a traves de e-mail.
-- JWT para gestionar autenticación y autorización de forma segura.
-- Nada de credenciales en el repo, usá .env.
+- Passwords hashed
+- Protection against SQL injection and XSS
+- HTTPS required, and wss:// for WebSocket connections
+- Two-factor authentication via email
+- JWT for secure authentication and authorization
+- No credentials in the repository – use .env files
 
 ## Gameplay and user managementy
-- Remote players: 2 jugadores jueguen desde distintos dispositivos vía red. Manejar lag y desconexiones.
-- Minijuego + historial + matchmaking:
+- Remote gameplay between 2 players from different devices
+- Handle lag and disconnections
+- Includes a minigame, history tracking, and matchmaking
 
 ## AI-Algo
-- Prohibido el uso de A* algorithm
-- Simular el comportamiento humano siendo capaz de ganar partidas.
+- A* algorithm is forbidden
+- Simulate human-like behavior capable of winning games
 
 ## Devops
-- Backend en microservicios modulares, mantenibles y escalables.
-- Comunicacion usando REST APIs mediantes brokers.
+- Backend divided into modular, maintainable, and scalable microservices
+- REST API communication via message brokers
 
 ## &#x1F6E0; Diagrama
 
-Schema of global logic:
-https://drive.google.com/file/d/1Llc0r4MQEMciNO2diklEgxHzNlYJo6Po/view?usp=sharing
+   Project architecture schema:
+
+	https://drive.google.com/file/d/1Llc0r4MQEMciNO2diklEgxHzNlYJo6Po/view?usp=sharing
 
 ## &#x1F4BB; Usage
 
-First of all create a .env archivo con lo siguiente:
+First, create a .env file with the following:
 ```
 #Enviroment Variables NEEDED for the project
 
@@ -94,20 +97,20 @@ SEPOLIA_PRIVATE_KEY=xxx
 
 `make stop` to stop all containers.
 
-`make fclean` to stop, delete containers and remove volumens.
+`make fclean` to remove containers and volumes.
 
-`make re` to fclean and make again.
+`make re` to rebuild everything.
 
 ## &#x1F4D6; Examples
 
 Execute this command in the terminal to deploy the web-app.
 
-```bash
-make
-```
 
-Let's try in the browser:
+	make
 
-`https://localhost:8443`
+
+Open in browser:
+
+	https://localhost:8443
 
 
