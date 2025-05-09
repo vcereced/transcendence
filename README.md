@@ -23,6 +23,7 @@ Diseñar, organizar y desarrollar u  proyecto full-stack en un equipo de desarro
 - Victor Cereceda [Github](https://github.com/vcereced)
 - David Garizado Toro [Github](https://github.com/garydd1)
 - Fernando Gómez - [Github](https://github.com/fer5899)
+  
 
 ## Requirements
 - Frontend vanilla JS.
